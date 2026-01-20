@@ -9,7 +9,7 @@ RUN chmod +x ./gradlew
 RUN ./gradlew clean build -x test --no-daemon
 
 # 2단계: 실행 환경 (Java)
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk
 WORKDIR /app
 # 빌드된 jar 파일만 가져오기
 COPY --from=builder /app/build/libs/*-SNAPSHOT.jar app.jar
