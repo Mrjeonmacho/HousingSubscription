@@ -9,3 +9,11 @@
 # 중요 환경변수
 application-secret.yml
 application-prod.yml
+
+application-secret.yaml
+application-prod.yaml
+
+# 환경 변수 (API 키 등)
+.env
+.env.local
+.env.production
