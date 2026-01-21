@@ -1,3 +1,18 @@
 spring:
   application:
     name: seouljibsa
+
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+  # 이미 테이블이 있으므로 update 권장 (create는 기존 데이터 날아감)
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
