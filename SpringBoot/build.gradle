@@ -39,6 +39,8 @@ dependencies {
 	// env
 	implementation(platform("me.paulschwarz:spring-dotenv-bom:5.1.0"))
 	developmentOnly("me.paulschwarz:springboot4-dotenv")
+
+
 }
 
 tasks.named('test') {

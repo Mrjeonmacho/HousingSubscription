@@ -12,7 +12,6 @@ spring:
 
   jpa:
     hibernate:
-  # 이미 테이블이 있으므로 update 권장 (create는 기존 데이터 날아감)
       ddl-auto: update
     properties:
       hibernate:
