@@ -1,0 +1,56 @@
+NOTI_001	공고 조회	공고	GET	FALSE	FALSE	FALSE	Noti_List_001	/api/notices	공고 조회
+			GET	FALSE	FALSE	FALSE	Noti_List_003	/api/notices/{id}	공고 상세 조회
+			없음	FALSE	FALSE	FALSE
+NOTI_002	관심 공고 저장 및 삭제	공고	GET	FALSE	FALSE	FALSE	Noti_Favorite_001	/api/notices/favorites	관심 공고 조회
+			POST	FALSE	FALSE	FALSE	Noti_Favorite_002	/api/notices/favorites/{id}	관심 공고 저장
+			DELETE	FALSE	FALSE	FALSE	Noti_Favorite_003	/api/notices/favorites/{id}	관심 공고 삭제
+			없음
+NOTI_003	공고 생성, 수정, 삭제(관리자)	공고	POST	FALSE	FALSE	FALSE	Noti_Admin_001	/api/notices/{id}	공고 생성
+			PATCH	FALSE	FALSE	FALSE	Noti_Admin_002	/api/notices/{id}	공고 수정
+			DELETE	FALSE	FALSE	FALSE	Noti_Admin_003	/api/notices/{id}	공고 삭제
+			없음	FALSE	FALSE	FALSE
+
+
+홍지운	최초	2026-01-16	2026-01-16	Noti_List_001	공고 목록 카드 조회	"SH에서 현재 신청할 수 있는 공고 중 인기있는 혹은 마감이 임박한 공고를 카드로 조회
+
+< 항목 >
+- 공고 등록 번호(SH 사이트 기준)
+- 공고문 제목
+- 공고 분류(ex. 행복주택, 청년안심주택 등)
+- 공고 등록일
+- 모집 공고 상태
+- 청약 접수 시작일
+- 청약 마감일"
+홍지운	최초	2026-01-16	2026-01-16	Noti_List_002	공고 목록 리스트 조회	SH에서 현재 신청할 수 있는 공고 SH 주택청약 공고 목록을 최신순으로 조회
+홍지운	최초	2026-01-16	2026-01-16	Noti_List_003	공고 상세 조회	"카드나 리스트에서 특정 공고 클릭 시 상세 내용을 확인할 수 있는 기능
+
+< 항목 >
+- 공고 등록 번호(SH 사이트 기준)
+- 공고문 제목
+- 공고 분류(ex. 행복주택, 청년안심주택 등)
+- 공고 등록일
+- 모집 공고 상태
+- 청약 접수 시작일
+- 청약 마감일
+- 모집 공고문 PDF
+- 매물 확인할 수 있는 네이버 지도
+- SH 홈페이지의 해당 공지글 URL"
+조원혁	최초	2026-01-16	2026-01-16	Noti_List_004	공고 목록 조회	"가져온 공고 데이터 목록 조회
+위에는 카드 슬라이드 형식
+아래에는 게시판 형식"
+
+
+조원혁	최초	2026-01-16	2026-01-16	Noti_Admin_001	공고 작성	"SH에 올라온 모집 공고 pdf 및 게시글 가져오기
+
+1. 관리자 계정인지 확인
+2. 게시판 편집 버튼 활성화
+3. 공고 데이터 업로드"
+조원혁	최초	2026-01-16	2026-01-16	Noti_Admin_002	공고 수정	기존 공고에서 정정된 공고가 생길 경우 수정
+조원혁	최초	2026-01-16	2026-01-16	Noti_Admin_003	공고 삭제	공고가 삭제되어야 하는 경우 삭제
+
+
+
+공고는 누구나 조회(Read)가능하다.
+하지만 공고를 찜하거나(저장), 찜한 공고 조회, 삭제는 로그인을 해야 가능하다.
+그라고 공고에 대해 생성, 수정, 삭제는 user 권한이 일반인이 아니라 관리자여야 가능하다.
+
