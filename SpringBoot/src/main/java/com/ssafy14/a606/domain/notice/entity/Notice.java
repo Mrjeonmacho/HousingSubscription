@@ -71,4 +71,16 @@ public class Notice {
         this.pdfUrl = pdfUrl;
         this.url = url;
     }
+
+    public void update(String noticeNo, String title, NoticeCategory category, NoticeStatus status, LocalDate regDate, LocalDate startDate, LocalDate endDate, String pdfUrl, String url) {
+        this.noticeNo = noticeNo;
+        this.title = title;
+        this.category = category;
+        this.status = status;
+        this.regDate = regDate;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.pdfUrl = pdfUrl;
+        this.url = url;
+    }
 }

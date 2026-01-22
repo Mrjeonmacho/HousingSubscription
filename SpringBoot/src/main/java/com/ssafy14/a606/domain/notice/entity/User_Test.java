@@ -15,6 +15,8 @@ public class User_Test {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String name;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
