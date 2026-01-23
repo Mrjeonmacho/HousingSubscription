@@ -1,15 +1,19 @@
 package com.ssafy14.a606.domain.notice.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Getter
 @Entity
-@Table(name = "users_test") // 데이터베이스에 'user'는 예약어인 경우가 많아 'users'로 테이블명을 지정하는 것이 안전합니다.
-public class User_Test {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "users_test")
+public class UserTest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,6 +32,16 @@ public class User_Test {
             inverseJoinColumns = @JoinColumn(name = "notice_id")
     )
     private Set<Notice> favoriteNotices = new HashSet<>();
+
+
+    // UserTest 객체가 생성될 떄 필수적인 정보는 name과 role이다.
+    // 관심공고는 이후 행위에 따라 채워지는 값임으로 빌더에 ㄴㄴ
+    // 그리고 넣는다해도 null 상태라 없는데 조회나 삭제하면 nullexception 발생함
+    @Builder
+    public UserTest(String name, UserRole role) {
+        this.name = name;
+        this.role = role;
+    }
 
     // 다른 필드들은 User 도메인 담당자가 최종적으로 추가할 예정입니다.
     // Notice 와의 관계 설정을 위해 임시로 생성된 파일입니다.

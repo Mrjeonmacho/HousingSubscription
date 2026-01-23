@@ -6,6 +6,7 @@ import com.ssafy14.a606.domain.notice.dto.response.NoticeListResponseDto;
 import com.ssafy14.a606.domain.notice.dto.response.NoticeResponseDto;
 import com.ssafy14.a606.domain.notice.entity.Notice;
 import com.ssafy14.a606.domain.notice.repository.NoticeRepository;
+import com.ssafy14.a606.domain.notice.repository.UserTestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
