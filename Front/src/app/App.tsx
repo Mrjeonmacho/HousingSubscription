@@ -2,7 +2,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "../components/layout/Layout";
 import HomePage from "../pages/HomePage";
 import NoticesPage from "../pages/NoticesPage";
-import Playground from "../pages/Playground";
+import Playground from "../pages/Playground/Playground";
+import Quiz from "../pages/Playground/Quiz";
 
 export default function App() {
   return (
@@ -11,7 +12,10 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/notices" element={<NoticesPage />} />
-          <Route path="/playground" element={<Playground />} />
+          <Route path="/playground">
+            <Route index element={<Playground />} />
+            <Route path="quiz" element={<Quiz />} />
+          </Route>
         </Routes>
       </Layout>
     </BrowserRouter>
