@@ -34,7 +34,7 @@ export default function Header() {
             SH 공고 찾기
           </NavLink>
 
-          <NavLink to="/ai" className={navClass}>
+          <NavLink to="/chatbot" className={navClass}>
             AI 채팅
           </NavLink>
 

@@ -5,6 +5,7 @@ import NoticesPage from "../pages/NoticesPage";
 import Playground from "../pages/Playground/Playground";
 import Quiz from "../pages/Playground/Quiz";
 import Preference from "../pages/Playground/Preference";
+import Chatbot from "../pages/Chatbot";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
             <Route path="quiz" element={<Quiz />} />
             <Route path="preference" element={<Preference />} />
           </Route>
+          <Route path="/chatbot" element={<Chatbot />} />
         </Routes>
       </Layout>
     </BrowserRouter>
