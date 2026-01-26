@@ -16,11 +16,4 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final UserService userService;
-
-    // 로컬 회원가입
-    @PostMapping("/signup")
-    public ResponseEntity<SignUpResponseDto> signUp(@Valid @RequestBody SignUpRequestDto request) {
-        return ResponseEntity.ok(userService.signUpLocal(request));
-    }
 }
