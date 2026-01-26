@@ -1,14 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const LoginCard = (): React.ReactElement => {
+  const navigate = useNavigate();
 
+  const handleLoginClick = () => {
+    navigate('/login');
+  }
 
   return (
     <div className="w-full max-w-xl text-center text-xs text-gray-600 font-sans">
       <div className="shadow-[0px_8px_30px_rgba(0,_0,_0,_0.06)] rounded-3xl bg-white p-10 overflow-hidden">
         <div className="space-y-6">
-          <button className="w-full shadow-[0px_10px_15px_-3px_rgba(0,_230,_118,_0.2),_0px_4px_6px_-4px_rgba(0,_230,_118,_0.2)] rounded-3xl bg-primary h-14 overflow-hidden text-lg text-white font-bold hover:shadow-lg transition-shadow">
+          <button className="w-full shadow-[0px_10px_15px_-3px_rgba(0,_230,_118,_0.2),_0px_4px_6px_-4px_rgba(0,_230,_118,_0.2)] rounded-3xl bg-primary h-14 overflow-hidden text-lg text-white font-bold hover:shadow-lg transition-shadow"
+            onClick={handleLoginClick}>
             로그인
           </button>
 
