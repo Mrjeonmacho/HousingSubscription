@@ -14,9 +14,10 @@ type QuizQuestion = {
 type QuizStatus = "question" | "correct" | "wrong" | "done";
 
 type QuizAnswerResponse = {
-  isCorrect: boolean;
-  correctAnswer: string;
-  explanation: string;
+  isCorrect?: boolean; // 백엔드가 isCorrect로 줄 수도 있고
+  correct?: boolean;   // 실제로는 correct로 주고 있음
+  correctAnswer?: string;
+  explanation?: string;
 };
 
 export default function Quiz() {
@@ -31,25 +32,33 @@ export default function Quiz() {
   const [correctCount, setCorrectCount] = useState(0);
 
   const currentQuestion = questions[currentIndex];
-
   const isLastQuestion = currentIndex === questions.length - 1;
-
 
   useEffect(() => {
     const fetchQuiz = async () => {
-      const res = await fetch("/api/games/quiz/start", { credentials: "include" });
-      if (!res.ok) return;
+      try {
+        const res = await fetch("/api/games/quiz/start", {
+          credentials: "include",
+        });
+        if (!res.ok) return;
 
-      const data = await res.json();
-      const list: QuizQuestion[] = Array.isArray(data) ? data : data?.questions ?? [];
+        const data = await res.json();
 
-      setQuestions(list);
-      setCurrentIndex(0);
-      setCorrectCount(0);
-      setAnswer("");
-      setCorrectAnswer("");
-      setExplanation("");
-      setStatus("question");
+        // start 응답이 "배열 자체"로 오고 있음
+        const list: QuizQuestion[] = Array.isArray(data)
+          ? data
+          : data?.questions ?? [];
+
+        setQuestions(list);
+        setCurrentIndex(0);
+        setCorrectCount(0);
+        setAnswer("");
+        setCorrectAnswer("");
+        setExplanation("");
+        setStatus("question");
+      } catch {
+        // 필요 시 에러 처리 확장
+      }
     };
 
     fetchQuiz();
@@ -58,25 +67,31 @@ export default function Quiz() {
   const handleSubmitAnswer = async () => {
     if (!currentQuestion) return;
 
-    const res = await fetch("/api/games/quiz/answer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        questionId: currentQuestion.questionId,
-        answer: answer.trim(),
-      }),
-    });
+    try {
+      const res = await fetch("/api/games/quiz/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          questionId: currentQuestion.questionId,
+          answer: answer.trim(),
+        }),
+      });
 
-    if (!res.ok) return;
+      if (!res.ok) return;
 
-    const data: QuizAnswerResponse = await res.json();
+      const data: QuizAnswerResponse = await res.json();
 
-    setCorrectAnswer(data.correctAnswer ?? "");
-    setExplanation(data.explanation ?? "");
-    setStatus(data.isCorrect ? "correct" : "wrong");
+      const isCorrect = (data.isCorrect ?? data.correct) ?? false;
 
-    if (data.isCorrect) setCorrectCount((prev) => prev + 1);
+      setCorrectAnswer(data.correctAnswer ?? "");
+      setExplanation(data.explanation ?? "");
+      setStatus(isCorrect ? "correct" : "wrong");
+
+      if (isCorrect) setCorrectCount((prev) => prev + 1);
+    } catch {
+      // 필요 시 에러 처리 확장
+    }
   };
 
   const handleNextQuestion = () => {
@@ -116,7 +131,10 @@ export default function Quiz() {
   return (
     <main className="flex-1 px-4 md:px-20 lg:px-40 py-12 flex flex-col items-center">
       <div className="w-full max-w-3xl flex flex-col gap-8">
-        <QuizHeader currentIndex={Math.min(currentIndex, questions.length - 1)} totalCount={questions.length} />
+        <QuizHeader
+          currentIndex={Math.min(currentIndex, questions.length - 1)}
+          totalCount={questions.length}
+        />
 
         {status === "done" && (
           <QuizResultDone
