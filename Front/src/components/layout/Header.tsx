@@ -1,13 +1,17 @@
 // seoul-jibsa\src\components\layout\Header.tsx
 import { Link, NavLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Header() {
+  const { isLoggedIn, user, logout } = useAuth();
+  console.log("Header - isLoggedIn:", isLoggedIn, "user:", user);
   const navBase =
     "text-sm font-medium text-gray-700 hover:text-primary transition-colors";
   const navActive = "text-sm font-semibold text-primary";
 
-  const navClass = ({ isActive }: { isActive: boolean }) =>
+  const navClass = ({ isActive }: { isActive: boolean }) => 
     isActive ? navActive : navBase;
+
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-black/5">
@@ -48,6 +52,17 @@ export default function Header() {
         </nav>
 
         {/* Right: Actions */}
+        { isLoggedIn ? (
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-700">안녕하세요, {user?.userName}님!</span>  
+            <button 
+              onClick={logout} 
+              className="text-sm text-gray-500 hover:text-black"
+            >
+              로그아웃
+            </button>
+          </div>
+        ) : (
         <div className="flex items-center gap-3">
           <Link
             to="/login"
@@ -63,6 +78,7 @@ export default function Header() {
             시작하기
           </Link>
         </div>
+        )}
       </div>
     </header>
   );

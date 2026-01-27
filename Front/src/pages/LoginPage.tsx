@@ -2,34 +2,47 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import GoogleButton from "../components/login/GoogleButton";
 import KakaoButton from "../components/login/KakaoButton";
+import { login as loginAPI } from "../api/AuthApi";
+import { useAuth } from "../context/AuthContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    userId: "",
-    password: "",
-  });
+  const { login } = useAuth();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  // 입력값 상태 관리
+  const [loginId, setLoginId] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.userId || !formData.password) {
+  // 로그인 핸들러
+  const handleLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!loginId || !password) {
       alert("아이디와 비밀번호를 모두 입력해주세요.");
       return;
     }
-    // Todo: 로그인 API 호출
-    console.log("로그인 시도:", formData);
-    alert(`${formData.userId}님, 환영합니다!`);
-    navigate("/");
+    // 로그인 요청
+    const result = await loginAPI({ loginId, password });
+
+    if (result) {
+      // 로그인 상태 업데이트
+      login({ 
+        token: result.token, 
+        userName: result.userName 
+      });
+      
+      alert(`${result.userName}님 환영합니다!`);
+      navigate("/");
+    } else {
+      alert("아이디 또는 비밀번호가 일치하지 않습니다.");
+    }
   };
 
-  const handleSocialLogin = (provider: string) => {
-    // Todo: 소셜 로그인 처리
-    alert(`${provider} 로그인을 시도합니다.`);
+  const handleKakaoLogin = () => {
+    console.log("카카오 로그인 클릭");
+  };
+
+  const handleGoogleLogin = () => {
+    console.log("구글 로그인 클릭");
   };
 
   return (
@@ -58,8 +71,8 @@ export default function LoginPage() {
               <input
                 type="text"
                 name="userId"
-                value={formData.userId}
-                onChange={handleChange}
+                value={loginId}
+                onChange={(e) => setLoginId(e.target.value)}
                 className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-gray-300"
                 placeholder="아이디를 입력해주세요"
               />
@@ -75,8 +88,8 @@ export default function LoginPage() {
               <input
                 type="password"
                 name="password"
-                value={formData.password}
-                onChange={handleChange}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-gray-300"
                 placeholder="비밀번호를 입력해주세요"
               />
@@ -106,13 +119,13 @@ export default function LoginPage() {
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-100"></div>
           </div>
-          <div className="relative flex justify-center text-xs text-gray-400 bg-white px-2">
-            또는
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-white text-gray-400 font-medium">또는</span>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <KakaoButton onClick={() => handleSocialLogin("Kakao")} />
-          <GoogleButton onClick={() => handleSocialLogin("Google")} />
+          <KakaoButton onClick={handleKakaoLogin} />
+          <GoogleButton onClick={handleGoogleLogin} />
         </div>
 
         {/* 회원가입 링크 */}
