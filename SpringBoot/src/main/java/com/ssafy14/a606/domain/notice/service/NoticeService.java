@@ -7,6 +7,7 @@ import com.ssafy14.a606.domain.notice.dto.response.NoticeResponseDto;
 import com.ssafy14.a606.domain.notice.entity.Notice;
 import com.ssafy14.a606.domain.notice.repository.NoticeRepository;
 import com.ssafy14.a606.domain.notice.repository.UserTestRepository;
+import com.ssafy14.a606.global.exceptions.InvalidValueException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +33,7 @@ public class NoticeService {
 
     public NoticeResponseDto getNotice(Long noticeId) {
         Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid notice Id:" + noticeId));
+                .orElseThrow(() -> new InvalidValueException("Invalid notice Id:" + noticeId));
         return new NoticeResponseDto(notice);
     }
 
@@ -47,7 +48,6 @@ public class NoticeService {
                 .startDate(noticeRequestDto.getStartDate())
                 .endDate(noticeRequestDto.getEndDate())
                 .pdfUrl(noticeRequestDto.getPdfUrl())
-                .url(noticeRequestDto.getUrl())
                 .build();
         noticeRepository.save(notice);
         return new NoticeResponseDto(notice);
@@ -59,7 +59,7 @@ public class NoticeService {
     @Transactional
     public NoticeResponseDto updateNotice(Long noticeId, NoticeRequestDto noticeRequestDto) {
         Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid notice Id:" + noticeId));
+                .orElseThrow(() -> new InvalidValueException("Invalid notice Id:" + noticeId));
         
         notice.update(
                 noticeRequestDto.getNoticeNo(),
@@ -69,8 +69,7 @@ public class NoticeService {
                 noticeRequestDto.getRegDate(),
                 noticeRequestDto.getStartDate(),
                 noticeRequestDto.getEndDate(),
-                noticeRequestDto.getPdfUrl(),
-                noticeRequestDto.getUrl()
+                noticeRequestDto.getPdfUrl()
         );
 
         return new NoticeResponseDto(notice);

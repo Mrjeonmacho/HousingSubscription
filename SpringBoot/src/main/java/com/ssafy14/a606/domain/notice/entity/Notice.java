@@ -51,16 +51,13 @@ public class Notice {
     // SH 공고 pdf 링크
     private String pdfUrl;
 
-    // SH 공고 링크
-    private String url;
-
     // 집 위치가 확인될 때 쓰는 공고의 집 목록 모음
     @OneToMany(mappedBy = "notice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Home> homes = new ArrayList<>();
 
     // 생성자 빌더
     @Builder
-    public Notice(String noticeNo, String title, NoticeCategory category, NoticeStatus status, LocalDate regDate, LocalDate startDate, LocalDate endDate, String pdfUrl, String url) {
+    public Notice(String noticeNo, String title, NoticeCategory category, NoticeStatus status, LocalDate regDate, LocalDate startDate, LocalDate endDate, String pdfUrl) {
         this.noticeNo = noticeNo;
         this.title = title;
         this.category = category;
@@ -69,10 +66,9 @@ public class Notice {
         this.startDate = startDate;
         this.endDate = endDate;
         this.pdfUrl = pdfUrl;
-        this.url = url;
     }
 
-    public void update(String noticeNo, String title, NoticeCategory category, NoticeStatus status, LocalDate regDate, LocalDate startDate, LocalDate endDate, String pdfUrl, String url) {
+    public void update(String noticeNo, String title, NoticeCategory category, NoticeStatus status, LocalDate regDate, LocalDate startDate, LocalDate endDate, String pdfUrl) {
         this.noticeNo = noticeNo;
         this.title = title;
         this.category = category;
@@ -81,6 +77,5 @@ public class Notice {
         this.startDate = startDate;
         this.endDate = endDate;
         this.pdfUrl = pdfUrl;
-        this.url = url;
     }
 }
