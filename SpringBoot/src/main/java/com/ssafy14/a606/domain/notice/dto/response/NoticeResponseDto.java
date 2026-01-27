@@ -19,7 +19,6 @@ public class NoticeResponseDto {
     private LocalDate startDate;
     private LocalDate endDate;
     private String pdfUrl;
-    private String url;
 
     public NoticeResponseDto(Notice notice) {
         this.id = notice.getId();
@@ -31,6 +30,5 @@ public class NoticeResponseDto {
         this.startDate = notice.getStartDate();
         this.endDate = notice.getEndDate();
         this.pdfUrl = notice.getPdfUrl();
-        this.url = notice.getUrl();
     }
 }
