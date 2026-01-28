@@ -27,11 +27,9 @@ export default function LoginPage() {
       // 로그인 상태 업데이트
       login({ 
         accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
         userName: result.userName,
         userRole: result.userRole
       });
-      
       alert(`${result.userName}님 환영합니다!`);
       navigate("/");
     } else {
