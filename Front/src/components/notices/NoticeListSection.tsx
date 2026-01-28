@@ -1,6 +1,7 @@
 // Front/src/components/notices/NoticeListSection.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
+import { apiClient } from "../../api/axiosConfig";
 import type { Notice } from "../../pages/NoticesPage";
 import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
 
@@ -154,16 +155,6 @@ function dateToMs(dateStr: string | null, fallback: string) {
   return new Date(dateStr ?? fallback).getTime();
 }
 
-function getToken() {
-  return localStorage.getItem("accessToken");
-}
-
-function authHeaders() {
-  const token = getToken();
-  if (!token) return null;
-  return { Authorization: `Bearer ${token}` };
-}
-
 export default function NoticeListSection({ totalCount, items, loading }: Props) {
   const [sortType, setSortType] = useState<SortType>("REG_DATE");
   const [open, setOpen] = useState(false);
@@ -171,23 +162,29 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
   const [favoriteMap, setFavoriteMap] = useState<Record<number, boolean>>({});
   const [favoritePending, setFavoritePending] = useState<Record<number, boolean>>({});
 
-  // 실행중인 백엔드가 userId를 path로 요구하므로 /me로 userId 확보
   const [userId, setUserId] = useState<number | null>(null);
+  const [meLoading, setMeLoading] = useState(false);
+  const [meLoaded, setMeLoaded] = useState(false);
 
+  // 1) /users/me로 userId 확보 (apiClient 사용 → 토큰 자동첨부 + refresh 자동)
   useEffect(() => {
-    const headers = authHeaders();
-    if (!headers) return;
-
     let ignore = false;
 
     (async () => {
       try {
-        const res = await axios.get<MeResponse>("/api/users/me", { headers });
-        if (ignore) return;
-        setUserId(res.data.userId);
+        const res = await apiClient.get<MeResponse>("/users/me");
+        if (!ignore) {
+          setUserId(res.data.userId);
+        }
       } catch {
-        if (ignore) return;
-        setUserId(null);
+        if (!ignore) {
+          setUserId(null);
+        }
+      } finally {
+        if (!ignore) {
+          setMeLoaded(true);
+          setMeLoading(false);
+        }
       }
     })();
 
@@ -196,19 +193,15 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
     };
   }, []);
 
-  // userId 확보 후 찜 목록 로딩 (GET /favorites/{userId})
+  // 2) userId 확보 후 찜 목록 로딩 (현재 백엔드 기준: /favorites/{userId})
   useEffect(() => {
-    const headers = authHeaders();
-    if (!headers || !userId) return;
+    if (!userId) return;
 
     let ignore = false;
 
     (async () => {
       try {
-        const res = await axios.get<FavoriteListItem[]>(
-          `/api/notices/favorites/${userId}`,
-          { headers }
-        );
+        const res = await apiClient.get<FavoriteListItem[]>(`/notices/favorites/${userId}`);
         if (ignore) return;
 
         const next: Record<number, boolean> = {};
@@ -217,7 +210,7 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
         }
         setFavoriteMap(next);
       } catch {
-        // 비로그인/오류면 조용히 무시
+        // 무시
       }
     })();
 
@@ -226,18 +219,16 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
     };
   }, [userId]);
 
-  // 토글: POST/DELETE 모두 /favorites/{userId}/{noticeId}
+  // 3) 찜 토글 (현재 백엔드 기준: /favorites/{userId}/{noticeId})
   const toggleFavorite = async (noticeId: number) => {
-    const headers = authHeaders();
-    if (!headers) {
-      alert("로그인이 필요합니다.");
-      return;
-    }
-    if (!userId) {
+    if (!meLoaded || meLoading) {
       alert("사용자 정보를 불러오는 중입니다.");
       return;
     }
-
+    if (!userId) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
     if (favoritePending[noticeId]) return;
 
     const currently = Boolean(favoriteMap[noticeId]);
@@ -247,15 +238,8 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
 
     try {
       const res = currently
-        ? await axios.delete<FavoriteSuccessResponse>(
-            `/api/notices/favorites/${userId}/${noticeId}`,
-            { headers }
-          )
-        : await axios.post<FavoriteSuccessResponse>(
-            `/api/notices/favorites/${userId}/${noticeId}`,
-            null,
-            { headers }
-          );
+        ? await apiClient.delete<FavoriteSuccessResponse>(`/notices/favorites/${userId}/${noticeId}`)
+        : await apiClient.post<FavoriteSuccessResponse>(`/notices/favorites/${userId}/${noticeId}`, null);
 
       setFavoriteMap((prev) => ({
         ...prev,
@@ -272,13 +256,11 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
         alert("로그인이 필요합니다.");
         return;
       }
-
       if (status === 409) {
         alert(msg);
         setFavoriteMap((prev) => ({ ...prev, [noticeId]: true }));
         return;
       }
-
       alert(msg);
     } finally {
       setFavoritePending((prev) => ({ ...prev, [noticeId]: false }));
@@ -293,9 +275,7 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
     const onDown = (e: MouseEvent) => {
       const el = dropdownRef.current;
       if (!el) return;
-      if (e.target instanceof Node && !el.contains(e.target)) {
-        setOpen(false);
-      }
+      if (e.target instanceof Node && !el.contains(e.target)) setOpen(false);
     };
 
     document.addEventListener("mousedown", onDown);
@@ -484,7 +464,7 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
                     className="p-1 rounded-full hover:bg-gray-50 transition-colors disabled:opacity-60"
                     aria-label="관심 공고 등록"
                     onClick={() => toggleFavorite(n.id)}
-                    disabled={isPending}
+                    disabled={isPending || meLoading}
                   >
                     <HeartIcon active={isFavorite} />
                   </button>
