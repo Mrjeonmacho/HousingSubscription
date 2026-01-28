@@ -121,4 +121,28 @@ public class AuthServiceImpl implements AuthService{
         return new TokenReissueResponseDto(newAccessToken);
     }
 
+    // 로그아웃
+    @Override
+    public void logout(String loginId, HttpServletResponse response) {
+
+        // 1) DB에서 userId 얻기
+        Long userId = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new AuthorizationException("인증되지 않은 사용자입니다."))
+                .getId();
+
+        // 2) Redis에서 refreshToken 삭제
+        refreshTokenStore.delete(userId);
+
+        // 3) refreshToken 쿠키 만료
+        ResponseCookie expiredCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(false)      // 로컬 http 테스트: false / 운영 https: true
+                .sameSite("Lax")    // 운영에서 프론트-백 도메인 다르면 None 고려
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        response.addHeader("Set-Cookie", expiredCookie.toString());
+    }
+
 }

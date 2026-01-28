@@ -13,4 +13,6 @@ public interface AuthService {
     // 토큰 재발급
     TokenReissueResponseDto reissueToken(String refreshToken, HttpServletResponse response);
 
+    // 로그아웃
+    void logout(String loginId, HttpServletResponse response);
 }
