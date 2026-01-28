@@ -1,4 +1,4 @@
-// Front\src\components\chatbot\ChatMessageItem.tsx => 개별 채팅 메시지
+// Front/src/components/chatbot/ChatMessageItem.tsx => 개별 채팅 메시지
 import type { ChatMessage } from "../../data/chat";
 
 type ChatMessageItemProps = {
@@ -9,8 +9,8 @@ function formatKoreanTime(isoString: string) {
   const d = new Date(isoString);
   if (Number.isNaN(d.getTime())) return "";
 
-  // 예: "오전 10:02"
   return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
@@ -19,11 +19,13 @@ function formatKoreanTime(isoString: string) {
 
 export default function ChatMessageItem({ message }: ChatMessageItemProps) {
   const isUser = message.role === "user";
+  const isAssistant = message.role === "assistant";
   const timeLabel = formatKoreanTime(message.createdAt);
+  const isAnnouncement = message.type === "announcement";
 
   return (
     <div className={isUser ? "flex justify-end" : "flex justify-start"}>
-      {!isUser ? (
+      {isAssistant ? (
         <div className="mr-3 mt-1 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
           <span className="material-symbols-outlined text-[18px] leading-none text-primary">
             smart_toy
@@ -32,7 +34,7 @@ export default function ChatMessageItem({ message }: ChatMessageItemProps) {
       ) : null}
 
       <div className={isUser ? "max-w-[70%]" : "max-w-[74%]"}>
-        {!isUser ? (
+        {isAssistant ? (
           <div className="text-[12px] text-gray-500 mb-2">Seoul Jibsa AI</div>
         ) : null}
 
@@ -40,6 +42,8 @@ export default function ChatMessageItem({ message }: ChatMessageItemProps) {
           className={
             isUser
               ? "bg-primary text-white rounded-2xl px-4 py-3 shadow-sm"
+              : isAnnouncement
+              ? "bg-white text-gray-900 rounded-2xl px-4 py-3 shadow-sm border border-black/10 ring-1 ring-primary/10"
               : "bg-white text-gray-900 rounded-2xl px-4 py-3 shadow-sm border border-black/5"
           }
         >
@@ -48,7 +52,6 @@ export default function ChatMessageItem({ message }: ChatMessageItemProps) {
           </div>
         </div>
 
-        {/* Time */}
         {timeLabel ? (
           <div
             className={
