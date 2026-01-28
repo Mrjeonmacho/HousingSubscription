@@ -263,7 +263,7 @@ export default function SignupPage() {
                 name="userId"
                 value={formData.userId}
                 onChange={handleChange}
-                className={`w-full px-4 py-3.5 rounded-2xl border ${
+                className={`w-full px-4 py-3.5 rounded-2xl border text-gray-900 placeholder:text-gray-300 ${
                   errors.userId 
                     ? 'border-red-500 focus:ring-red-200' 
                     : status.isIdChecked 
@@ -295,7 +295,7 @@ export default function SignupPage() {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className={`w-full px-4 py-3.5 rounded-2xl border ${errors.password ? 'border-red-500' : 'border-gray-200'} focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all`}
+              className={`w-full px-4 py-3.5 rounded-2xl border text-gray-900 placeholder:text-gray-300 ${errors.password ? 'border-red-500' : 'border-gray-200'} focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all`}
               placeholder="8~20자 (소문자, 숫자, 특수문자 포함)"
             />
             {errors.password && <p className="text-red-500 text-xs mt-1 ml-1">{errors.password}</p>}
@@ -309,7 +309,7 @@ export default function SignupPage() {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              className={`w-full px-4 py-3.5 rounded-2xl border ${
+              className={`w-full px-4 py-3.5 rounded-2xl border text-gray-900 placeholder:text-gray-300 ${
                 isPasswordMismatch
                   ? "border-red-500 focus:border-red-500 focus:ring-red-200"
                   : isPasswordMatch
@@ -330,7 +330,7 @@ export default function SignupPage() {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-4 py-3.5 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+              className="w-full px-4 py-3.5 rounded-2xl border border-gray-200 text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-gray-300"
               placeholder="이름을 입력해주세요"
             />
           </div>
@@ -345,7 +345,7 @@ export default function SignupPage() {
                 value={formData.email}
                 onChange={handleChange}
                 disabled={status.isEmailVerified} 
-                className={`flex-1 px-4 py-3.5 rounded-2xl border ${errors.email ? 'border-red-500' : status.isEmailVerified ? 'bg-gray-50 text-gray-500 border-gray-200' : 'border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20'} outline-none transition-all`}
+                className={`flex-1 px-4 py-3.5 rounded-2xl border text-gray-900 placeholder:text-gray-300 ${errors.email ? 'border-red-500' : status.isEmailVerified ? 'bg-gray-50 text-gray-500 border-gray-200' : 'border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20'} outline-none transition-all`}
                 placeholder="example@email.com"
               />
               <button
