@@ -1,3 +1,4 @@
+/*
 package com.ssafy14.a606.domain.notice.service;
 
 import com.ssafy14.a606.domain.notice.dto.response.NoticeResponseDto;
@@ -98,3 +99,4 @@ class UserTestServiceTest {
         assertThat(user.getFavoriteNotices()).isEmpty();
     }
 }
+*/

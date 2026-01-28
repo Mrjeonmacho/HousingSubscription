@@ -37,7 +37,8 @@ public class SecurityConfig {
                                 "/",
                                 "/api/users/signup",
                                 "/api/users/check",
-                                "/api/users/email/**"
+                                "/api/users/email/**",
+                                "/api/chatbot/**" // 챗봇 엔드포인트 임시 허용
                         ).permitAll()
                         .requestMatchers("/api/auth/logout").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()

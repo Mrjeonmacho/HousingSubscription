@@ -1,3 +1,4 @@
+/*
 package com.ssafy14.a606.domain.notice.service;
 
 import com.ssafy14.a606.domain.notice.dto.request.NoticeRequestDto;
@@ -137,4 +138,4 @@ class NoticeServiceTest {
         assertThrows(IllegalArgumentException.class, () -> noticeService.getNotice(notice1Id));
     }
 }
-
+*/

@@ -10,6 +10,7 @@ import io.jsonwebtoken.security.Keys;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Date;
 
 @Component
@@ -20,9 +21,8 @@ public class JwtTokenProvider {
 
     public JwtTokenProvider(JwtProperties props) {
         this.props = props;
-        this.key = Keys.hmacShaKeyFor(
-                props.secret().getBytes(StandardCharsets.UTF_8)
-        );
+        byte[] keyBytes = Base64.getDecoder().decode(props.secret()); // ✅ 핵심
+        this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
     // accessToken 생성 (loginId, role 포함)

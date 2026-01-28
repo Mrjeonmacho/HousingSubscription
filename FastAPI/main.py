@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic_settings import BaseSettings
+from pydantic import BaseModel
 
 # 1. 앱 생성
 app = FastAPI()
@@ -18,7 +18,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 3. 테스트용 API
+# 3. Pydantic 모델 정의
+class ChatRequest(BaseModel):
+    message: str
+
+class ChatResponse(BaseModel):
+    message: str
+
+# 4. 테스트용 API
 @app.get("/")
 def read_root():
     return {"message": "Hello from FastAPI!"}
+
+# 5. 챗봇 API
+@app.post("/chat", response_model=ChatResponse)
+def chat(request: ChatRequest):
+    # 여기에서 실제 챗봇 로직을 수행합니다.
+    # 지금은 받은 메시지를 그대로 반환합니다.
+    return ChatResponse(message=f"FastAPI received: {request.message}")
