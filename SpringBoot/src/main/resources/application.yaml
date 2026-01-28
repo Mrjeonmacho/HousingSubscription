@@ -1,3 +1,10 @@
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+      enabled: true
+
 spring:
   config:
     import: optional:classpath:application-secret.yaml
@@ -5,7 +12,7 @@ spring:
     name: seouljibsa
 
   datasource:
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?serverTimezone=Asia/Seoul&useUnicode=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -26,5 +33,5 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET}
-  access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:1800000}   # 기본 30분
+  access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:1800000}
   refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:1209600000}
