@@ -1,5 +1,5 @@
 // Front/src/components/notices/NoticeListSection.tsx
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Notice } from "../../pages/NoticesPage";
 import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
 
@@ -32,11 +32,36 @@ function calcDDay(endDate: string | null) {
 
   if (diffDays > 0) return `D-${diffDays}`;
   if (diffDays === 0) return "D-DAY";
-  return null; // 지난 날짜는 D-day 표시 안 함
+  return null;
+}
+
+function getDDayInfo(endDate: string | null) {
+  if (!endDate) return { text: null as string | null, daysLeft: null as number | null };
+
+  const end = new Date(endDate);
+  if (Number.isNaN(end.getTime())) return { text: null, daysLeft: null };
+
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfEnd = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+  const diffMs = startOfEnd.getTime() - startOfToday.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays > 0) return { text: `D-${diffDays}`, daysLeft: diffDays };
+  if (diffDays === 0) return { text: "D-DAY", daysLeft: 0 };
+  return { text: null, daysLeft: diffDays }; // 지난 날짜
+}
+
+function ddayTone(daysLeft: number | null) {
+  if (daysLeft === null) return "text-gray-400";
+  if (daysLeft <= 3) return "text-red-500";
+  if (daysLeft <= 10) return "text-primary";
+  return "text-gray-400";
 }
 
 function rightTone() {
-  return "text-[#4CAF50]";
+  return "text-primary";
 }
 
 function HeartIcon({ active }: { active: boolean }) {
@@ -97,13 +122,53 @@ function isNew(regDate: string | null, days = 7) {
   return diffDays <= days;
 }
 
-export default function NoticeListSection({
-  totalCount,
-  items,
-  loading,
-}: Props) {
+function isClosedNotice(n: Notice) {
+  // endDate가 있으면 날짜를 최우선으로 판단
+  if (n.endDate) {
+    const end = new Date(n.endDate);
+    if (!Number.isNaN(end.getTime())) {
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const startOfEnd = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+      // 오늘 포함(= D-DAY 포함)은 마감으로 보지 않음
+      if (startOfEnd.getTime() >= startOfToday.getTime()) return false;
+
+      // 과거면 마감
+      return true;
+    }
+  }
+
+  // endDate가 없거나 파싱 실패 시에만 status 기반으로 판단
+  const label = statusLabel(n.status);
+  const normalized = String(label).replace(/\s+/g, "");
+  return normalized.includes("마감") || normalized.includes("종료");
+}
+
+function dateToMs(dateStr: string | null, fallback: string) {
+  return new Date(dateStr ?? fallback).getTime();
+}
+
+export default function NoticeListSection({ totalCount, items, loading }: Props) {
   const [sortType, setSortType] = useState<SortType>("REG_DATE");
   const [open, setOpen] = useState(false);
+
+  // 드롭박스 밖 클릭 닫기
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+
+    const onDown = (e: MouseEvent) => {
+      const el = dropdownRef.current;
+      if (!el) return;
+      if (e.target instanceof Node && !el.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
 
   const sortedItems = useMemo(() => {
     const copied = [...items];
@@ -111,19 +176,25 @@ export default function NoticeListSection({
     return copied.sort((a, b) => {
       if (sortType === "REG_DATE") {
         return (
-          new Date(b.regDate ?? "1970-01-01").getTime() -
-          new Date(a.regDate ?? "1970-01-01").getTime()
+          dateToMs(b.regDate, "1970-01-01") - dateToMs(a.regDate, "1970-01-01")
         );
       }
 
-      // 마감 임박순 (endDate 없으면 맨 뒤)
-      return (
-        new Date(a.endDate ?? "9999-12-31").getTime() -
-        new Date(b.endDate ?? "9999-12-31").getTime()
-      );
+      // 마감 임박순:
+      // 1) 접수마감은 항상 아래
+      const aClosed = isClosedNotice(a);
+      const bClosed = isClosedNotice(b);
+      if (aClosed !== bClosed) return aClosed ? 1 : -1;
+
+      // 2) (둘 다 접수마감이 아니거나, 둘 다 접수마감이면) endDate 빠른 순
+      const endDiff =
+        dateToMs(a.endDate, "9999-12-31") - dateToMs(b.endDate, "9999-12-31");
+      if (endDiff !== 0) return endDiff;
+
+      // 3) tie-break: regDate 최신 순
+      return dateToMs(b.regDate, "1970-01-01") - dateToMs(a.regDate, "1970-01-01");
     });
   }, [items, sortType]);
-
 
   return (
     <section className="space-y-6">
@@ -132,7 +203,7 @@ export default function NoticeListSection({
           전체 공고 리스트 <span className="text-gray-900">({totalCount})</span>
         </h3>
 
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
           <button
             type="button"
             onClick={() => setOpen((prev) => !prev)}
@@ -196,16 +267,35 @@ export default function NoticeListSection({
         ) : (
           sortedItems.map((n) => {
             const dday = calcDDay(n.endDate);
+            const statusText = String(statusLabel(n.status));
             const rightText = dday ?? statusLabel(n.status);
 
+            const { text: ddayText, daysLeft } = getDDayInfo(n.endDate);
+
+            // D-day가 아닌(= statusText를 보여줄 때) 색은 기존처럼 primary, D-day면 조건부 색상
+            const isClosed = isClosedNotice(n);
+            const rightTextClass = isClosed
+              ? "text-gray-400"
+              : ddayText
+              ? ddayTone(daysLeft)
+              : rightTone();
+
             const isFavorite = false;
+
+            const normalizedStatus = statusText.replace(/\s+/g, "");
+            const badgeText =
+                normalizedStatus === "접수중"
+                  ? "접수중"
+                  : normalizedStatus === "마감임박" || n.status === "DEADLINE_APPROACHING"
+                  ? "마감임박"
+                  : null;
 
             return (
               <article
                 key={n.id}
                 className="group relative flex flex-col md:flex-row items-stretch md:items-center gap-6 rounded-[20px] bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[#F2F4F6] hover:border-gray-300 hover:shadow-md transition-all duration-200"
               >
-                <div className="shrink-0 w-full md:w-32 flex flex-col justify-center items-center rounded-full bg-[#F3F4F6] py-3 px-2 text-center">
+                <div className="shrink-0 w-full md:w-32 flex flex-col justify-center items-center rounded-2xl bg-[#F3F4F6] py-3 px-2 text-center">
                   <span className="text-xs text-[#7D8592] mb-1">주택유형</span>
                   <span className="text-[15px] font-bold text-[#191F28] break-keep leading-tight">
                     {categoryLabel(n.category)}
@@ -214,14 +304,14 @@ export default function NoticeListSection({
 
                 <div className="flex-1 min-w-0 py-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <h4 className="truncate text-lg md:text-[15px] font-bold text-[#191F28] tracking-tight">
-                      {n.title}
-                    </h4>
                     {isNew(n.regDate) && (
-                      <span className="inline-flex shrink-0 items-center justify-center rounded bg-[#DDFBE2] px-[6px] py-[2px] text-[10px] font-bold text-[#2E7D32]">
+                      <span className="inline-flex shrink-0 items-center justify-center rounded px-[6px] py-[2px] text-[10px] font-bold text-primary">
                         NEW
                       </span>
                     )}
+                    <h4 className="truncate text-lg md:text-[15px] font-bold text-[#191F28] tracking-tight">
+                      {n.title}
+                    </h4>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[#8B95A1] font-medium">
@@ -244,8 +334,16 @@ export default function NoticeListSection({
                 </div>
 
                 <div className="flex items-center justify-between md:justify-end gap-6 md:pl-2">
-                  <div className={`text-l tracking-tight whitespace-nowrap ${rightTone()}`}>
-                    {rightText}
+                  <div className="flex flex-col items-center justify-center text-center min-w-[72px]">
+                    {badgeText && (
+                      <span className="mb-1 inline-flex shrink-0 items-center justify-center rounded bg-[#F3F4F6] px-[6px] py-[2px] text-[10px] font-bold">
+                        {badgeText}
+                      </span>
+                    )}
+
+                    <div className={`text-l font-bold tracking-tight whitespace-nowrap ${rightTextClass}`}>
+                      {rightText}
+                    </div>
                   </div>
 
                   <button
@@ -257,6 +355,7 @@ export default function NoticeListSection({
                     <HeartIcon active={isFavorite} />
                   </button>
                 </div>
+
               </article>
             );
           })
