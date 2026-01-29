@@ -25,12 +25,12 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     message: str
 
-# 4. 테스트용 API
+# 4. 챗봇 API
 @app.get("/")
 def read_root():
     return {"message": "Hello from FastAPI!"}
 
-# 5. 챗봇 API
+# 5. 챗봇 API 테스트
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
-    return ChatResponse(message=f"FastAPI received: {request.message}")
+    return ChatResponse(message=f"FastAPI received test : {request.message}")
