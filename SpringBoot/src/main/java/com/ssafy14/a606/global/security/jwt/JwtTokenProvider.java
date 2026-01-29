@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import io.jsonwebtoken.security.Keys;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Date;
 
@@ -21,8 +20,9 @@ public class JwtTokenProvider {
 
     public JwtTokenProvider(JwtProperties props) {
         this.props = props;
-        byte[] keyBytes = Base64.getDecoder().decode(props.secret()); // ✅ 핵심
+        byte[] keyBytes = Base64.getDecoder().decode(props.secret());
         this.key = Keys.hmacShaKeyFor(keyBytes);
+
     }
 
     // accessToken 생성 (loginId, role 포함)

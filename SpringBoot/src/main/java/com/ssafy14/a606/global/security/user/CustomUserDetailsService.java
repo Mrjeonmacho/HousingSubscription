@@ -21,14 +21,16 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
 
-        User user = userRepository.findByLoginId(loginId)  // ✅ (1) 메서드명 확인
+        User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() ->
                         new UsernameNotFoundException("User not found. loginId=" + loginId)
                 );
 
         Long userId = user.getId();
         String role = user.getRole().name();
+        String password = user.getPassword();
+        if (password == null) password="";
 
-        return new CustomUserDetails(userId, user.getLoginId(), role);
+        return new CustomUserDetails(userId, user.getLoginId(), password, role);
     }
 }

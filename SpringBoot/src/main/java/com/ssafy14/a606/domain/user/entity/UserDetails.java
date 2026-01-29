@@ -1,5 +1,6 @@
 package com.ssafy14.a606.domain.user.entity;
 
+import com.ssafy14.a606.domain.user.dto.request.UserDetailsRequestDto;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -72,4 +73,14 @@ public class UserDetails {
      */
     @Column(name = "income")
     private Long income;
+
+    public void update(UserDetailsRequestDto dto) {
+        this.birthDate = dto.getBirthDate();
+        this.targetType = dto.getTargetType();
+        this.marriageStatus = dto.getMarriageStatus();
+        this.childCount = dto.getChildCount();
+        this.houseOwn = dto.getHouseOwn();
+        this.asset = dto.getAsset();
+        this.income = dto.getIncome();
+    }
 }
