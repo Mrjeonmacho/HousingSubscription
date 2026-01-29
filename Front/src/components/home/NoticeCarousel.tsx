@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { notices, type NoticeStatus } from "../../data/notices";
 
 function StatusBadge({ status }: { status: NoticeStatus }) {
@@ -22,9 +23,15 @@ export default function NoticeCarousel() {
           </p>
         </div>
 
-        <button className="text-primary font-bold text-sm flex items-center gap-1 hover:underline">
-          전체보기 <span className="material-symbols-outlined text-sm">chevron_right</span>
-        </button>
+        <Link 
+            to="/notices" 
+            className="group text-primary font-bold flex items-center gap-1 transition-colors"
+          >
+            <span className="group-hover:underline">전체보기</span>
+            <span className="material-symbols-outlined text-sm transform group-hover:translate-x-1 transition-transform">
+              chevron_right
+            </span>
+          </Link>
       </div>
 
       <div className="flex overflow-x-auto gap-6 no-scrollbar pb-6 -mx-4 px-4">
