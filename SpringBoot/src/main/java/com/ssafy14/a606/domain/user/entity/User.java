@@ -1,9 +1,12 @@
 package com.ssafy14.a606.domain.user.entity;
 
+import com.ssafy14.a606.domain.notice.entity.Notice;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name="users")
@@ -79,6 +82,19 @@ public class User {
      */
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedAt;
+
+    /**
+     * 관심 공고 (ManyToMany)
+     * - User 기준 연관관계 주인
+     * - 중간 테이블: user_favorite_notices
+     */
+    @ManyToMany
+    @JoinTable(
+            name = "user_favorite_notices",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "notice_id")
+    )
+    private Set<Notice> favoriteNotices = new HashSet<>();
 
     /**
      * 저장 직전 기본값 세팅
