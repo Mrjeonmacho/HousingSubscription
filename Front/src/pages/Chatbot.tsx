@@ -1,5 +1,5 @@
 // Front/src/pages/Chatbot.tsx
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import type { ChatMessage } from "../data/chat";
 
@@ -60,6 +60,8 @@ export default function Chatbot() {
   }, []);
 
   useEffect(() => {
+    if (messages.length === 0) return;
+
     requestAnimationFrame(() => {
       window.scrollTo({
         top: document.documentElement.scrollHeight,
@@ -68,57 +70,60 @@ export default function Chatbot() {
     });
   }, [messages.length]);
 
-  const handleSendText = async (raw: string) => {
-    const value = raw.trim();
-    if (!value || isSending) return;
+  const handleSendText = useCallback(
+    async (raw: string) => {
+      const value = raw.trim();
+      if (!value || isSending) return;
 
-    setErrorText(null);
-    setIsSending(true);
+      setErrorText(null);
+      setIsSending(true);
 
-    const userMessage: ChatMessage = {
-      id: `chat-${Date.now()}`,
-      role: "user",
-      type: "text",
-      text: value,
-      createdAt: new Date().toISOString(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-
-    try {
-      const answer = await postChat(value);
-
-      const assistantMessage: ChatMessage = {
-        id: `chat-${Date.now()}-assistant`,
-        role: "assistant",
+      const userMessage: ChatMessage = {
+        id: `chat-${Date.now()}`,
+        role: "user",
         type: "text",
-        text: answer,
+        text: value,
         createdAt: new Date().toISOString(),
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (e) {
-      const msg = toErrorText(e);
-      setErrorText(msg);
+      setMessages((prev) => [...prev, userMessage]);
+      setInput("");
 
-      const assistantErrorMessage: ChatMessage = {
-        id: `chat-${Date.now()}-assistant-error`,
-        role: "assistant",
-        type: "text",
-        text: msg,
-        createdAt: new Date().toISOString(),
-      };
+      try {
+        const answer = await postChat(value);
 
-      setMessages((prev) => [...prev, assistantErrorMessage]);
-    } finally {
-      setIsSending(false);
-    }
-  };
+        const assistantMessage: ChatMessage = {
+          id: `chat-${Date.now()}-assistant`,
+          role: "assistant",
+          type: "text",
+          text: answer,
+          createdAt: new Date().toISOString(),
+        };
 
-  const handleSend = async () => {
+        setMessages((prev) => [...prev, assistantMessage]);
+      } catch (e) {
+        const msg = toErrorText(e);
+        setErrorText(msg);
+
+        const assistantErrorMessage: ChatMessage = {
+          id: `chat-${Date.now()}-assistant-error`,
+          role: "assistant",
+          type: "text",
+          text: msg,
+          createdAt: new Date().toISOString(),
+        };
+
+        setMessages((prev) => [...prev, assistantErrorMessage]);
+      } finally {
+        setIsSending(false);
+      }
+    },
+    [isSending]
+  );
+
+  const handleSend = useCallback(async () => {
     await handleSendText(input);
-  };
+  }, [handleSendText, input]);
 
   // HeroSearch에서 넘어온 초기 메시지 자동 전송 (1회만)
   const autoSentRef = useRef(false);
@@ -132,12 +137,9 @@ export default function Chatbot() {
 
     autoSentRef.current = true;
 
-    // 입력창에도 보이게 하고 싶으면 유지, 바로 전송만 원하면 setInput은 빼셔도 됩니다.
     setInput(initialMessage);
-
-    // 상태 반영 타이밍 이슈 피하려고 텍스트 직접 전달
     void handleSendText(initialMessage);
-  }, [location.state]);
+  }, [location.state, handleSendText]);
 
   return (
     <div className="min-h-screen bg-gray-50">

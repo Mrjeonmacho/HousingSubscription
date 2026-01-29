@@ -1,5 +1,5 @@
 // Front/src/components/chatbot/ChatComposer.tsx
-// Quick Action 버튼 & 채팅 입력 영역 (API 연동 기준 최종)
+// Quick Action 버튼 & 채팅 입력 영역
 
 type QuickAction = {
   icon: string;
@@ -29,7 +29,7 @@ export default function ChatComposer({
   onQuickAction,
 }: ChatComposerProps) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-transparent pb-6">
+    <div className="fixed bottom-0 left-0 right-0 bg-gray-50 pb-6">
       <div className="mx-auto max-w-4xl px-4 md:px-6">
         <div className="rounded-2xl bg-white shadow-lg border border-black/5 px-4 py-4">
           {/* Quick actions */}
