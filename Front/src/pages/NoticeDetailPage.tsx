@@ -2,9 +2,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AxiosError } from "axios";
-import { apiClient } from "../api/axiosConfig";
 
 import type { Notice } from "./NoticesPage";
+import { getNoticeDetail } from "../api/NoticeApi";
 
 import NoticeDetailHeader from "../components/noticeDetail/NoticeDetailHeader";
 import NoticeOverviewCard from "../components/noticeDetail/NoticeOverviewCard";
@@ -26,23 +26,6 @@ function calcDDay(endDate: string | null) {
     (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
   );
   return diff;
-}
-
-function normalizeNoticeDetail(data: unknown): Notice {
-  const d = (data ?? {}) as Record<string, unknown>;
-
-  return {
-    id: Number(d.id),
-    noticeNo: (d.noticeNo ?? d.no ?? null) as string | null,
-    title: (d.title ?? "") as string,
-    category: (d.category ?? null) as Notice["category"],
-    regDate: (d.regDate ?? d.reg_date ?? null) as string | null,
-    status: (d.status ?? null) as Notice["status"],
-    startDate: (d.startDate ?? d.start_date ?? null) as string | null,
-    endDate: (d.endDate ?? d.end_date ?? null) as string | null,
-    pdfUrl: (d.pdfUrl ?? d.pdf ?? null) as string | null,
-    url: (d.url ?? null) as string | null,
-  };
 }
 
 export default function NoticeDetailPage() {
@@ -77,11 +60,10 @@ export default function NoticeDetailPage() {
         setLoading(true);
         setErrorMessage(null);
 
-        const res = await apiClient.get<unknown>(`/notices/${parsedId}`);
+        const data = await getNoticeDetail(parsedId);
         if (ignore) return;
 
-        const normalized = normalizeNoticeDetail(res.data);
-        setNotice(normalized);
+        setNotice(data);
       } catch (e) {
         if (ignore) return;
 
@@ -129,22 +111,17 @@ export default function NoticeDetailPage() {
     }
   };
 
-  const onFavorite = () => {
-    alert("찜 기능은 다음 단계에서 연결할게요.");
-  };
-
   return (
     <div className="mx-auto max-w-6xl px-4 md:px-6 py-8">
       <NoticeDetailHeader
+        noticeId={notice?.id ?? null}
         title={notice?.title ?? "공고 상세"}
         status={notice?.status ?? null}
         dday={dday}
         loading={loading}
         onBack={onBack}
-        onFavorite={onFavorite}
         onShare={onShare}
       />
-
       {errorMessage && (
         <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
           {errorMessage}
@@ -153,21 +130,7 @@ export default function NoticeDetailPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-        <NoticeOverviewCard
-        loading={loading}
-        notice={
-            notice
-            ? {
-                no: notice.noticeNo ?? null,
-                reg_date: notice.regDate ?? null,
-                category: notice.category ?? null,
-                status: notice.status ?? null,
-                start_date: notice.startDate ?? null,
-                end_date: notice.endDate ?? null,
-                }
-            : null
-        }
-        />
+          <NoticeOverviewCard loading={loading} notice={notice} />
           <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
             <div className="h-[420px] w-full bg-gray-50 flex items-center justify-center text-sm text-gray-400">
               지도 영역 (추후 네이버/카카오 지도 컴포넌트로 교체)

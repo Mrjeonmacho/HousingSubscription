@@ -14,7 +14,10 @@ export type NoticeStatus =
   | "COMPLETED"
   | "TO_BE_ANNOUNCED";
 
-export function categoryLabel(category: NoticeCategory | null | undefined) {
+/**
+ * 공고 카테고리
+ */
+export function categoryLabel(category: string | null | undefined) {
   switch (category) {
     case "YOUTH_RESIDENCE":
       return "청년안심주택";
@@ -33,7 +36,10 @@ export function categoryLabel(category: NoticeCategory | null | undefined) {
   }
 }
 
-export function statusLabel(status: NoticeStatus | null | undefined) {
+/**
+ * 공고 상태
+ */
+export function statusLabel(status: string | null | undefined) {
   switch (status) {
     case "RECEIVING":
       return "접수중";
