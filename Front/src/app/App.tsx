@@ -3,6 +3,7 @@ import { AuthProvider } from "../context/AuthContext";
 
 import Layout from "../components/layout/Layout";
 import ChatbotLayout from "../components/chatbot/ChatbotLayout";
+import ProtectedRoute from "../components/auth/ProtectedRoute";
 
 import HomePage from "../pages/HomePage";
 import NoticesPage from "../pages/NoticesPage";
@@ -30,7 +31,9 @@ export default function App() {
               <Route path="quiz" element={<Quiz />} />
               <Route path="preference" element={<Preference />} />
             </Route>
-            <Route path="/mypage" element={<MyPage />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/mypage" element={<MyPage />} />
+            </Route>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
           </Route>
