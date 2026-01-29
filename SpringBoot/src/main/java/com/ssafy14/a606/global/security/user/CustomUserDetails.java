@@ -1,5 +1,6 @@
 package com.ssafy14.a606.global.security.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -13,11 +14,14 @@ public class CustomUserDetails implements UserDetails {
 
     private final Long userId;
     private final String loginId;
+    @JsonIgnore
+    private final String password;
     private final String role; // DB 값: USER / ADMIN (또는 ROLE_USER 형태도 허용)
 
-    public CustomUserDetails(Long userId, String loginId, String role) {
+    public CustomUserDetails(Long userId, String loginId, String password, String role) {
         this.userId = userId;
         this.loginId = loginId;
+        this.password = password;
         this.role = role;
     }
 
@@ -45,7 +49,7 @@ public class CustomUserDetails implements UserDetails {
      */
     @Override
     public String getPassword() {
-        return null;
+        return password;
     }
 
     // 계정 상태 정책이 없다면 true로 고정

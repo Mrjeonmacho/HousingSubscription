@@ -9,8 +9,8 @@ public interface UserDetailsService {
     UserDetailsResponseDto getMyDetails(Long userId);
 
     // 추가정보 입력
-    void createMyDetails(Long userId, UserDetailsRequestDto requestDto);
+    UserDetailsResponseDto createMyDetails(Long userId, UserDetailsRequestDto requestDto);
 
     // 추가정보 수정
-    void updateMyDetails(Long userId, UserDetailsRequestDto requestDto);
+    UserDetailsResponseDto updateMyDetails(Long userId, UserDetailsRequestDto requestDto);
 }

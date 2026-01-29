@@ -1,5 +1,6 @@
 package com.ssafy14.a606.domain.user.entity;
 
+import com.ssafy14.a606.domain.user.dto.request.UserDetailsRequestDto;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,6 +11,7 @@ import java.time.LocalDate;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class UserDetails {
 
     @Id
@@ -72,42 +74,13 @@ public class UserDetails {
     @Column(name = "income")
     private Long income;
 
-    public static UserDetails create(User user,
-                                     LocalDate birthDate,
-                                     TargetType targetType,
-                                     MarriageStatus marriageStatus,
-                                     Integer childCount,
-                                     HouseOwn houseOwn,
-                                     Long asset,
-                                     Long income) {
-        return new UserDetails(
-                user.getId(),   // PK=FK 강제
-                user,
-                birthDate,
-                targetType,
-                marriageStatus,
-                childCount,
-                houseOwn,
-                asset,
-                income
-        );
-    }
-
-    public void updatePatch(
-            LocalDate birthDate,
-            TargetType targetType,
-            MarriageStatus marriageStatus,
-            Integer childCount,
-            HouseOwn houseOwn,
-            Long asset,
-            Long income
-    ) {
-        if (birthDate != null) this.birthDate = birthDate;
-        if (targetType != null) this.targetType = targetType;
-        if (marriageStatus != null) this.marriageStatus = marriageStatus;
-        if (childCount != null) this.childCount = childCount;
-        if (houseOwn != null) this.houseOwn = houseOwn;
-        if (asset != null) this.asset = asset;
-        if (income != null) this.income = income;
+    public void update(UserDetailsRequestDto dto) {
+        this.birthDate = dto.getBirthDate();
+        this.targetType = dto.getTargetType();
+        this.marriageStatus = dto.getMarriageStatus();
+        this.childCount = dto.getChildCount();
+        this.houseOwn = dto.getHouseOwn();
+        this.asset = dto.getAsset();
+        this.income = dto.getIncome();
     }
 }

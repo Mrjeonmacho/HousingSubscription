@@ -28,3 +28,6 @@ jwt:
   secret: ${JWT_SECRET}
   access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:1800000}   # 기본 30분
   refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:1209600000}
+
+fastapi:
+  url: http://localhost:8000
