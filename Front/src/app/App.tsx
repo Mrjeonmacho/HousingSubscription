@@ -4,6 +4,7 @@ import { AuthProvider } from "../context/AuthContext";
 import Layout from "../components/layout/Layout";
 import ChatbotLayout from "../components/chatbot/ChatbotLayout";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
+import ScrollToTop from "../components/common/ScrollToTop";
 
 import HomePage from "../pages/HomePage";
 import NoticesPage from "../pages/NoticesPage";
@@ -19,6 +20,7 @@ import MyPage from "../pages/MyPage";
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <Routes>
           {/* 일반 페이지: 기존 Layout 적용 */}
