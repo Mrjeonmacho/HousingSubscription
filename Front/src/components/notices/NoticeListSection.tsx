@@ -5,6 +5,8 @@ import { apiClient } from "../../api/axiosConfig";
 import type { Notice } from "../../pages/NoticesPage";
 import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
 
+import { useNavigate } from "react-router-dom";
+
 type SortType = "REG_DATE" | "END_DATE";
 
 type Props = {
@@ -156,6 +158,8 @@ function dateToMs(dateStr: string | null, fallback: string) {
 }
 
 export default function NoticeListSection({ totalCount, items, loading }: Props) {
+  const navigate = useNavigate();
+
   const [sortType, setSortType] = useState<SortType>("REG_DATE");
   const [open, setOpen] = useState(false);
 
@@ -399,6 +403,7 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
             return (
               <article
                 key={n.id}
+                onClick={() => navigate(`/notices/${n.id}`)}
                 className="group relative flex flex-col md:flex-row items-stretch md:items-center gap-6 rounded-[20px] bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[#F2F4F6] hover:border-gray-300 hover:shadow-md transition-all duration-200"
               >
                 <div className="shrink-0 w-full md:w-32 flex flex-col justify-center items-center rounded-2xl bg-[#F3F4F6] py-3 px-2 text-center">

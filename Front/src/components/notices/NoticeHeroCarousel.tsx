@@ -1,4 +1,6 @@
 // Front/src/components/notices/NoticeHeroCarousel.tsx
+import { useNavigate } from "react-router-dom";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Notice } from "../../pages/NoticesPage";
 import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
@@ -16,10 +18,11 @@ export default function NoticeHeroCarousel({
   items,
   autoPlayMs = 5000,
 }: NoticeHeroCarouselProps) {
+  const navigate = useNavigate();
   const slides = useMemo(() => {
     const base = items ?? [];
 
-    // ✅ "모집중" = RECEIVING
+    // "모집중" = RECEIVING
     const receiving = base.filter((n) => n.status === "RECEIVING");
 
     receiving.sort((a, b) =>
@@ -131,16 +134,13 @@ export default function NoticeHeroCarousel({
         </div>
 
         <div className="mt-12 flex justify-end">
-            <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
-                className="inline-flex items-center gap-3 rounded-full bg-white px-8 py-4 text-base font-semibold text-black/80 hover:bg-white/90 transition-colors"
-                // TODO: 공고 상세 페이지 구현 후
-                // /notices/{id} 라우팅으로 이동하도록 수정 필요
-                // (상세 페이지에서 GET /api/notices/{id} 호출 예정)
-            >
-                공고 자세히 보기 <span aria-hidden>→</span>
-            </a>
+          <button
+            type="button"
+            onClick={() => navigate(`/notices/${current.id}`)}
+            className="inline-flex items-center gap-3 rounded-full bg-white px-8 py-4 text-base font-semibold text-black/80 hover:bg-white/90 transition-colors"
+          >
+            공고 자세히 보기 <span aria-hidden>→</span>
+          </button>
         </div>
 
       </div>
