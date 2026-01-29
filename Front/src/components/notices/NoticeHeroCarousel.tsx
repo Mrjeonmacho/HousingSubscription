@@ -1,7 +1,7 @@
 // Front/src/components/notices/NoticeHeroCarousel.tsx
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import type { Notice } from "../../pages/NoticesPage";
 import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
 
@@ -19,16 +19,12 @@ export default function NoticeHeroCarousel({
   autoPlayMs = 5000,
 }: NoticeHeroCarouselProps) {
   const navigate = useNavigate();
+
   const slides = useMemo(() => {
     const base = items ?? [];
-
-    // "모집중" = RECEIVING
     const receiving = base.filter((n) => n.status === "RECEIVING");
 
-    receiving.sort((a, b) =>
-      (b.regDate ?? "").localeCompare(a.regDate ?? "")
-    );
-
+    receiving.sort((a, b) => (b.regDate ?? "").localeCompare(a.regDate ?? ""));
     return receiving.slice(0, 5);
   }, [items]);
 
@@ -38,7 +34,6 @@ export default function NoticeHeroCarousel({
   const [index, setIndex] = useState(0);
   const pausedRef = useRef(false);
 
-  // setState로 보정하지 않고, 렌더에서 안전한 인덱스를 계산해서 사용
   const activeIndex = useMemo(() => {
     if (count === 0) return 0;
     return Math.min(index, count - 1);
@@ -58,7 +53,6 @@ export default function NoticeHeroCarousel({
   const prev = () => go(activeIndex - 1);
   const next = () => go(activeIndex + 1);
 
-  // 자동재생
   useEffect(() => {
     if (!autoPlayMs || autoPlayMs <= 0) return;
     if (!canSlide) return;
@@ -118,7 +112,8 @@ export default function NoticeHeroCarousel({
       <div className="p-6 md:p-20">
         <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold">
           <span>
-            {categoryLabel(current.category)} | {statusLabel(current.status)}
+            {categoryLabel(current.category ?? undefined)} |{" "}
+            {statusLabel(current.status ?? undefined)}
           </span>
         </div>
 
@@ -130,7 +125,9 @@ export default function NoticeHeroCarousel({
           <span className="material-symbols-outlined text-white/85 text-xl">
             event
           </span>
-          <span className="text-lg">마감일 : {formatDate(current.endDate)}</span>
+          <span className="text-lg">
+            마감일 : {formatDate(current.endDate)}
+          </span>
         </div>
 
         <div className="mt-12 flex justify-end">
@@ -142,7 +139,6 @@ export default function NoticeHeroCarousel({
             공고 자세히 보기 <span aria-hidden>→</span>
           </button>
         </div>
-
       </div>
 
       {canSlide && (

@@ -1,11 +1,15 @@
 // Front/src/components/notices/NoticeListSection.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AxiosError } from "axios";
-import { apiClient } from "../../api/axiosConfig";
 import type { Notice } from "../../pages/NoticesPage";
 import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
-
 import { useNavigate } from "react-router-dom";
+import {
+  addFavoriteNotice,
+  getFavoriteNotices,
+  getMe,
+  removeFavoriteNotice,
+} from "../../api/NoticeApi";
 
 type SortType = "REG_DATE" | "END_DATE";
 
@@ -16,24 +20,9 @@ type Props = {
   errorMessage: string | null;
 };
 
-type FavoriteSuccessResponse = {
-  code: string;
-  message: string;
-  noticeId: number;
-  isFavorite: boolean;
-};
-
 type ApiErrorResponse = {
   code?: string;
   message?: string;
-};
-
-type FavoriteListItem = {
-  id: number;
-};
-
-type MeResponse = {
-  userId: number;
 };
 
 function formatDateRange(start: string | null, end: string | null) {
@@ -170,20 +159,17 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
   const [meLoading, setMeLoading] = useState(false);
   const [meLoaded, setMeLoaded] = useState(false);
 
-  // 1) /users/me로 userId 확보 (apiClient 사용 → 토큰 자동첨부 + refresh 자동)
+  // 1) /users/me로 userId 확보 (API는 NoticeApi.ts로)
   useEffect(() => {
     let ignore = false;
 
     (async () => {
+      setMeLoading(true);
       try {
-        const res = await apiClient.get<MeResponse>("/users/me");
-        if (!ignore) {
-          setUserId(res.data.userId);
-        }
+        const me = await getMe();
+        if (!ignore) setUserId(me.userId);
       } catch {
-        if (!ignore) {
-          setUserId(null);
-        }
+        if (!ignore) setUserId(null);
       } finally {
         if (!ignore) {
           setMeLoaded(true);
@@ -197,7 +183,7 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
     };
   }, []);
 
-  // 2) userId 확보 후 찜 목록 로딩 (현재 백엔드 기준: /favorites/{userId})
+  // 2) userId 확보 후 찜 목록 로딩
   useEffect(() => {
     if (!userId) return;
 
@@ -205,11 +191,11 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
 
     (async () => {
       try {
-        const res = await apiClient.get<FavoriteListItem[]>(`/notices/favorites/${userId}`);
+        const list = await getFavoriteNotices(userId);
         if (ignore) return;
 
         const next: Record<number, boolean> = {};
-        for (const fav of res.data) {
+        for (const fav of list) {
           if (typeof fav?.id === "number") next[fav.id] = true;
         }
         setFavoriteMap(next);
@@ -223,7 +209,7 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
     };
   }, [userId]);
 
-  // 3) 찜 토글 (현재 백엔드 기준: /favorites/{userId}/{noticeId})
+  // 3) 찜 토글
   const toggleFavorite = async (noticeId: number) => {
     if (!meLoaded || meLoading) {
       alert("사용자 정보를 불러오는 중입니다.");
@@ -241,13 +227,13 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
     setFavoriteMap((prev) => ({ ...prev, [noticeId]: !currently }));
 
     try {
-      const res = currently
-        ? await apiClient.delete<FavoriteSuccessResponse>(`/notices/favorites/${userId}/${noticeId}`)
-        : await apiClient.post<FavoriteSuccessResponse>(`/notices/favorites/${userId}/${noticeId}`, null);
+      const data = currently
+        ? await removeFavoriteNotice(userId, noticeId)
+        : await addFavoriteNotice(userId, noticeId);
 
       setFavoriteMap((prev) => ({
         ...prev,
-        [res.data.noticeId]: res.data.isFavorite,
+        [data.noticeId]: data.isFavorite,
       }));
     } catch (err) {
       setFavoriteMap((prev) => ({ ...prev, [noticeId]: currently }));
@@ -298,8 +284,7 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
       const bClosed = isClosedNotice(b);
       if (aClosed !== bClosed) return aClosed ? 1 : -1;
 
-      const endDiff =
-        dateToMs(a.endDate, "9999-12-31") - dateToMs(b.endDate, "9999-12-31");
+      const endDiff = dateToMs(a.endDate, "9999-12-31") - dateToMs(b.endDate, "9999-12-31");
       if (endDiff !== 0) return endDiff;
 
       return dateToMs(b.regDate, "1970-01-01") - dateToMs(a.regDate, "1970-01-01");

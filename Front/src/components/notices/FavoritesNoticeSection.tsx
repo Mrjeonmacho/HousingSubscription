@@ -3,18 +3,12 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 
-import { apiClient } from "../../api/axiosConfig";
 import type { Notice } from "../../pages/NoticesPage";
+import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
+import { removeFavoriteNoticeByNoticeId } from "../../api/NoticeApi";
 
 type Props = {
   items: Notice[];
-};
-
-type FavoriteDeleteResponse = {
-  code: string;
-  message: string;
-  noticeId: number;
-  isFavorite: boolean;
 };
 
 type ApiErrorResponse = {
@@ -32,7 +26,8 @@ export default function FavoritesNoticeSection({ items }: Props) {
     return next;
   }, [items]);
 
-  const [favoriteMap, setFavoriteMap] = useState<Record<number, boolean>>(initialFavoriteMap);
+  const [favoriteMap, setFavoriteMap] =
+    useState<Record<number, boolean>>(initialFavoriteMap);
   const [pendingMap, setPendingMap] = useState<Record<number, boolean>>({});
 
   const visibleItems = useMemo(() => {
@@ -49,12 +44,12 @@ export default function FavoritesNoticeSection({ items }: Props) {
     setFavoriteMap((prev) => ({ ...prev, [noticeId]: false }));
 
     try {
-      const res = await apiClient.delete<FavoriteDeleteResponse>(`/notices/favorites/${noticeId}`);
+      const data = await removeFavoriteNoticeByNoticeId(noticeId);
 
       // 서버 응답 기준으로 최종 반영
       setFavoriteMap((prev) => ({
         ...prev,
-        [res.data.noticeId]: res.data.isFavorite,
+        [data.noticeId]: data.isFavorite,
       }));
     } catch (err) {
       // 실패 시 롤백
@@ -100,7 +95,7 @@ export default function FavoritesNoticeSection({ items }: Props) {
               >
                 {/* Category */}
                 <span className="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-                  {notice.category}
+                  {categoryLabel(notice.category)}
                 </span>
 
                 {/* Favorite Icon */}
@@ -124,7 +119,9 @@ export default function FavoritesNoticeSection({ items }: Props) {
 
                 {/* Status */}
                 <div className="mt-6 flex items-center justify-between">
-                  <span className="text-sm font-medium text-green-600">{notice.status}</span>
+                  <span className="text-sm font-medium text-green-600">
+                    {statusLabel(notice.status)}
+                  </span>
                   <span className="text-gray-300">→</span>
                 </div>
               </div>
