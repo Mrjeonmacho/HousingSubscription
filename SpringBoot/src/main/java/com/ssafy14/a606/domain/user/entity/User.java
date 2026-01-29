@@ -104,4 +104,12 @@ public class User {
     public void prePersist() {
         if (this.role == null) this.role = Role.USER;
     }
+
+    public void updateUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
+    }
 }

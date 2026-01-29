@@ -2,8 +2,10 @@ package com.ssafy14.a606.domain.user.controller;
 
 import com.ssafy14.a606.domain.user.dto.request.SignUpRequestDto;
 import com.ssafy14.a606.domain.user.dto.request.UserDetailsRequestDto;
+import com.ssafy14.a606.domain.user.dto.request.UserUpdateRequestDto;
 import com.ssafy14.a606.domain.user.dto.response.SignUpResponseDto;
 import com.ssafy14.a606.domain.user.dto.response.UserDetailsResponseDto;
+import com.ssafy14.a606.domain.user.dto.response.UserResponseDto;
 import com.ssafy14.a606.domain.user.service.UserDetailsService;
 import com.ssafy14.a606.domain.user.service.UserService;
 import com.ssafy14.a606.global.security.user.CustomUserDetails;
@@ -40,7 +42,7 @@ public class UserController {
 
     // 추가정보 조회
     @GetMapping("/me/info")
-    public ResponseEntity<UserDetailsResponseDto> get(
+    public ResponseEntity<UserDetailsResponseDto> getMyDetailInfo(
             @AuthenticationPrincipal CustomUserDetails principal
     ) {
         return ResponseEntity.ok(userDetailsService.getMyDetails(principal.getUserId()));
@@ -48,7 +50,7 @@ public class UserController {
 
     // 추가정보 입력
     @PostMapping("/me/info")
-    public ResponseEntity<UserDetailsResponseDto> create(
+    public ResponseEntity<UserDetailsResponseDto> createDetailInfo(
             @AuthenticationPrincipal CustomUserDetails principal,
             @RequestBody UserDetailsRequestDto dto
     ) {
@@ -57,10 +59,31 @@ public class UserController {
 
     // 추가정보 수정
     @PutMapping("/me/info")
-    public ResponseEntity<UserDetailsResponseDto> update(
+    public ResponseEntity<UserDetailsResponseDto> updateDetailInfo(
             @AuthenticationPrincipal CustomUserDetails principal,
             @RequestBody UserDetailsRequestDto dto
     ) {
         return ResponseEntity.ok(userDetailsService.updateMyDetails(principal.getUserId(), dto));
     }
+
+    // 기본정보 조회
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDto> getMyInfo(
+            @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        Long userId = principal.getUserId();
+        return ResponseEntity.ok(userService.getMyInfo(userId));
+    }
+
+    // 기본정보 수정
+    @PatchMapping("/me")
+    public ResponseEntity<UserResponseDto> updateMyInfo(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @Valid @RequestBody UserUpdateRequestDto request
+    ) {
+        Long userId = principal.getUserId();
+        return ResponseEntity.ok(userService.updateMyInfo(userId, request));
+    }
+
+
 }
