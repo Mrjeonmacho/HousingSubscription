@@ -40,7 +40,7 @@ public class SecurityConfig {
                                 "/api/users/email/**",
                                 "/api/chatbot/**" // 챗봇 엔드포인트 임시 허용
                         ).permitAll()
-                        .requestMatchers("/api/auth/logout").authenticated()
+                        .requestMatchers("/api/auth/logout").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/notices/**").permitAll()
                         .requestMatchers("/api/games/**").permitAll()

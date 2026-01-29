@@ -55,8 +55,8 @@ public class AuthServiceImpl implements AuthService{
         // refreshToken -> HttpOnly 쿠키
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
-                .secure(false)      // 로컬 http 테스트: false / 운영 https: true
-                .sameSite("Lax")    // 운영에서 프론트-백 도메인 다르면 None 고려
+                .secure(true)      // 로컬 http 테스트: false / 운영 https: true
+                .sameSite("None")    // 운영에서 프론트-백 도메인 다르면 None 고려
                 .path("/")
                 .maxAge(Duration.ofDays(14))
                 .build();
@@ -136,8 +136,8 @@ public class AuthServiceImpl implements AuthService{
         // 3) refreshToken 쿠키 만료
         ResponseCookie expiredCookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .secure(false)      // 로컬 http 테스트: false / 운영 https: true
-                .sameSite("Lax")    // 운영에서 프론트-백 도메인 다르면 None 고려
+                .secure(true)      // 로컬 http 테스트: false / 운영 https: true
+                .sameSite("None")    // 운영에서 프론트-백 도메인 다르면 None 고려
                 .path("/")
                 .maxAge(0)
                 .build();

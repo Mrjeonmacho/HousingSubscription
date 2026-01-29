@@ -1,9 +1,20 @@
-import type { Notice } from "../pages/NoticesPage";
+// Front/src/utils/noticeFormat.ts
 
-type NoticeCategory = Notice["category"];
-type NoticeStatus = Notice["status"];
+export type NoticeCategory =
+  | "YOUTH_RESIDENCE"
+  | "HAPPY_HOUSE"
+  | "NATIONAL_RENTAL"
+  | "PUBLIC_RENTAL"
+  | "LONG_TERM_RENTAL"
+  | "SALE_HOUSE";
 
-export function categoryLabel(category: NoticeCategory) {
+export type NoticeStatus =
+  | "RECEIVING"
+  | "DEADLINE_APPROACHING"
+  | "COMPLETED"
+  | "TO_BE_ANNOUNCED";
+
+export function categoryLabel(category: NoticeCategory | null | undefined) {
   switch (category) {
     case "YOUTH_RESIDENCE":
       return "청년안심주택";
@@ -18,11 +29,11 @@ export function categoryLabel(category: NoticeCategory) {
     case "SALE_HOUSE":
       return "분양주택";
     default:
-      return category ?? "-";
+      return "-";
   }
 }
 
-export function statusLabel(status: NoticeStatus) {
+export function statusLabel(status: NoticeStatus | null | undefined) {
   switch (status) {
     case "RECEIVING":
       return "접수중";
@@ -33,6 +44,6 @@ export function statusLabel(status: NoticeStatus) {
     case "TO_BE_ANNOUNCED":
       return "발표예정";
     default:
-      return status ?? "-";
+      return "-";
   }
 }

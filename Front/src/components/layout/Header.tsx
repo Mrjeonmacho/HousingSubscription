@@ -45,16 +45,21 @@ export default function Header() {
           <NavLink to="/playground" className={navClass}>
             청약 놀이터
           </NavLink>
-
+          
           <NavLink to="/mypage" className={navClass}>
             마이페이지
           </NavLink>
         </nav>
 
         {/* Right: Actions */}
-        { isLoggedIn ? (
+        { isLoggedIn && user ? (
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-700">안녕하세요, {user?.userName}님!</span>  
+            <Link 
+              to="/mypage" 
+              className="font-bold text-gray-700 hover:text-primary transition-colors cursor-pointer"
+            >
+              {user.userName}님
+            </Link> 
             <button 
               onClick={logout} 
               className="text-sm text-gray-500 hover:text-black"

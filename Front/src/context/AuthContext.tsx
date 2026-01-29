@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
-import type { User } from "../types/auth"; // 타입 import 확인
+import { useNavigate } from "react-router-dom";
+import type { User } from "../types/auth";
 import { logoutAPI } from "../api/AuthApi";
 
 // Context 타입
@@ -14,6 +15,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 // Provider 컴포넌트
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const navigate = useNavigate();
   
   const [user, setUser] = useState<User | null>(() => {
     try {
@@ -43,6 +45,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem("userName");
     localStorage.removeItem("userRole");
     setUser(null);
+
+    navigate("/");
   };
 
   return (

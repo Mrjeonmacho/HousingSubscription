@@ -11,14 +11,18 @@ const LoginCard = (): React.ReactElement => {
     navigate('/login');
   }
 
+  const handleMyPageClick = () => {
+    navigate('/mypage');
+  }
+
   if (isLoggedIn) {
-    // [로그인 완료 상태 UI]
+    // 로그인 완료 상태 UI
     return (
       <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100">
         <h3 className="text-lg font-bold mb-2">반갑습니다, {user?.userName}님! 🏠</h3>
         <p className="text-gray-500 text-sm mb-4">오늘도 서울집사와 함께 스마트한 하루 되세요.</p>
         <div className="flex gap-2">
-           <button className="flex-1 bg-gray-100 py-2 rounded-xl text-sm font-bold text-gray-700">마이페이지</button>
+           <button className="flex-1 bg-gray-100 py-2 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-200" onClick={handleMyPageClick}>마이페이지</button>
            <button className="flex-1 bg-primary/10 py-2 rounded-xl text-sm font-bold text-primary">추천 공고</button>
         </div>
       </div>
