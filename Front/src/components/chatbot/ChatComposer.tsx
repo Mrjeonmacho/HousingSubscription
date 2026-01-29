@@ -1,4 +1,6 @@
-// Front\src\components\chatbot\ChatComposer.tsx => Quick Action 버튼 & 채팅 적는 공간
+// Front/src/components/chatbot/ChatComposer.tsx
+// Quick Action 버튼 & 채팅 입력 영역 (API 연동 기준 최종)
+
 type QuickAction = {
   icon: string;
   label: string;
@@ -6,6 +8,7 @@ type QuickAction = {
 
 type ChatComposerProps = {
   input: string;
+  isSending: boolean;
   onInputChange: (value: string) => void;
   onSend: () => void;
   onQuickAction: (label: string) => void;
@@ -20,6 +23,7 @@ const QUICK_ACTIONS: QuickAction[] = [
 
 export default function ChatComposer({
   input,
+  isSending,
   onInputChange,
   onSend,
   onQuickAction,
@@ -34,8 +38,14 @@ export default function ChatComposer({
               <button
                 key={item.label}
                 type="button"
-                className="shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-full bg-black/5 hover:bg-black/10 transition text-[12px] text-gray-700"
-                onClick={() => onQuickAction(item.label)}
+                disabled={isSending}
+                className="shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-full
+                           bg-black/5 hover:bg-black/10 transition text-[12px] text-gray-700
+                           disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => {
+                  onQuickAction(item.label);
+                  onSend();
+                }}
               >
                 <span className="material-symbols-outlined text-[16px] leading-none text-primary">
                   {item.icon}
@@ -49,20 +59,34 @@ export default function ChatComposer({
           <div className="flex items-center gap-3">
             <input
               value={input}
+              disabled={isSending}
               onChange={e => onInputChange(e.target.value)}
               onKeyDown={e => {
-                if (e.key === "Enter") onSend();
+                if (
+                  e.key === "Enter" &&
+                  !e.shiftKey &&
+                  !e.nativeEvent.isComposing
+                ) {
+                  e.preventDefault();
+                  onSend();
+                }
               }}
-              placeholder="메시지를 입력하세요"
-              className="flex-1 h-11 rounded-xl bg-black/5 px-4 text-[14px] outline-none focus:bg-white focus:ring-2 focus:ring-primary/30 transition"
+              placeholder={isSending ? "답변을 생성 중입니다..." : "메시지를 입력하세요"}
+              className="flex-1 h-11 rounded-xl bg-black/5 px-4 text-[14px] outline-none
+                         focus:bg-white focus:ring-2 focus:ring-primary/30 transition
+                         disabled:opacity-50"
             />
 
             <button
               type="button"
+              disabled={isSending}
               onClick={onSend}
-              className="h-11 px-5 rounded-xl bg-primary text-white font-semibold inline-flex items-center gap-2 hover:opacity-95 active:opacity-90 transition"
+              className="h-11 px-5 rounded-xl bg-primary text-white font-semibold
+                         inline-flex items-center gap-2
+                         hover:opacity-95 active:opacity-90 transition
+                         disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              전송
+              {isSending ? "전송 중" : "전송"}
               <span className="material-symbols-outlined text-[18px] leading-none">
                 send
               </span>

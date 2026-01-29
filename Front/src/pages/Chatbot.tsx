@@ -1,20 +1,65 @@
-import { useEffect, useMemo, useState } from "react";
-import { chatMessages } from "../data/chat";
+// Front/src/pages/Chatbot.tsx
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import type { ChatMessage } from "../data/chat";
+
+import type { AxiosError } from "axios";
 
 import ChatComposer from "../components/chatbot/ChatComposer";
 import ChatMessageList from "../components/chatbot/ChatMessageList";
 
+import { apiClient } from "../api/axiosConfig";
 
+type ChatbotSuccessResponse = {
+  message: string;
+};
+
+async function postChat(message: string): Promise<string> {
+  const res = await apiClient.post<ChatbotSuccessResponse>("/chatbot/chat", {
+    message,
+  });
+  return res.data.message;
+}
+
+function toErrorText(err: unknown): string {
+  if (err && typeof err === "object" && "isAxiosError" in err) {
+    const axiosErr = err as AxiosError<{
+      code?: string;
+      message?: string;
+    }>;
+
+    const status = axiosErr.response?.status;
+    const data = axiosErr.response?.data;
+
+    if (data?.message) {
+      const code = data.code ? ` (${data.code})` : "";
+      return `${data.message}${code}`;
+    }
+
+    if (status) {
+      return `요청 처리 중 오류가 발생했습니다. (HTTP ${status})`;
+    }
+  }
+
+  return "요청 처리 중 오류가 발생했습니다.";
+}
 
 export default function Chatbot() {
-  const [messages, setMessages] = useState<ChatMessage[]>(chatMessages);
-  const [input, setInput] = useState("");
+  const location = useLocation();
 
-  const todayLabel = useMemo(() => "오늘, 11월 12일", []);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [errorText, setErrorText] = useState<string | null>(null);
+
+  const todayLabel = useMemo(() => {
+    const d = new Date();
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    return `오늘, ${m}월 ${day}일`;
+  }, []);
 
   useEffect(() => {
-    // 렌더가 끝난 다음 높이 계산이 정확해지도록 한 프레임 늦춤
     requestAnimationFrame(() => {
       window.scrollTo({
         top: document.documentElement.scrollHeight,
@@ -23,11 +68,14 @@ export default function Chatbot() {
     });
   }, [messages.length]);
 
-  const handleSend = () => {
-    const value = input.trim();
-    if (!value) return;
+  const handleSendText = async (raw: string) => {
+    const value = raw.trim();
+    if (!value || isSending) return;
 
-    const newMessage: ChatMessage = {
+    setErrorText(null);
+    setIsSending(true);
+
+    const userMessage: ChatMessage = {
       id: `chat-${Date.now()}`,
       role: "user",
       type: "text",
@@ -35,32 +83,87 @@ export default function Chatbot() {
       createdAt: new Date().toISOString(),
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
+
+    try {
+      const answer = await postChat(value);
+
+      const assistantMessage: ChatMessage = {
+        id: `chat-${Date.now()}-assistant`,
+        role: "assistant",
+        type: "text",
+        text: answer,
+        createdAt: new Date().toISOString(),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (e) {
+      const msg = toErrorText(e);
+      setErrorText(msg);
+
+      const assistantErrorMessage: ChatMessage = {
+        id: `chat-${Date.now()}-assistant-error`,
+        role: "assistant",
+        type: "text",
+        text: msg,
+        createdAt: new Date().toISOString(),
+      };
+
+      setMessages((prev) => [...prev, assistantErrorMessage]);
+    } finally {
+      setIsSending(false);
+    }
   };
+
+  const handleSend = async () => {
+    await handleSendText(input);
+  };
+
+  // HeroSearch에서 넘어온 초기 메시지 자동 전송 (1회만)
+  const autoSentRef = useRef(false);
+  useEffect(() => {
+    if (autoSentRef.current) return;
+
+    const initialMessage =
+      (location.state as { initialMessage?: string } | null)?.initialMessage;
+
+    if (!initialMessage) return;
+
+    autoSentRef.current = true;
+
+    // 입력창에도 보이게 하고 싶으면 유지, 바로 전송만 원하면 setInput은 빼셔도 됩니다.
+    setInput(initialMessage);
+
+    // 상태 반영 타이밍 이슈 피하려고 텍스트 직접 전달
+    void handleSendText(initialMessage);
+  }, [location.state]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-4xl px-4 md:px-6">
-        {/* Date pill */}
         <div className="flex justify-center pt-6">
           <div className="px-3 py-1 rounded-full bg-black/5 text-[12px] text-gray-500">
             {todayLabel}
           </div>
         </div>
 
-        {/* Messages area */}
+        {errorText && (
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {errorText}
+          </div>
+        )}
+
         <ChatMessageList messages={messages} />
-        
       </div>
 
-      {/* Bottom composer */}
-        <ChatComposer
-            input={input}
-            onInputChange={setInput}
-            onSend={handleSend}
-            onQuickAction={label => setInput(label)}
-        />
-        </div>
+      <ChatComposer
+        input={input}
+        isSending={isSending}
+        onInputChange={setInput}
+        onSend={handleSend}
+        onQuickAction={(label) => setInput(label)}
+      />
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 // Front/src/components/notices/NoticeListSection.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
+import { apiClient } from "../../api/axiosConfig";
 import type { Notice } from "../../pages/NoticesPage";
 import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
 
@@ -23,6 +24,14 @@ type FavoriteSuccessResponse = {
 type ApiErrorResponse = {
   code?: string;
   message?: string;
+};
+
+type FavoriteListItem = {
+  id: number;
+};
+
+type MeResponse = {
+  userId: number;
 };
 
 function formatDateRange(start: string | null, end: string | null) {
@@ -82,9 +91,7 @@ function HeartIcon({ active }: { active: boolean }) {
     <span
       className={[
         "material-symbols-outlined text-[22px] transition-all",
-        active
-          ? "text-red-500"
-          : "text-gray-400 group-hover:text-red-400",
+        active ? "text-red-500" : "text-gray-400 group-hover:text-red-400",
       ].join(" ")}
     >
       {active ? "favorite" : "favorite_border"}
@@ -152,46 +159,111 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
   const [sortType, setSortType] = useState<SortType>("REG_DATE");
   const [open, setOpen] = useState(false);
 
-  // 찜 상태(로컬 UI 반영용)
   const [favoriteMap, setFavoriteMap] = useState<Record<number, boolean>>({});
+  const [favoritePending, setFavoritePending] = useState<Record<number, boolean>>({});
 
-  const isLoggedIn = () => {
-    // 프로젝트 토큰 키에 맞게 수정하세요.
-    return Boolean(localStorage.getItem("accessToken"));
-  };
+  const [userId, setUserId] = useState<number | null>(null);
+  const [meLoading, setMeLoading] = useState(false);
+  const [meLoaded, setMeLoaded] = useState(false);
 
-  const addFavorite = async (noticeId: number) => {
-    if (!isLoggedIn()) {
+  // 1) /users/me로 userId 확보 (apiClient 사용 → 토큰 자동첨부 + refresh 자동)
+  useEffect(() => {
+    let ignore = false;
+
+    (async () => {
+      try {
+        const res = await apiClient.get<MeResponse>("/users/me");
+        if (!ignore) {
+          setUserId(res.data.userId);
+        }
+      } catch {
+        if (!ignore) {
+          setUserId(null);
+        }
+      } finally {
+        if (!ignore) {
+          setMeLoaded(true);
+          setMeLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  // 2) userId 확보 후 찜 목록 로딩 (현재 백엔드 기준: /favorites/{userId})
+  useEffect(() => {
+    if (!userId) return;
+
+    let ignore = false;
+
+    (async () => {
+      try {
+        const res = await apiClient.get<FavoriteListItem[]>(`/notices/favorites/${userId}`);
+        if (ignore) return;
+
+        const next: Record<number, boolean> = {};
+        for (const fav of res.data) {
+          if (typeof fav?.id === "number") next[fav.id] = true;
+        }
+        setFavoriteMap(next);
+      } catch {
+        // 무시
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, [userId]);
+
+  // 3) 찜 토글 (현재 백엔드 기준: /favorites/{userId}/{noticeId})
+  const toggleFavorite = async (noticeId: number) => {
+    if (!meLoaded || meLoading) {
+      alert("사용자 정보를 불러오는 중입니다.");
+      return;
+    }
+    if (!userId) {
       alert("로그인이 필요합니다.");
       return;
     }
+    if (favoritePending[noticeId]) return;
+
+    const currently = Boolean(favoriteMap[noticeId]);
+
+    setFavoritePending((prev) => ({ ...prev, [noticeId]: true }));
+    setFavoriteMap((prev) => ({ ...prev, [noticeId]: !currently }));
 
     try {
-      const res = await axios.post<FavoriteSuccessResponse>(
-        `/api/notices/favorites/${noticeId}`
-      );
+      const res = currently
+        ? await apiClient.delete<FavoriteSuccessResponse>(`/notices/favorites/${userId}/${noticeId}`)
+        : await apiClient.post<FavoriteSuccessResponse>(`/notices/favorites/${userId}/${noticeId}`, null);
 
       setFavoriteMap((prev) => ({
         ...prev,
         [res.data.noticeId]: res.data.isFavorite,
       }));
     } catch (err) {
+      setFavoriteMap((prev) => ({ ...prev, [noticeId]: currently }));
+
       const ax = err as AxiosError<ApiErrorResponse>;
       const status = ax.response?.status;
       const msg = ax.response?.data?.message ?? "요청 처리 중 오류가 발생했습니다.";
-
-      if (status === 409) {
-        alert(msg);
-        setFavoriteMap((prev) => ({ ...prev, [noticeId]: true }));
-        return;
-      }
 
       if (status === 401 || status === 403) {
         alert("로그인이 필요합니다.");
         return;
       }
-
+      if (status === 409) {
+        alert(msg);
+        setFavoriteMap((prev) => ({ ...prev, [noticeId]: true }));
+        return;
+      }
       alert(msg);
+    } finally {
+      setFavoritePending((prev) => ({ ...prev, [noticeId]: false }));
     }
   };
 
@@ -203,9 +275,7 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
     const onDown = (e: MouseEvent) => {
       const el = dropdownRef.current;
       if (!el) return;
-      if (e.target instanceof Node && !el.contains(e.target)) {
-        setOpen(false);
-      }
+      if (e.target instanceof Node && !el.contains(e.target)) setOpen(false);
     };
 
     document.addEventListener("mousedown", onDown);
@@ -316,6 +386,7 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
               : rightTone();
 
             const isFavorite = Boolean(favoriteMap[n.id]);
+            const isPending = Boolean(favoritePending[n.id]);
 
             const normalizedStatus = statusText.replace(/\s+/g, "");
             const badgeText =
@@ -370,7 +441,6 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
 
                 <div className="flex items-center justify-between md:justify-end gap-6 md:pl-2">
                   <div className="flex flex-col items-center justify-center text-center min-w-[72px]">
-                    {/* 뱃지 부분은 요청대로 수정하지 않고 그대로 둠 */}
                     {badgeText && (
                       <span
                         className={[
@@ -384,18 +454,17 @@ export default function NoticeListSection({ totalCount, items, loading }: Props)
                       </span>
                     )}
 
-                    <div
-                      className={`text-l font-bold tracking-tight whitespace-nowrap ${rightTextClass}`}
-                    >
+                    <div className={`text-l font-bold tracking-tight whitespace-nowrap ${rightTextClass}`}>
                       {rightText}
                     </div>
                   </div>
 
                   <button
                     type="button"
-                    className="p-1 rounded-full hover:bg-gray-50 transition-colors"
+                    className="p-1 rounded-full hover:bg-gray-50 transition-colors disabled:opacity-60"
                     aria-label="관심 공고 등록"
-                    onClick={() => addFavorite(n.id)}
+                    onClick={() => toggleFavorite(n.id)}
+                    disabled={isPending || meLoading}
                   >
                     <HeartIcon active={isFavorite} />
                   </button>
