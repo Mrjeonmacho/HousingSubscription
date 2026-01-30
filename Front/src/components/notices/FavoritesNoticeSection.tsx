@@ -1,5 +1,5 @@
 // Front/src/components/notices/FavoritesNoticeSection.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 
@@ -17,10 +17,12 @@ type ApiErrorResponse = {
   message?: string;
 };
 
-export default function FavoritesNoticeSection({ items, onChangedFavorites }: Props) {
+export default function FavoritesNoticeSection({
+  items,
+  onChangedFavorites,
+}: Props) {
   const navigate = useNavigate();
 
-  // 초기 렌더에서 props(items) 기준으로 "찜 상태"를 true로 세팅
   const initialFavoriteMap = useMemo(() => {
     const next: Record<number, boolean> = {};
     for (const n of items) next[n.id] = true;
@@ -36,7 +38,6 @@ export default function FavoritesNoticeSection({ items, onChangedFavorites }: Pr
   }, [initialFavoriteMap]);
 
   const visibleItems = useMemo(() => {
-    // 화면에서는 isFavorite=false 된 항목은 숨김 처리
     return items.filter((n) => favoriteMap[n.id] !== false);
   }, [items, favoriteMap]);
 
@@ -44,23 +45,18 @@ export default function FavoritesNoticeSection({ items, onChangedFavorites }: Pr
     if (pendingMap[noticeId]) return;
 
     setPendingMap((prev) => ({ ...prev, [noticeId]: true }));
-
-    // 낙관적 업데이트: 즉시 카드 제거
     setFavoriteMap((prev) => ({ ...prev, [noticeId]: false }));
 
     try {
       const data = await removeFavoriteNotice(noticeId);
 
-      // 서버 응답 기준으로 최종 반영
       setFavoriteMap((prev) => ({
         ...prev,
         [data.noticeId]: data.isFavorite,
       }));
 
       onChangedFavorites?.();
-
     } catch (err) {
-      // 실패 시 롤백
       setFavoriteMap((prev) => ({ ...prev, [noticeId]: true }));
 
       const ax = err as AxiosError<ApiErrorResponse>;
@@ -77,11 +73,82 @@ export default function FavoritesNoticeSection({ items, onChangedFavorites }: Pr
     }
   };
 
+  // 캐러셀(가로 스크롤) 관련
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(false);
+
+  const updateNavState = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    const max = el.scrollWidth - el.clientWidth;
+    setCanPrev(el.scrollLeft > 0);
+    setCanNext(el.scrollLeft < max - 1);
+  };
+
+  useEffect(() => {
+    updateNavState();
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    const onScroll = () => updateNavState();
+    el.addEventListener("scroll", onScroll, { passive: true });
+
+    const ro = new ResizeObserver(() => updateNavState());
+    ro.observe(el);
+
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      ro.disconnect();
+    };
+  }, [visibleItems.length]);
+
+  const scrollByCard = (dir: "prev" | "next") => {
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    // 한 번에 "카드 1장 + gap" 만큼 이동
+    const firstCard = el.querySelector<HTMLElement>("[data-fav-card]");
+    const step = firstCard
+      ? firstCard.getBoundingClientRect().width + 16 // gap-4 = 16px
+      : 320;
+
+    el.scrollBy({
+      left: dir === "prev" ? -step : step,
+      behavior: "smooth",
+    });
+  };
+
   return (
     <section className="mt-16">
       {/* Header */}
-      <div className="mb-6 flex items-center gap-3">
+      <div className="mb-6 flex items-center justify-between gap-3">
         <h2 className="text-xl font-semibold text-gray-900">내가 찜한 공고</h2>
+
+        {/* 좌/우 버튼 */}
+        {visibleItems.length > 3 && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => scrollByCard("prev")}
+              disabled={!canPrev}
+              className="h-9 w-9 rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 disabled:opacity-40"
+              aria-label="이전"
+            >
+              ←
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollByCard("next")}
+              disabled={!canNext}
+              className="h-9 w-9 rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 disabled:opacity-40"
+              aria-label="다음"
+            >
+              →
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Empty State */}
@@ -90,51 +157,68 @@ export default function FavoritesNoticeSection({ items, onChangedFavorites }: Pr
           <p className="text-sm text-gray-400">아직 찜한 공고가 없습니다.</p>
         </div>
       ) : (
-        /* List */
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {visibleItems.map((notice) => {
-            const isPending = Boolean(pendingMap[notice.id]);
+        <div className="relative">
+          {/* 가로 스크롤 영역 */}
+          <div
+            ref={scrollerRef}
+            className="
+              flex gap-4 overflow-x-auto scroll-smooth
+              pb-2
+              [scrollbar-width:none]
+              [&::-webkit-scrollbar]:hidden
+            "
+          >
+            {visibleItems.map((notice) => {
+              const isPending = Boolean(pendingMap[notice.id]);
 
-            return (
-              <div
-                key={notice.id}
-                onClick={() => navigate(`/notices/${notice.id}`)}
-                className="relative cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:shadow-md"
-              >
-                {/* Category */}
-                <span className="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-                  {categoryLabel(notice.category)}
-                </span>
-
-                {/* Favorite Icon */}
-                <button
-                  type="button"
-                  className="absolute right-6 top-6 text-red-500 hover:text-red-600 disabled:opacity-60"
-                  aria-label="찜 해제"
-                  disabled={isPending}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    unfavorite(notice.id);
-                  }}
+              return (
+                <div
+                  key={notice.id}
+                  data-fav-card
+                  onClick={() => navigate(`/notices/${notice.id}`)}
+                  className="
+                    relative cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 shadow-sm
+                    transition hover:shadow-md
+                    shrink-0
+                    w-[calc((100%-2rem)/3)]
+                    min-w-[260px]
+                  "
                 >
-                  ❤
-                </button>
-
-                {/* Title */}
-                <h3 className="mt-4 line-clamp-2 text-base font-semibold text-gray-900">
-                  {notice.title}
-                </h3>
-
-                {/* Status */}
-                <div className="mt-6 flex items-center justify-between">
-                  <span className="text-sm font-medium text-green-600">
-                    {statusLabel(notice.status)}
+                  {/* Category */}
+                  <span className="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                    {categoryLabel(notice.category)}
                   </span>
-                  <span className="text-gray-300">→</span>
+
+                  {/* Favorite Icon */}
+                  <button
+                    type="button"
+                    className="absolute right-6 top-6 text-red-500 hover:text-red-600 disabled:opacity-60"
+                    aria-label="찜 해제"
+                    disabled={isPending}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      unfavorite(notice.id);
+                    }}
+                  >
+                    ❤
+                  </button>
+
+                  {/* Title */}
+                  <h3 className="mt-4 line-clamp-2 text-base font-semibold text-gray-900">
+                    {notice.title}
+                  </h3>
+
+                  {/* Status */}
+                  <div className="mt-6 flex items-center justify-between">
+                    <span className="text-sm font-medium text-green-600">
+                      {statusLabel(notice.status)}
+                    </span>
+                    <span className="text-gray-300">→</span>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
     </section>
