@@ -11,7 +11,7 @@ public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long
      * 용어 퀴즈 랜덤 10문제 조회
      */
     @Query(
-            value = "SELECT * FROM quizzes ORDER BY RAND() LIMIT 10",
+            value = "SELECT * FROM quiz_questions ORDER BY RAND() LIMIT 10",
             nativeQuery = true
     )
     List<QuizQuestion> findRandom10Questions();
