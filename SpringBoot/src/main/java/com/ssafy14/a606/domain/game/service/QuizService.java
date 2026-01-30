@@ -2,10 +2,13 @@ package com.ssafy14.a606.domain.game.service;
 
 import com.ssafy14.a606.domain.game.dto.request.QuizAnswerRequest;
 import com.ssafy14.a606.domain.game.dto.response.QuizAnswerResponse;
+import com.ssafy14.a606.domain.game.entity.QuizOption;
 import com.ssafy14.a606.domain.game.entity.QuizQuestion;
+import com.ssafy14.a606.domain.game.repository.QuizOptionRepository;
 import com.ssafy14.a606.domain.game.repository.QuizQuestionRepository;
 import com.ssafy14.a606.domain.game.dto.response.QuizQuestionResponse;
 
+import com.ssafy14.a606.global.exceptions.InvalidValueException;
 import com.ssafy14.a606.global.exceptions.NotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,52 +21,53 @@ import java.util.stream.Collectors;
 public class QuizService {
 
     private final QuizQuestionRepository quizQuestionRepository;
+    private final QuizOptionRepository quizOptionRepository;
 
-    public QuizService(QuizQuestionRepository quizQuestionRepository) {
+    public QuizService(
+            QuizQuestionRepository quizQuestionRepository,
+            QuizOptionRepository quizOptionRepository
+    ) {
         this.quizQuestionRepository = quizQuestionRepository;
+        this.quizOptionRepository = quizOptionRepository;
     }
 
     /**
-     * 용어 퀴즈 시작
-     * - 랜덤 10문제 조회
-     * - Entity → DTO 변환
+     * 퀴즈 시작
      */
     public List<QuizQuestionResponse> getRandomQuizQuestions() {
-
-        List<QuizQuestion> questions =
-                quizQuestionRepository.findRandom10Questions();
-
-        return questions.stream()
+        return quizQuestionRepository.findRandom10Questions()
+                .stream()
                 .map(QuizQuestionResponse::from)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
-     * 용어 퀴즈 정답 제출
+     * 정답 제출
      */
+    @Transactional
     public QuizAnswerResponse submitAnswer(QuizAnswerRequest request) {
 
-        QuizQuestion quizQuestion = quizQuestionRepository.findById(request.getQuestionId())
-                .orElseThrow(() -> new NotFoundException("유효하지 않은 문제 ID입니다."));
+        QuizOption option = quizOptionRepository.findById(request.getSelectedOptionId())
+                .orElseThrow(() -> new InvalidValueException("유효하지 않은 보기입니다."));
 
-        String correct = normalize(quizQuestion.getAnswer());
-        String userAnswer = normalize(request.getAnswer());
+        QuizQuestion question = option.getQuestion();
 
-        boolean isCorrect = correct.equals(userAnswer);
+        boolean isCorrect = option.isCorrect();
 
         return new QuizAnswerResponse(
                 isCorrect,
-                quizQuestion.getAnswer(),
-                quizQuestion.getExplanation()
+                getCorrectAnswer(question),
+                question.getExplanation()
         );
     }
 
-    private String normalize(String answer) {
-        return answer
-                .replaceAll("\\s+", "") // 모든 공백 제거
-                .toLowerCase();          // 대소문자 무시
+    private String getCorrectAnswer(QuizQuestion question) {
+        return question.getOptions().stream()
+                .filter(QuizOption::isCorrect)
+                .findFirst()
+                .map(QuizOption::getOptionText)
+                .orElse("정답 없음");
     }
-
-
 }
+
 

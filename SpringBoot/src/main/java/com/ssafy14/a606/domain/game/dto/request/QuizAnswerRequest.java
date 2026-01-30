@@ -1,18 +1,13 @@
 package com.ssafy14.a606.domain.game.dto.request;
 
+import lombok.Getter;
+
+@Getter
 public class QuizAnswerRequest {
 
     private Long questionId;
-    private String answer;
+    private Long selectedOptionId;
 
-    protected QuizAnswerRequest() {
-    }
+    protected QuizAnswerRequest() {}
 
-    public Long getQuestionId() {
-        return questionId;
-    }
-
-    public String getAnswer() {
-        return answer;
-    }
 }
