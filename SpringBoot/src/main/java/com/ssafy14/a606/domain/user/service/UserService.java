@@ -27,4 +27,7 @@ public interface UserService {
 
     // 6. 회원 기본정보 수정 (이름, 이메일만 가능)
     UserResponseDto updateMyInfo(Long userId, UserUpdateRequestDto request);
+
+    // 7. 회원탈퇴 (hard delete)
+    void deleteAccount(Long userId);
 }

@@ -150,6 +150,18 @@ public class UserServiceImpl implements UserService {
         return toUserResponse(user);
     }
 
+    // 7. 회원탈퇴
+    @Override
+    @Transactional
+    public void deleteAccount(Long userId){
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(()->new NotFoundException("존재하지 않는 사용자입니다."));
+
+        userRepository.delete(user);
+
+    }
+
 
     private UserResponseDto toUserResponse(User user) {
         return UserResponseDto.builder()

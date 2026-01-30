@@ -77,5 +77,13 @@ public class UserController {
         return ResponseEntity.ok(userService.updateMyInfo(userId, request));
     }
 
+    // 회원탈퇴 -> hard delete
+    @DeleteMapping("/me")
+    public ResponseEntity<Map<String, String>> deleteMe(@AuthenticationPrincipal CustomUserDetails principal){
+        Long userId = principal.getUserId();
+        userService.deleteAccount(userId);
+        return ResponseEntity.ok(Map.of("message", "ACCOUNT_DELETE_SUCCESS"));
+    }
+
 
 }
