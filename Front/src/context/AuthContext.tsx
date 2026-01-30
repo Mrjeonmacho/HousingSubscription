@@ -9,6 +9,7 @@ interface AuthContextType {
   isLoggedIn: boolean;
   login: (userData: User) => void;
   logout: () => void;
+  updateUserState: (newInfo: { userName: string }) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -49,8 +50,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     navigate("/");
   };
 
+  const updateUserState = (newInfo: { userName: string }) => {
+    setUser((prevUser) => {
+      if (!prevUser) return null; // 로그인 안 된 상태면 무시
+
+      // 기존 유저 정보에 새 이름만 덮어쓰기
+      const updatedUser = { 
+        ...prevUser, 
+        userName: newInfo.userName, 
+      };
+
+      // 새로고침해도 유지되도록 localStorage도 업데이트
+      localStorage.setItem("userName", newInfo.userName);
+      
+      return updatedUser;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoggedIn: !!user, updateUserState }}>
       {children}
     </AuthContext.Provider>
   );
