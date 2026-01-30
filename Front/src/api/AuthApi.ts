@@ -114,6 +114,7 @@ export const login = async (loginData: LoginData): Promise<User | null> => {
 export const logoutAPI = async (): Promise<void> => {
   try {
     await apiClient.post("/auth/logout");
+    alert("로그아웃 되었습니다");
   } catch (error) {
     console.error("로그아웃 요청 실패", error);
   }
