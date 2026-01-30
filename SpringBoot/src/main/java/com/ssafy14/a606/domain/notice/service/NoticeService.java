@@ -6,7 +6,6 @@ import com.ssafy14.a606.domain.notice.dto.response.NoticeListResponseDto;
 import com.ssafy14.a606.domain.notice.dto.response.NoticeResponseDto;
 import com.ssafy14.a606.domain.notice.entity.Notice;
 import com.ssafy14.a606.domain.notice.repository.NoticeRepository;
-import com.ssafy14.a606.domain.notice.repository.UserTestRepository;
 import com.ssafy14.a606.global.exceptions.InvalidValueException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,7 +32,7 @@ public class NoticeService {
 
     public NoticeResponseDto getNotice(Long noticeId) {
         Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(() -> new InvalidValueException("Invalid notice Id:" + noticeId));
+                .orElseThrow(() -> new InvalidValueException("해당 공고를 찾을 수 없습니다. notice Id:" + noticeId));
         return new NoticeResponseDto(notice);
     }
 
@@ -59,7 +58,7 @@ public class NoticeService {
     @Transactional
     public NoticeResponseDto updateNotice(Long noticeId, NoticeRequestDto noticeRequestDto) {
         Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(() -> new InvalidValueException("Invalid notice Id:" + noticeId));
+                .orElseThrow(() -> new InvalidValueException("해당 공고를 찾을 수 없습니다. Id:" + noticeId));
         
         notice.update(
                 noticeRequestDto.getNoticeNo(),
