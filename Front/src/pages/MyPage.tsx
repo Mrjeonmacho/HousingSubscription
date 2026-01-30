@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getUserAddInfo, saveUserAddInfo, updateUserAddInfo } from "../api/UserApi"; // API 연동 시 주석 해제
+import { getUserAddInfo, updateUserAddInfo } from "../api/UserApi"; // API 연동 시 주석 해제
 import type { UserAddInfo } from "../types/user";
 
 // 기본 정보 폼 타입
@@ -23,7 +24,8 @@ interface AddInfoFormState {
 
 export default function MyPage() {
   const { user, logout } = useAuth();
-  
+  const navigate = useNavigate();
+
   // 기본 정보 State
   const [isBasicEditing, setIsBasicEditing] = useState(false);
   const [basicFormData, setBasicFormData] = useState<BasicFormState>({
@@ -31,6 +33,11 @@ export default function MyPage() {
     loginId: "seoul_dummy_01",
     email: "dummy@example.com"
   });
+
+  const handleLogout = () => {
+    logout(); 
+    navigate("/"); 
+  };
 
   useEffect(() => {
     if (user?.userName && basicFormData.userName !== user.userName) {
@@ -57,9 +64,6 @@ export default function MyPage() {
   // 추가 정보 State
   const [isAddInfoEditing, setIsAddInfoEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // 로딩 상태
-
-  // DB에 정보가 존재하는지 판단하는 플래그
-  const [hasInfo, setHasInfo] = useState(false);
   
   // 초기값을 모두 빈 문자열("")로 설정
   const [addInfoFormData, setAddInfoFormData] = useState<AddInfoFormState>({
@@ -89,7 +93,6 @@ export default function MyPage() {
       try {
         const data = await getUserAddInfo();
         console.log("Fetched UserAddInfo:", data);
-        setHasInfo(true); // 정보가 존재함
         setSavedData(data); // 화면 표시용 데이터 업데이트
 
         // 수정 모드 진입 시 폼에 채워넣을 데이터 세팅 (null -> "")
@@ -144,13 +147,9 @@ export default function MyPage() {
     console.log("서버로 전송될 데이터:", payload);
     try{
       // API 호출
-      if (hasInfo) { 
-         await updateUserAddInfo(payload); // PUT 호출
-         alert("성공적으로 수정되었습니다!");
-      } else {
-         await saveUserAddInfo(payload);   // POST 호출
-         alert("성공적으로 등록되었습니다!");
-      }
+      await updateUserAddInfo(payload); // PUT 호출
+      alert("성공적으로 수정되었습니다!");
+      setSavedData(payload); // 화면 표시용 데이터 업데이트
       setIsAddInfoEditing(false);
     } catch (error) {
       console.error("추가 정보 저장 실패:", error);
@@ -203,7 +202,7 @@ export default function MyPage() {
               </button>
             </nav>
             <div className="mt-8 pt-6 border-t border-gray-100">
-              <button onClick={logout} className="flex items-center gap-2 text-gray-400 hover:text-red-500 transition-colors">
+              <button onClick={handleLogout} className="flex items-center gap-2 text-gray-400 hover:text-red-500 transition-colors">
                 <span className="material-symbols-outlined text-sm">logout</span>
                 로그아웃
               </button>

@@ -1,11 +1,17 @@
 // seoul-jibsa\src\components\layout\Header.tsx
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 export default function Header() {
   const { isLoggedIn, user, logout } = useAuth();
+  const navigate = useNavigate();
   console.log("Header - isLoggedIn:", isLoggedIn, "user:", user);
+
+  const handleLogout = () => {
+    logout(); 
+    navigate("/"); 
+  };
 
   // 모바일 메뉴 상태 관리
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -57,7 +63,7 @@ export default function Header() {
                 {user.userName}님
               </Link>
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="text-xs sm:text-sm text-gray-500 hover:text-black whitespace-nowrap"
               >
                 로그아웃
