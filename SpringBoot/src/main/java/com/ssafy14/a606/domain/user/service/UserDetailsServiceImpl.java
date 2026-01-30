@@ -6,7 +6,6 @@ import com.ssafy14.a606.domain.user.entity.User;
 import com.ssafy14.a606.domain.user.entity.UserDetails;
 import com.ssafy14.a606.domain.user.repository.UserDetailsRepository;
 import com.ssafy14.a606.domain.user.repository.UserRepository;
-import com.ssafy14.a606.global.exceptions.DuplicateValueException;
 import com.ssafy14.a606.global.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,47 +24,44 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     // 추가정보 조회
     @Override
-    public UserDetailsResponseDto getMyDetails(Long userId) {
-        return userDetailsRepository.findById(userId)
-                .map(this::toResponseDto)
-                .orElseGet(this::emptyResponseDto);
-    }
-
-    // 추가정보 입력 (최초 1회만)
-    @Override
     @Transactional
-    public UserDetailsResponseDto createMyDetails(Long userId, UserDetailsRequestDto requestDto) {
-        if (userDetailsRepository.existsById(userId)) {
-            throw new DuplicateValueException("이미 추가정보가 존재합니다.");
-        }
+    public UserDetailsResponseDto getMyDetails(Long userId) {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+        UserDetails details = userDetailsRepository.findById(userId)
+                .orElseGet(() -> {
 
-        UserDetails details = UserDetails.builder()
-                .user(user) // @MapsId 때문에 user 세팅 필수
-                .birthDate(requestDto.getBirthDate())
-                .targetType(requestDto.getTargetType())
-                .marriageStatus(requestDto.getMarriageStatus())
-                .childCount(requestDto.getChildCount())
-                .houseOwn(requestDto.getHouseOwn())
-                .asset(requestDto.getAsset())
-                .income(requestDto.getIncome())
-                .build();
+                    // 1) 사용자 존재 여부 확인
+                    User user = userRepository.findById(userId)
+                            .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
 
-        UserDetails saved = userDetailsRepository.save(details);
-        return toResponseDto(saved);
+                    // 2) details에서 row가 없으면 생성 후 반환
+                    return userDetailsRepository.save(
+                            UserDetails.builder()
+                                    .user(user)
+                                    .build()
+                    );
+                });
+
+        return toResponseDto(details);
     }
 
 
-    // 추가정보 수정
+    // 추가정보 수정 -> PUT (null 포함 덮어쓰기)
     @Override
     @Transactional
     public UserDetailsResponseDto updateMyDetails(Long userId, UserDetailsRequestDto requestDto) {
         UserDetails details = userDetailsRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("추가정보가 존재하지 않습니다."));
+                .orElseGet(() -> {
+                    User user = userRepository.findById(userId)
+                            .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
 
-        // null 포함해서 그대로 덮어쓰기
+                    return userDetailsRepository.save(
+                            UserDetails.builder()
+                                    .user(user)
+                                    .build()
+                    );
+                });
+
         details.update(requestDto);
 
         return toResponseDto(details);

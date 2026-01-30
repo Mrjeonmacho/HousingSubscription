@@ -8,9 +8,6 @@ public interface UserDetailsService {
     // 추가정보 조회
     UserDetailsResponseDto getMyDetails(Long userId);
 
-    // 추가정보 입력
-    UserDetailsResponseDto createMyDetails(Long userId, UserDetailsRequestDto requestDto);
-
     // 추가정보 수정
     UserDetailsResponseDto updateMyDetails(Long userId, UserDetailsRequestDto requestDto);
 }

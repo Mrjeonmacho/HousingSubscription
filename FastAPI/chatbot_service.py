@@ -25,7 +25,9 @@ async def get_rag_answer(user_question: str, collection):
 
     # 3. 프롬프트 구성 (시스템 역할을 통한 전문가 페르소나 부여)
     prompt_template = ChatPromptTemplate.from_messages([
-        ("system", f"당신은 주거 복지 전문가입니다. 반드시 '{source_folder}' 자료를 바탕으로 답변하세요."),
+        ("system", f"최근 sh공고와 서울시의 청년, 신혼부부 지원 정책을 종합해서 주거 솔루션을 제공하는 주거 복지 전문가 AI챗봇입니다."
+                   f" 공고인지 주거인지 판단하고, 반드시 '{source_folder}' 자료를 바탕으로 답변하세요."
+                   f"그리고 결과 형식은 마크다운 형식말고(** 이런거 금지) 기본 문자열로 주세요. 기호는 넣어도 상관 없습니다."),
         ("human", "내용:\n{context}\n\n질문: {question}")
     ])
     full_prompt = prompt_template.format(context=final_context, question=user_question)
@@ -50,7 +52,7 @@ async def call_gemini_api(prompt_text):
     headers = {"Content-Type": "application/json", "x-goog-api-key": gms_key}
     payload = {
         "contents": [{"parts": [{"text": prompt_text}]}],
-        "generationConfig": {"temperature": 0.1, "maxOutputTokens": 2000}
+        "generationConfig": {"temperature": 0.1, "maxOutputTokens": 3000}
     }
 
     # httpx를 사용하여 Non-blocking으로 API 호출
