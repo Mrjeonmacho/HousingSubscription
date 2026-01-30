@@ -220,9 +220,6 @@ export default function MyPage() {
               <button className="w-full text-left px-4 py-3 bg-green-50 text-primary font-bold rounded-xl">
                 👤 내 정보 관리
               </button>
-              <button className="w-full text-left px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition-colors">
-                ❤️ 찜한 공고
-              </button>
             </nav>
             <div className="mt-8 pt-6 border-t border-gray-100">
               <button onClick={handleLogout} className="flex items-center gap-2 text-gray-400 hover:text-red-500 transition-colors">
