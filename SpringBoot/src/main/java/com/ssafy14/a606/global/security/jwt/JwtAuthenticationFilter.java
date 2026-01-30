@@ -40,10 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // 3. 토큰 유효성 검증 (유효하지 않으면 인증 없이 통과)
-        if (!jwtTokenProvider.validateToken(token)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        jwtTokenProvider.validateTokenOrThrow(token);
 
         // 이미 인증이 들어있으면 중복 세팅 방지
         if (SecurityContextHolder.getContext().getAuthentication() == null) {

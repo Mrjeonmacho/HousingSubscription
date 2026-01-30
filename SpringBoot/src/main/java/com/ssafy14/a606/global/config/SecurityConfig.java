@@ -1,6 +1,7 @@
 package com.ssafy14.a606.global.config;
 
 import com.ssafy14.a606.global.security.jwt.JwtAuthenticationFilter;
+import com.ssafy14.a606.global.security.jwt.JwtExceptionFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,7 @@ import java.util.Collections;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtExceptionFilter jwtExceptionFilter;
 
     // 회원가입, 로그인 구현중 -> 일단 permitAll()로 전체에 접근 권한 부여
     @Bean
@@ -40,6 +42,7 @@ public class SecurityConfig {
                                 "/api/users/email/**",
                                 "/api/chatbot/**" // 챗봇 엔드포인트 임시 허용
                         ).permitAll()
+                        .requestMatchers("/api/notices/favorites/**").authenticated()
                         .requestMatchers("/api/users/me/**").authenticated()
                         .requestMatchers("/api/auth/logout").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
@@ -48,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(jwtExceptionFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
