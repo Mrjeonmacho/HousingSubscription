@@ -13,18 +13,23 @@ type Props = {
 
 function SkeletonRow() {
   return (
-    <div className="rounded-[20px] bg-white p-6 shadow-sm border border-gray-100">
-      <div className="flex items-center gap-6">
-        <div className="h-24 w-32 rounded-2xl bg-gray-100 animate-pulse" />
-        <div className="flex-1 space-y-3">
-          <div className="h-7 w-3/4 rounded bg-gray-100 animate-pulse" />
-          <div className="flex items-center gap-4">
-            <div className="h-4 w-32 rounded bg-gray-100 animate-pulse" />
-            <div className="h-4 w-32 rounded bg-gray-100 animate-pulse" />
-          </div>
+    <div className="px-6 py-5 bg-white">
+      <div className="grid grid-cols-[84px_1fr_92px_64px] items-center">
+        <div className="flex items-center justify-center px-2">
+          <div className="h-5 w-12 rounded bg-gray-100 animate-pulse" />
         </div>
-        <div className="flex items-center gap-4">
-          <div className="h-6 w-12 rounded bg-gray-100 animate-pulse" />
+
+        <div className="min-w-0 px-4">
+          <div className="mb-2 h-5 w-20 rounded bg-gray-100 animate-pulse" />
+          <div className="mb-2 h-6 w-3/4 rounded bg-gray-100 animate-pulse" />
+          <div className="h-4 w-1/2 rounded bg-gray-100 animate-pulse" />
+        </div>
+
+        <div className="flex justify-center px-2">
+          <div className="h-5 w-12 rounded bg-gray-100 animate-pulse" />
+        </div>
+
+        <div className="flex justify-center px-2">
           <div className="h-6 w-6 rounded bg-gray-100 animate-pulse" />
         </div>
       </div>
@@ -40,30 +45,36 @@ export default function NoticeList({
   onOpen,
   onToggleFavorite,
 }: Props) {
+  if (loading) {
+    return (
+      <div className="divide-y divide-gray-100 border-b border-gray-100">
+        <SkeletonRow />
+        <SkeletonRow />
+        <SkeletonRow />
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="border-b border-gray-100 bg-white px-6 py-12 text-center text-gray-500">
+        표시할 공고가 없습니다.
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4">
-      {loading ? (
-        <>
-          <SkeletonRow />
-          <SkeletonRow />
-          <SkeletonRow />
-        </>
-      ) : items.length === 0 ? (
-        <div className="rounded-[20px] border border-gray-100 bg-white px-6 py-12 text-center text-gray-500 shadow-sm">
-          표시할 공고가 없습니다.
-        </div>
-      ) : (
-        items.map((n) => (
-          <NoticeListItem
-            key={n.id}
-            notice={n}
-            isFavorite={isFavorite(n.id)}
-            isPending={isPending(n.id)}
-            onOpen={onOpen}
-            onToggleFavorite={onToggleFavorite}
-          />
-        ))
-      )}
+    <div className="divide-y divide-gray-100 border-b border-gray-100">
+      {items.map((n) => (
+        <NoticeListItem
+          key={n.id}
+          notice={n}
+          isFavorite={isFavorite(n.id)}
+          isPending={isPending(n.id)}
+          onOpen={onOpen}
+          onToggleFavorite={onToggleFavorite}
+        />
+      ))}
     </div>
   );
 }

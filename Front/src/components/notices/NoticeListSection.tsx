@@ -1,4 +1,4 @@
-// Front\src\components\notices\NoticeListSection.tsx => 컨테이너(정렬/드롭다운/찜 상태/정렬된 배열 생성)
+// Front\src\components\notices\NoticeListSection.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AxiosError } from "axios";
 import type { Notice } from "../../pages/NoticesPage";
@@ -49,7 +49,23 @@ function dateToMs(dateStr: string | null, fallback: string) {
   return new Date(dateStr ?? fallback).getTime();
 }
 
-export default function NoticeListSection({ totalCount, items, loading, onChangedFavorites }: Props) {
+function ListHeader() {
+  return (
+    <div className="hidden md:grid grid-cols-[84px_1fr_92px_64px] items-center px-6 py-4 text-sm font-bold border-b border-gray-100 bg-gray-50">
+      <div className="text-center">진행상태</div>
+      <div className="text-center">공고명</div>
+      <div className="text-center">D-DAY</div>
+      <div className="text-center">관심공고</div>
+    </div>
+  );
+}
+
+export default function NoticeListSection({
+  totalCount,
+  items,
+  loading,
+  onChangedFavorites,
+}: Props) {
   const navigate = useNavigate();
 
   const [sortType, setSortType] = useState<SortType>("REG_DATE");
@@ -95,7 +111,9 @@ export default function NoticeListSection({ totalCount, items, loading, onChange
     setFavoriteMap((prev) => ({ ...prev, [noticeId]: !currently }));
 
     try {
-      const data = currently ? await removeFavoriteNotice(noticeId) : await addFavoriteNotice(noticeId);
+      const data = currently
+        ? await removeFavoriteNotice(noticeId)
+        : await addFavoriteNotice(noticeId);
 
       setFavoriteMap((prev) => ({
         ...prev,
@@ -159,10 +177,11 @@ export default function NoticeListSection({ totalCount, items, loading, onChange
   }, [items, sortType]);
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-4">
+      {/* 검색결과 헤더 + 정렬 */}
       <div className="flex items-end justify-between px-1">
         <h3 className="text-xl font-bold text-gray-900 leading-none">
-          전체 공고 리스트 <span className="text-gray-900">({totalCount})</span>
+          검색결과 <span className="text-gray-900">({totalCount})</span>
         </h3>
 
         <div className="relative" ref={dropdownRef}>
@@ -215,14 +234,21 @@ export default function NoticeListSection({ totalCount, items, loading, onChange
         </div>
       </div>
 
-      <NoticeList
-        loading={loading}
-        items={sortedItems}
-        isFavorite={(id) => Boolean(favoriteMap[id])}
-        isPending={(id) => Boolean(favoritePending[id])}
-        onOpen={(id) => navigate(`/notices/${id}`)}
-        onToggleFavorite={toggleFavorite}
-      />
+      {/* 테이블 컨테이너 (라인만) */}
+      <div className="border-t border-gray-200">
+        <ListHeader />
+
+        <div className="divide-y divide-gray-100">
+          <NoticeList
+            loading={loading}
+            items={sortedItems}
+            isFavorite={(id) => Boolean(favoriteMap[id])}
+            isPending={(id) => Boolean(favoritePending[id])}
+            onOpen={(id) => navigate(`/notices/${id}`)}
+            onToggleFavorite={toggleFavorite}
+          />
+        </div>
+      </div>
     </section>
   );
 }

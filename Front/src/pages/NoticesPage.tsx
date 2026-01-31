@@ -203,7 +203,7 @@ export default function NoticesPage() {
   }, [notices]);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 md:px-8 py-8 space-y-10">
+    <div className="mx-auto md:py-8 space-y-10">
       <NoticeHeroCarousel items={featured} />
 
       <BookmarkedNoticeSection items={favorites} onChangedFavorites={loadFavorites} />
