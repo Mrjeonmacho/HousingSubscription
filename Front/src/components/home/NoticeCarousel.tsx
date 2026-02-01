@@ -85,12 +85,44 @@ function SkeletonCard() {
   );
 }
 
+function useColumnsByBreakpoint() {
+  const calc = () => {
+    const w = window.innerWidth;
+
+    // Tailwind 기본 브레이크포인트:
+    // sm: 640, md: 768, lg: 1024, xl: 1280
+    if (w >= 1280) return 4;
+    if (w >= 1024) return 3;
+    if (w >= 768) return 2;
+    return 1;
+  };
+
+  // 초기값은 여기서 계산 (effect 안에서 setState 금지)
+  const [cols, setCols] = useState<number>(() => calc());
+
+  useEffect(() => {
+    const onResize = () => {
+      setCols(calc());
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
+
+  return cols;
+}
+
+
 export default function NoticeCarousel() {
   const navigate = useNavigate();
 
   const [items, setItems] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const cols = useColumnsByBreakpoint();
 
   useEffect(() => {
     let ignore = false;
@@ -125,24 +157,25 @@ export default function NoticeCarousel() {
 
     // 2) 마감 임박순 정렬 (endDate가 가까운 순)
     const sorted = [...openOnly].sort((a, b) => {
-      const aEnd = a.endDate ? new Date(a.endDate).getTime() : Number.POSITIVE_INFINITY;
-      const bEnd = b.endDate ? new Date(b.endDate).getTime() : Number.POSITIVE_INFINITY;
+      const aEnd = a.endDate
+        ? new Date(a.endDate).getTime()
+        : Number.POSITIVE_INFINITY;
+      const bEnd = b.endDate
+        ? new Date(b.endDate).getTime()
+        : Number.POSITIVE_INFINITY;
 
-      // endDate가 있으면 그 값이 작은(더 빨리 마감) 게 먼저
       if (aEnd !== bEnd) return aEnd - bEnd;
 
-      // endDate가 같거나 둘 다 없으면 등록일 최신순으로 보정
       const aReg = a.regDate ? new Date(a.regDate).getTime() : 0;
       const bReg = b.regDate ? new Date(b.regDate).getTime() : 0;
       if (bReg !== aReg) return bReg - aReg;
 
-      // 마지막 tie-breaker
       return (Number(b.id) || 0) - (Number(a.id) || 0);
     });
 
-    // 3) 최대 4개
-    return sorted.slice(0, 4);
-  }, [items]);
+    // 3) 화면 크기(cols)에 맞게 "한 줄만" 보여주기
+    return sorted.slice(0, cols);
+  }, [items, cols]);
 
   const goDetail = (id: number) => {
     navigate(`/notices/${id}`);
@@ -160,7 +193,7 @@ export default function NoticeCarousel() {
 
         <Link
           to="/notices"
-          className="group text-primary font-bold flex items-center gap-1 transition-colors"
+          className="cursor-pointer group text-primary font-bold flex items-center gap-1 transition-colors"
         >
           <span className="group-hover:underline">전체보기</span>
           <span className="material-symbols-outlined text-sm transform group-hover:translate-x-1 transition-transform">
@@ -175,14 +208,15 @@ export default function NoticeCarousel() {
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
+            <SkeletonCard />
           </>
         ) : errorMessage ? (
-          <div className="w-full px-2">
+          <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4 w-full px-2">
             <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
               <p className="text-sm text-gray-500">{errorMessage}</p>
               <Link
                 to="/notices"
-                className="inline-flex items-center gap-1 mt-4 text-primary font-bold"
+                className="cursor-pointer inline-flex items-center gap-1 mt-4 text-primary font-bold"
               >
                 공고 목록으로 이동
                 <span className="material-symbols-outlined text-sm">
@@ -192,14 +226,14 @@ export default function NoticeCarousel() {
             </div>
           </div>
         ) : latest.length === 0 ? (
-          <div className="w-full px-2">
+          <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4 w-full px-2">
             <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
               <p className="text-sm text-gray-500">
                 지금 신청 가능한 공고가 없습니다.
               </p>
               <Link
                 to="/notices"
-                className="inline-flex items-center gap-1 mt-4 text-primary font-bold"
+                className="cursor-pointer inline-flex items-center gap-1 mt-4 text-primary font-bold"
               >
                 전체 공고 보기
                 <span className="material-symbols-outlined text-sm">
@@ -216,7 +250,7 @@ export default function NoticeCarousel() {
             return (
               <div
                 key={item.id}
-                className="glass p-6 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-xl transition-all group"
+                className="glass p-6 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-xl transition-all group flex flex-col"
               >
                 <div className="flex justify-between items-start mb-4">
                   <span
@@ -229,31 +263,38 @@ export default function NoticeCarousel() {
                   <StatusBadge status={uiStatus} />
                 </div>
 
-                <h3 className="text-lg font-bold mb-4 line-clamp-2">
-                  {item.title}
-                </h3>
+                {/* 본문은 늘어나도 OK */}
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold mb-4 line-clamp-2">
+                    {item.title}
+                  </h3>
 
-                <div className="space-y-2 mb-6">
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <span className="material-symbols-outlined text-sm">
-                      calendar_month
-                    </span>
-                    <span>{formatPeriod(item.startDate, item.endDate)}</span>
+                  <div className="space-y-2 mb-6">
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <span className="material-symbols-outlined text-sm">
+                        calendar_month
+                      </span>
+                      <span>{formatPeriod(item.startDate, item.endDate)}</span>
+                    </div>
                   </div>
                 </div>
 
-                {isDisabled ? (
-                  <button className="w-full py-3 bg-gray-50 dark:bg-white/5 rounded-xl text-sm font-bold opacity-50 cursor-not-allowed">
-                    공고 종료
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => goDetail(item.id)}
-                    className="w-full py-3 bg-gray-50 dark:bg-white/5 rounded-xl text-sm font-bold group-hover:bg-primary group-hover:text-white transition-all"
-                  >
-                    공고 상세보기
-                  </button>
-                )}
+                {/* 버튼 하단 고정 */}
+                <div className="mt-auto">
+                  {isDisabled ? (
+                    <button className="w-full py-3 bg-gray-50 dark:bg-white/5 rounded-xl text-sm font-bold opacity-50 cursor-not-allowed">
+                      공고 종료
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => goDetail(item.id)}
+                      className="cursor-pointer w-full py-3 bg-gray-50 dark:bg-white/5 rounded-xl text-sm font-bold group-hover:bg-primary group-hover:text-white transition-all"
+                    >
+                      공고 상세보기
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })

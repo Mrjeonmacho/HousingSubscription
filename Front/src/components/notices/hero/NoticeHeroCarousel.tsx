@@ -85,7 +85,7 @@ export default function NoticeHeroCarousel({
           <button
             type="button"
             disabled
-            className="rounded-full bg-white/50 px-8 py-4 text-base font-semibold text-black/70 cursor-not-allowed"
+            className="cursor-not-allowed rounded-full bg-white/50 px-8 py-4 text-base font-semibold text-black/70"
           >
             공고 자세히 보기 →
           </button>
@@ -133,7 +133,7 @@ export default function NoticeHeroCarousel({
           <button
             type="button"
             onClick={() => navigate(`/notices/${current.id}`)}
-            className="inline-flex items-center gap-3 rounded-full bg-white px-8 py-4 text-base font-semibold text-black/80 hover:bg-white/90 transition-colors"
+            className="cursor-pointer inline-flex items-center gap-3 rounded-full bg-white px-8 py-4 text-base font-semibold text-black/80 hover:bg-white/90 transition-colors"
           >
             공고 자세히 보기 <span aria-hidden>→</span>
           </button>
@@ -146,7 +146,7 @@ export default function NoticeHeroCarousel({
             type="button"
             onClick={prev}
             aria-label="이전 공고"
-            className="absolute left-4 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full border border-white/20 bg-white/10 hover:bg-white/15 transition-colors"
+            className="cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full border border-white/20 bg-white/10 hover:bg-white/15 transition-colors"
           >
             ‹
           </button>
@@ -154,7 +154,7 @@ export default function NoticeHeroCarousel({
             type="button"
             onClick={next}
             aria-label="다음 공고"
-            className="absolute right-4 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full border border-white/20 bg-white/10 hover:bg-white/15 transition-colors"
+            className="cursor-pointer absolute right-4 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full border border-white/20 bg-white/10 hover:bg-white/15 transition-colors"
           >
             ›
           </button>
@@ -171,7 +171,7 @@ export default function NoticeHeroCarousel({
                 type="button"
                 onClick={() => go(i)}
                 aria-label={`슬라이드 ${i + 1}`}
-                className={`h-2.5 rounded-full transition-all ${
+                className={`cursor-pointer h-2.5 rounded-full transition-all ${
                   active ? "w-10 bg-white/90" : "w-2.5 bg-white/25"
                 }`}
               />
