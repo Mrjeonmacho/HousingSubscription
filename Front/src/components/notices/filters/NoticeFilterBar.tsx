@@ -4,7 +4,7 @@ import {
   statusLabel,
   type NoticeCategory,
   type NoticeStatus,
-} from "../../utils/noticeFormat";
+} from "../../../utils/noticeFormat";
 
 import NoticeFilterCollapsed from "./NoticeFilterCollapsed";
 import NoticeFilterExpanded from "./NoticeFilterExpanded";

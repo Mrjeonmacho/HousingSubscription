@@ -1,9 +1,8 @@
-// Front/src/components/notices/NoticeHeroCarousel.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import type { Notice } from "../../pages/NoticesPage";
-import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
+import type { Notice } from "../../../pages/NoticesPage";
+import { categoryLabel, statusLabel } from "../../../utils/noticeFormat";
 
 type NoticeHeroCarouselProps = {
   items: Notice[];

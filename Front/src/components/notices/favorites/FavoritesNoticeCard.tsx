@@ -1,5 +1,5 @@
-import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
-import type { Notice } from "../../pages/NoticesPage";
+import { categoryLabel, statusLabel } from "../../../utils/noticeFormat";
+import type { Notice } from "../../../pages/NoticesPage";
 
 type Props = {
   notice: Notice;

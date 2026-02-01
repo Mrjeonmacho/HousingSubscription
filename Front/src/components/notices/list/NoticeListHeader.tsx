@@ -1,7 +1,6 @@
-// Front/src/components/notices/NoticeListHeader.tsx  => 검색결과, 전체 공고
+// Front/src/components/notices/list/NoticeListHeader.tsx  => 검색결과, 전체 공고
 import { useEffect, useRef, useState } from "react";
-
-type SortType = "REG_DATE" | "END_DATE";
+import type { SortType } from "./NoticeListLayout";
 
 type Props = {
   totalCount: number;

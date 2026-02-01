@@ -1,5 +1,5 @@
-// Front\src\components\notices\NoticeList.tsx => 리스트(로딩/빈 상태/맵)
-import type { Notice } from "../../pages/NoticesPage";
+// Front/src/components/notices/NoticeList.tsx => 리스트(로딩/빈 상태/맵)
+import type { Notice } from "../../../pages/NoticesPage";
 import NoticeListItem from "./NoticeListItem";
 
 type Props = {

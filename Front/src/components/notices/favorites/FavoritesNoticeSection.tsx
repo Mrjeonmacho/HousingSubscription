@@ -1,10 +1,9 @@
-// Front/src/components/notices/FavoritesNoticeSection.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 
-import type { Notice } from "../../pages/NoticesPage";
-import { removeFavoriteNotice } from "../../api/NoticeApi";
+import type { Notice } from "../../../pages/NoticesPage";
+import { removeFavoriteNotice } from "../../../api/NoticeApi";
 import FavoritesNoticeCard from "./FavoritesNoticeCard";
 
 type Props = {

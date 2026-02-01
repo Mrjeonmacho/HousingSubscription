@@ -1,5 +1,3 @@
-// Front/src/components/notices/FilterRowCollapsed.tsx
-
 function MaterialIcon({
   name,
   className,

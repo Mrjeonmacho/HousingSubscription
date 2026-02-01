@@ -1,13 +1,18 @@
 // Front/src/pages/NoticesPage.tsx
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { AxiosError } from "axios";
-import { getFavoriteNotices, getNoticeList, type FavoriteNotice } from "../api/NoticeApi";
+import {
+  getFavoriteNotices,
+  getNoticeList,
+  type FavoriteNotice,
+} from "../api/NoticeApi";
 
-import NoticeHeroCarousel from "../components/notices/NoticeHeroCarousel";
-import BookmarkedNoticeSection from "../components/notices/FavoritesNoticeSection";
-import NoticeFilterBar from "../components/notices/NoticeFilterBar";
-import NoticeListSection from "../components/notices/NoticeListSection";
+import NoticeHeroCarousel from "../components/notices/hero/NoticeHeroCarousel";
+import FavoritesNoticeSection from "../components/notices/favorites/FavoritesNoticeSection";
 import Pagination from "../components/notices/Pagination";
+import NoticeListLayout, {
+  type SortType,
+} from "../components/notices/list/NoticeListLayout";
 
 type NoticeCategory =
   | "YOUTH_RESIDENCE"
@@ -68,9 +73,11 @@ function toMs(dateStr: string | null) {
 export default function NoticesPage() {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
 
+  // ✅ 정렬 상태는 Header(sortType) 기준으로만 사용
+  const [sortType, setSortType] = useState<SortType>("REG_DATE");
+
   const [notices, setNotices] = useState<Notice[]>([]);
   const [favorites, setFavorites] = useState<Notice[]>([]);
-
   const [favoritesVersion, setFavoritesVersion] = useState(0);
 
   const [loading, setLoading] = useState(true);
@@ -92,21 +99,20 @@ export default function NoticesPage() {
     url: f.url ?? null,
   });
 
-  const loadFavorites = useCallback(
-    async (ignore?: boolean): Promise<void> => {
-      try {
-        const favList = await getFavoriteNotices();
-        if (ignore) return;
-        setFavorites((favList ?? []).map(mapFavoriteToNotice));
-        setFavoritesVersion((v) => v + 1);
-      } catch {
-        if (ignore) return;
-        setFavorites([]);
-        setFavoritesVersion((v) => v + 1);
-      }
-    },
-    []
-  );
+  const loadFavorites = useCallback(async (ignore?: boolean): Promise<void> => {
+    try {
+      const favList = await getFavoriteNotices();
+      if (ignore) return;
+
+      setFavorites((favList ?? []).map(mapFavoriteToNotice));
+      setFavoritesVersion((v) => v + 1);
+    } catch {
+      if (ignore) return;
+
+      setFavorites([]);
+      setFavoritesVersion((v) => v + 1);
+    }
+  }, []);
 
   // 목록 로딩
   useEffect(() => {
@@ -143,20 +149,13 @@ export default function NoticesPage() {
     };
   }, [loadFavorites]);
 
-  const categoryKey = useMemo(
-    () => JSON.stringify(filters.category),
-    [filters.category]
-  );
+  const categoryKey = useMemo(() => JSON.stringify(filters.category), [filters.category]);
+  const statusKey = useMemo(() => JSON.stringify(filters.status), [filters.status]);
 
-  const statusKey = useMemo(
-    () => JSON.stringify(filters.status),
-    [filters.status]
-  );
-
-  // 필터 변경 시 1페이지로
+  // 필터/정렬 변경 시 1페이지로
   useEffect(() => {
     setPage(1);
-  }, [filters.keyword, categoryKey, statusKey, filters.sort]);
+  }, [filters.keyword, categoryKey, statusKey, sortType]);
 
   // 1) FE 필터링
   const filtered = useMemo(() => {
@@ -164,7 +163,8 @@ export default function NoticesPage() {
 
     return (notices ?? []).filter((n) => {
       const matchKeyword =
-        keyword.length === 0 || (n.title ?? "").toLowerCase().includes(keyword);
+        keyword.length === 0 ||
+        (n.title ?? "").toLowerCase().includes(keyword);
 
       const matchCategory =
         filters.category.length === 0 ||
@@ -178,24 +178,19 @@ export default function NoticesPage() {
     });
   }, [notices, filters.keyword, filters.category, filters.status]);
 
-  // 2) FE 정렬 (filters.sort 반영)
+  // 2) FE 정렬: sortType 기준(헤더 드롭다운)
   const sorted = useMemo(() => {
     const copied = [...filtered];
 
-    if (filters.sort === "LATEST") {
+    if (sortType === "REG_DATE") {
       copied.sort((a, b) => toMs(b.regDate) - toMs(a.regDate));
       return copied;
     }
 
-    if (filters.sort === "DEADLINE") {
-      copied.sort((a, b) => toMs(a.endDate) - toMs(b.endDate));
-      return copied;
-    }
-
-    // POPULAR: 백엔드 인기 지표 없으니 일단 최신순으로 fallback
-    copied.sort((a, b) => toMs(b.regDate) - toMs(a.regDate));
+    // END_DATE
+    copied.sort((a, b) => toMs(a.endDate) - toMs(b.endDate));
     return copied;
-  }, [filtered, filters.sort]);
+  }, [filtered, sortType]);
 
   const totalCount = sorted.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -219,15 +214,17 @@ export default function NoticesPage() {
     <div className="mx-auto md:py-8 space-y-10">
       <NoticeHeroCarousel items={featured} />
 
-      <BookmarkedNoticeSection items={favorites} onChangedFavorites={loadFavorites} />
+      <FavoritesNoticeSection items={favorites} onChangedFavorites={loadFavorites} />
 
-      <NoticeFilterBar value={filters} onChange={setFilters} />
-
-      <NoticeListSection
+      <NoticeListLayout
         totalCount={totalCount}
         items={paged}
         loading={loading}
         errorMessage={errorMessage}
+        filters={filters}
+        onChangeFilters={setFilters}
+        sortType={sortType}
+        onChangeSortType={setSortType}
         onChangedFavorites={loadFavorites}
         favoritesVersion={favoritesVersion}
       />
