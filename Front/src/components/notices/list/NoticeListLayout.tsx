@@ -1,4 +1,4 @@
-// Front/src/components/notices/list/NoticeListLayout.tsx => 공고 전체 레이아웃
+// Front/src/components/notices/list/NoticeListLayout.tsx
 import NoticeListHeader from "./NoticeListHeader";
 import NoticeFilterBar from "../filters/NoticeFilterBar";
 import NoticeListSection from "./NoticeListSection";
@@ -12,17 +12,14 @@ type Props = {
   loading: boolean;
   errorMessage: string | null;
 
-  // filters는 NoticeFilterBar가 기대하는 타입 그대로 사용(현재 페이지 Filters 유지)
   filters: {
     keyword: string;
     category: string[];
     status: string[];
-    // sort는 여기서 안 씀(정렬은 sortType으로)
     sort: "LATEST" | "DEADLINE" | "POPULAR";
   };
   onChangeFilters: (next: Props["filters"]) => void;
 
-  // 정렬은 page에서 내려받음
   sortType: SortType;
   onChangeSortType: (next: SortType) => void;
 
@@ -30,6 +27,9 @@ type Props = {
   favoritesVersion?: number;
 
   className?: string;
+
+  // 필터 자동 펼침
+  defaultExpandFilters?: boolean;
 };
 
 export default function NoticeListLayout({
@@ -44,6 +44,7 @@ export default function NoticeListLayout({
   onChangedFavorites,
   favoritesVersion,
   className,
+  defaultExpandFilters = false,
 }: Props) {
   return (
     <section className={["space-y-6", className ?? ""].join(" ")}>
@@ -53,7 +54,11 @@ export default function NoticeListLayout({
         onChangeSort={onChangeSortType}
       />
 
-      <NoticeFilterBar value={filters} onChange={onChangeFilters} />
+      <NoticeFilterBar
+        value={filters}
+        onChange={onChangeFilters}
+        defaultExpanded={defaultExpandFilters}
+      />
 
       <NoticeListSection
         items={items}

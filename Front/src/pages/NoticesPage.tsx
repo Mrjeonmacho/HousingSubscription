@@ -1,5 +1,7 @@
 // Front/src/pages/NoticesPage.tsx
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+
 import { AxiosError } from "axios";
 import {
   getFavoriteNotices,
@@ -10,9 +12,7 @@ import {
 import NoticeHeroCarousel from "../components/notices/hero/NoticeHeroCarousel";
 import FavoritesNoticeSection from "../components/notices/favorites/FavoritesNoticeSection";
 import Pagination from "../components/notices/Pagination";
-import NoticeListLayout, {
-  type SortType,
-} from "../components/notices/list/NoticeListLayout";
+import NoticeListLayout, { type SortType } from "../components/notices/list/NoticeListLayout";
 
 type NoticeCategory =
   | "YOUTH_RESIDENCE"
@@ -70,8 +70,41 @@ function toMs(dateStr: string | null) {
   return Number.isNaN(t) ? 0 : t;
 }
 
+type NoticePresetState = {
+  preselectedCategories?: string[];
+};
+
 export default function NoticesPage() {
-  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // ✅ 이동 시 전달된 preset을 "처음 렌더에서" 읽기
+  const presetCategories = useMemo(() => {
+    const state = location.state as NoticePresetState | null;
+    const preset = state?.preselectedCategories;
+    if (!Array.isArray(preset) || preset.length === 0) return null;
+    return Array.from(new Set(preset));
+  }, [location.state]);
+
+  // ✅ 필터 초기값에 preset 반영 (처음부터 체크된 상태)
+  const [filters, setFilters] = useState<Filters>(() => {
+    if (!presetCategories) return DEFAULT_FILTERS;
+    return {
+      ...DEFAULT_FILTERS,
+      category: presetCategories,
+      keyword: "", // 원하시면 유지로 바꿔드릴게요
+      status: [],  // 원하시면 유지로 바꿔드릴게요
+    };
+  });
+
+  // ✅ 처음부터 펼친 상태로 시작
+  const [defaultExpandFilters] = useState<boolean>(() => !!presetCategories);
+
+  // ✅ state 재적용 방지용으로 한 번만 지움
+  useEffect(() => {
+    if (!presetCategories) return;
+    navigate(location.pathname, { replace: true, state: null });
+  }, [presetCategories, navigate, location.pathname]);
 
   // ✅ 정렬 상태는 Header(sortType) 기준으로만 사용
   const [sortType, setSortType] = useState<SortType>("REG_DATE");
@@ -187,7 +220,6 @@ export default function NoticesPage() {
       return copied;
     }
 
-    // END_DATE
     copied.sort((a, b) => toMs(a.endDate) - toMs(b.endDate));
     return copied;
   }, [filtered, sortType]);
@@ -200,7 +232,6 @@ export default function NoticesPage() {
     return sorted.slice(start, start + pageSize);
   }, [sorted, page]);
 
-  // Hero: 접수중(RECEIVING) 우선 + 최대 3개
   const featured = useMemo(() => {
     const list = [...(notices ?? [])].sort((a, b) => {
       const aRec = a.status === "RECEIVING" ? 0 : 1;
@@ -227,6 +258,7 @@ export default function NoticesPage() {
         onChangeSortType={setSortType}
         onChangedFavorites={loadFavorites}
         favoritesVersion={favoritesVersion}
+        defaultExpandFilters={defaultExpandFilters}
       />
 
       <Pagination page={page} totalPages={totalPages} onChangePage={setPage} />

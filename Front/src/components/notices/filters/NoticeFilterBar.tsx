@@ -1,3 +1,4 @@
+// Front/src/components/notices/filters/NoticeFilterBar.tsx
 import { useMemo, useState } from "react";
 import {
   categoryLabel,
@@ -18,8 +19,8 @@ type SortKey = "LATEST" | "DEADLINE" | "POPULAR";
 
 export type Filters = {
   keyword: string;
-  category: string[]; // 멀티 선택 (비어있으면 전체)
-  status: string[]; // 멀티 선택 (비어있으면 전체)
+  category: string[];
+  status: string[];
   sort: SortKey;
 };
 
@@ -32,6 +33,9 @@ type NoticeFilterBarProps = {
 
   placeholder?: string;
   className?: string;
+
+  // 처음 렌더링 시 펼칠지 여부(또는 true로 들어오면 펼치기)
+  defaultExpanded?: boolean;
 };
 
 function MaterialIcon({
@@ -62,8 +66,10 @@ export default function NoticeFilterBar({
   statusOptions,
   placeholder = "검색어를 입력하세요",
   className,
+  defaultExpanded = false,
 }: NoticeFilterBarProps) {
-  const [expanded, setExpanded] = useState(false);
+  // 초기값에 반영
+  const [expanded, setExpanded] = useState(() => defaultExpanded);
   const [localKeyword, setLocalKeyword] = useState(value.keyword);
 
   const defaultCategoryOptions = useMemo<Option[]>(() => {
@@ -114,7 +120,6 @@ export default function NoticeFilterBar({
         className ?? "",
       ].join(" ")}
     >
-      {/* 상단: 요약 필터 + 검색 */}
       <div className="flex flex-col lg:flex-row gap-3">
         <NoticeFilterCollapsed
           expanded={expanded}
@@ -123,7 +128,6 @@ export default function NoticeFilterBar({
 
         <div className="hidden lg:block w-px bg-gray-200 my-1 mx-1" />
 
-        {/* Search Input */}
         <div className="relative flex-1 flex items-center border border-gray-200 rounded-lg px-3 h-11 bg-gray-50">
           <MaterialIcon name="search" className="mr-2 text-gray-400" />
           <input
@@ -153,7 +157,6 @@ export default function NoticeFilterBar({
         </button>
       </div>
 
-      {/* 펼쳤을 때: 상세 패널 + 초기화 */}
       {expanded ? (
         <div className="mt-4">
           <NoticeFilterExpanded

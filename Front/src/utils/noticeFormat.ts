@@ -17,20 +17,28 @@ export type NoticeStatus =
 /**
  * 공고 카테고리
  */
+// recommendedCategories에 내려오는 값까지 커버하도록 보강
 export function categoryLabel(category: string | null | undefined) {
   switch (category) {
     case "YOUTH_RESIDENCE":
+    case "YOUTH_HOUSING":
       return "청년안심주택";
+
     case "HAPPY_HOUSE":
       return "행복주택";
+
     case "NATIONAL_RENTAL":
       return "국민임대";
+
     case "PUBLIC_RENTAL":
       return "공공임대";
+
     case "LONG_TERM_RENTAL":
       return "장기전세";
+
     case "SALE_HOUSE":
       return "분양주택";
+
     default:
       return "-";
   }
