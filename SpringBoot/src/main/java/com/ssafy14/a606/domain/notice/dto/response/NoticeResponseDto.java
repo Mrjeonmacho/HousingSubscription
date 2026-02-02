@@ -22,7 +22,7 @@ public class NoticeResponseDto {
     private String pdfUrl;
     private List<HomeDto> homes;
 
-    public NoticeResponseDto(Notice notice) {
+    public  NoticeResponseDto(Notice notice) {
         this.id = notice.getId();
         this.noticeNo = notice.getNoticeNo();
         this.title = notice.getTitle();
