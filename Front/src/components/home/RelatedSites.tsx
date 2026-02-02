@@ -37,8 +37,9 @@ export default function RelatedSites() {
     setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
   };
 
+  // 수정: mt-12 제거 (HomePage에서 mt-24로 제어), 상단 여백 제거하여 깔끔하게 변경
   return (
-    <section className="bg-gray-50 dark:bg-white/5 py-10 px-4 mt-12 rounded-[2.5rem] overflow-hidden">
+    <section className="bg-gray-50 dark:bg-white/5 py-10 px-4 rounded-[1rem] overflow-hidden">
       <div className="max-w-7xl mx-auto">
         
         <div className="overflow-hidden mb-8 -mx-2"> 
@@ -53,7 +54,7 @@ export default function RelatedSites() {
               >
                 <a
                   href={site.url}
-                  className="flex items-center justify-between bg-white dark:bg-white/10 px-6 py-4 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-gray-100 dark:border-white/5 group h-full"
+                  className="flex items-center justify-between bg-white dark:bg-white/10 px-6 py-4 rounded-xl transition-shadow cursor-pointer border border-gray-100 dark:border-white/5 group h-full"
                 >
                   <span className="font-bold text-gray-700 dark:text-gray-200 group-hover:text-primary transition-colors">
                     {site.title}

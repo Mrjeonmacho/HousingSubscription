@@ -1,23 +1,23 @@
 import HeroSearch from "../components/home/HeroSearch";
-// import QuickCards from "../components/home/QuickCards";
 import NoticeCarousel from "../components/home/NoticeCarousel";
-import LoginCard from "../components/home/LoginCard";
 import RelatedSites from "../components/home/RelatedSites";
 
 export default function HomePage() {
   return (
-    <>
-      <section className="flex flex-row lg:flex-row items-center justify-center gap-8 max-w-7xl mx-auto py-8">
-        <div className="flex-1 w-full">
-          <HeroSearch />
-        </div>
-        <div className="flex items-center w-auto">
-          <LoginCard />
-        </div>
+    <main className="w-full max-w-7xl mx-auto px-4 pb-20 flex flex-col gap-30">
+      
+      <section className="flex justify-center pt-16"> 
+        <HeroSearch />
       </section>
-      {/* <QuickCards /> */}
-      <NoticeCarousel />
-      <RelatedSites />
-    </>
+
+      <section> 
+        <NoticeCarousel />
+      </section>
+
+      <section> 
+        <RelatedSites />
+      </section>
+
+    </main>
   );
 }
