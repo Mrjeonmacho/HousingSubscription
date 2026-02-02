@@ -1,4 +1,3 @@
-// Front/src/components/home/HeroSearch.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -14,19 +13,20 @@ export default function HeroSearch() {
   };
 
   return (
-    <section className="flex flex-col items-center justify-center text-left pt-8 pb-12 max-w-4xl w-full">
-      <div className="mb-8 flex flex-col items-start">
-        <div className="mb-6 flex items-center">
+    <section className="flex flex-col items-center justify-center text-left max-w-4xl w-full">
+      <div className="mb-10 flex flex-col items-center text-center">
+        
+        <div className="mb-20 mt-10 flex items-center">
           <div className="relative w-14 h-14">
             {/* 바깥 글로우 */}
-            <div className="absolute inset-0 rounded-full bg-primary/40 blur-xl" />
+            <div className="absolute -inset-6 rounded-full bg-primary/20 blur-2xl bg-primary/30" />
           </div>
         </div>
 
-        <h1 className="text-4xl md:text-5xl font-black mb-4 leading-tight">
+        <h1 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
           안녕하세요, <span className="text-primary">서울집사</span>입니다.
           <br />
-          <span className="block mt-1">무엇을 도와드릴까요?</span>
+          <span className="block mt-2">무엇을 도와드릴까요?</span>
         </h1>
 
         <p className="text-lg text-gray-500 dark:text-gray-400">
