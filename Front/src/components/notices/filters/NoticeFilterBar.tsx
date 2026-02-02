@@ -138,7 +138,11 @@ export default function NoticeFilterBar({
               if (e.key === "Enter") commitKeyword();
             }}
             placeholder={placeholder}
-            className="w-full bg-transparent outline-none text-gray-900 placeholder:text-gray-400 text-sm"
+            className={[
+              "w-full bg-transparent outline-none text-gray-900 placeholder:text-gray-400 text-sm",
+              "h-11 leading-[44px]",
+              "py-0",
+            ].join(" ")}
             aria-label="공지 검색"
           />
         </div>

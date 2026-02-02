@@ -6,7 +6,7 @@ export default function HomePage() {
   return (
     <main className="w-full max-w-7xl mx-auto px-4 pb-20 flex flex-col gap-30">
       
-      <section className="flex justify-center pt-16"> 
+      <section className="flex justify-center pt-4"> 
         <HeroSearch />
       </section>
 
