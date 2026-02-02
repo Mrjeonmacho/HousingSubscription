@@ -1,31 +1,21 @@
-// Front/src/pages/NoticeDetailPage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AxiosError } from "axios";
-
 import type { Notice } from "./NoticesPage";
 import { getNoticeDetail } from "../api/NoticeApi";
 
 import NoticeDetailHeader from "../components/noticeDetail/NoticeDetailHeader";
 import NoticeOverviewCard from "../components/noticeDetail/NoticeOverviewCard";
-import NoticeAiHelpCard from "../components/noticeDetail/NoticeAiHelpCard";
 import NoticeQuickLinksCard from "../components/noticeDetail/NoticeQuickLinksCard";
+import NoticeChatbotPanel from "../components/noticeDetail/NoticeChatbotPanel";
 
-type ApiErrorResponse = {
-  code?: string;
-  message?: string;
-};
-
+// D-Day 계산 유틸
 function calcDDay(endDate: string | null) {
   if (!endDate) return null;
   const today = new Date();
   const end = new Date(endDate);
   today.setHours(0, 0, 0, 0);
   end.setHours(0, 0, 0, 0);
-  const diff = Math.ceil(
-    (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-  );
-  return diff;
+  return Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export default function NoticeDetailPage() {
@@ -34,121 +24,102 @@ export default function NoticeDetailPage() {
 
   const [notice, setNotice] = useState<Notice | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const parsedId = useMemo(() => {
     const n = Number(noticeId);
     return Number.isFinite(n) ? n : NaN;
   }, [noticeId]);
 
-  const dday = useMemo(() => {
-    if (!notice) return null;
-    return calcDDay(notice.endDate);
-  }, [notice]);
+  const dday = useMemo(() => (notice ? calcDDay(notice.endDate) : null), [notice]);
 
+  // 데이터 로딩
   useEffect(() => {
     if (!noticeId || Number.isNaN(parsedId)) {
       setLoading(false);
-      setErrorMessage("잘못된 요청입니다. ID는 숫자여야 합니다.");
       return;
     }
-
     let ignore = false;
-
     (async () => {
       try {
         setLoading(true);
-        setErrorMessage(null);
-
         const data = await getNoticeDetail(parsedId);
-        if (ignore) return;
 
-        setNotice(data);
+        if (!ignore) setNotice(data);
       } catch (e) {
-        if (ignore) return;
-
-        const err = e as AxiosError<ApiErrorResponse>;
-        const msg =
-          err.response?.data?.message ??
-          (err.response?.status === 404
-            ? "해당 공고를 찾을 수 없습니다."
-            : "내부 서버 오류입니다.");
-
-        setErrorMessage(msg);
-        setNotice(null);
+        console.error(e);
       } finally {
         if (!ignore) setLoading(false);
       }
     })();
-
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, [noticeId, parsedId]);
 
   const onBack = () => navigate("/notices");
 
   const onShare = async () => {
     const url = window.location.href;
-
     try {
       if (navigator.share) {
-        await navigator.share({
-          title: notice?.title ?? "공고 상세",
-          url,
-        });
+        await navigator.share({ title: notice?.title ?? "공고 공유", url });
         return;
       }
+      throw new Error("No share API");
     } catch {
-      // 공유 취소 등은 무시
-    }
-
-    try {
-      await navigator.clipboard.writeText(url);
-      alert("링크를 복사했습니다.");
-    } catch {
-      alert("링크 복사에 실패했습니다.");
+      try {
+        await navigator.clipboard.writeText(url);
+        alert("링크가 복사되었습니다!");
+      } catch {
+        alert("링크 복사에 실패했습니다.");
+      }
     }
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 md:px-6 py-8">
-      <NoticeDetailHeader
-        noticeId={notice?.id ?? null}
-        title={notice?.title ?? "공고 상세"}
-        status={notice?.status ?? null}
-        dday={dday}
-        loading={loading}
-        onBack={onBack}
-        onShare={onShare}
-      />
-      {errorMessage && (
-        <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
-          {errorMessage}
-        </div>
-      )}
+    <div className="mx-auto max-w-7xl px-4 pb-8 md:px-6">
+      {/* 뒤로가기 버튼 */}
+      <div className="mb-6 mt-4">
+        <button
+          onClick={onBack}
+          className="group flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+        >
+          <span className="material-symbols-outlined text-[20px] transition-transform group-hover:-translate-x-1">
+            arrow_back
+          </span>
+          공고 목록으로 돌아가기
+        </button>
+      </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
+      {/* 헤더 */}
+      <div className="mb-8 border-b border-gray-100 pb-8">
+        <NoticeDetailHeader
+          noticeId={notice?.id ?? null}
+          title={notice?.title ?? "공고 로딩중..."}
+          status={notice?.status ?? null}
+          dday={dday}
+          loading={loading}
+          onShare={onShare}
+        />
+      </div>
+
+      {/* 레이아웃 */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+        
+        {/* 상세 정보 & 링크 */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
           <NoticeOverviewCard loading={loading} notice={notice} />
-          <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-            <div className="h-[420px] w-full bg-gray-50 flex items-center justify-center text-sm text-gray-400">
-              지도 영역 (추후 네이버/카카오 지도 컴포넌트로 교체)
-            </div>
-          </section>
-        </div>
 
-        <div className="space-y-6">
           <NoticeQuickLinksCard
             loading={loading}
             pdf={notice?.pdfUrl ?? null}
-            url={notice?.url ?? null}
+            url={notice?.url ?? null} 
           />
+        </div>
 
-          <NoticeAiHelpCard
-            noticeId={notice?.id ?? null}
-            noticeTitle={notice?.title ?? null}
-            disabled={loading || Boolean(errorMessage)}
+        {/* AI 챗봇 */}
+        <div className="lg:col-span-2 sticky top-6 h-[calc(100vh-100px)] min-h-[600px] overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+          <NoticeChatbotPanel 
+            noticeTitle={notice?.title} 
+            noticeId={notice?.id}
           />
         </div>
       </div>

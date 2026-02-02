@@ -1,4 +1,3 @@
-// Front/src/components/noticeDetail/NoticeOverviewCard.tsx
 import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
 import type { Notice } from "../../pages/NoticesPage";
 
@@ -7,114 +6,77 @@ type Props = {
   notice: Notice | null;
 };
 
-function MaterialIcon({
-  name,
-  className,
-}: {
-  name: string;
-  className?: string;
-}) {
-  return (
-    <span
-      className={`material-symbols-outlined ${className ?? ""}`}
-      style={{
-        fontVariationSettings: "'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24",
-      }}
-    >
-      {name}
-    </span>
-  );
-}
+function getStatusColor(status: string | null) {
+  if (!status) return "text-gray-400";
+  const s = status as string;
 
-function SkeletonCard() {
-  return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-      <div className="mb-5 flex items-center gap-2">
-        <span className="inline-block h-5 w-1 rounded bg-gray-200 animate-pulse" />
-        <div className="h-6 w-32 rounded bg-gray-100 animate-pulse" />
-      </div>
+  // 접수중 -> #F97316 (주황색)
+  if (s === "RECEIVING" || s === "OPEN" || s === "RECRUITING") {
+    return "text-[#F97316]";
+  }
+  
+  // 마감임박 -> #FF5A5A (빨간색)
+  if (s === "DEADLINE_APPROACHING") {
+    return "text-[#FF5A5A]";
+  }
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="space-y-5">
-          <div>
-            <div className="h-3 w-20 rounded bg-gray-100 animate-pulse" />
-            <div className="mt-2 h-5 w-40 rounded bg-gray-100 animate-pulse" />
-          </div>
-          <div>
-            <div className="h-3 w-16 rounded bg-gray-100 animate-pulse" />
-            <div className="mt-2 h-5 w-24 rounded bg-gray-100 animate-pulse" />
-          </div>
-        </div>
+  // 예정 -> #8B95A1 (블루그레이)
+  if (s === "TO_BE_ANNOUNCED" || s === "SCHEDULED") {
+    return "text-[#8B95A1]";
+  }
 
-        <div className="space-y-5">
-          <div>
-            <div className="h-3 w-16 rounded bg-gray-100 animate-pulse" />
-            <div className="mt-2 h-5 w-28 rounded bg-gray-100 animate-pulse" />
-          </div>
-          <div>
-            <div className="h-3 w-20 rounded bg-gray-100 animate-pulse" />
-            <div className="mt-2 h-5 w-20 rounded bg-gray-100 animate-pulse" />
-          </div>
-        </div>
-      </div>
+  // 마감 / 종료 -> Gray
+  if (s === "COMPLETED" || s === "CLOSED" || s === "ENDED") {
+    return "text-gray-400";
+  }
 
-      <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50 p-5">
-        <div className="mb-2 h-4 w-24 rounded bg-gray-100 animate-pulse" />
-        <div className="h-4 w-60 rounded bg-gray-100 animate-pulse" />
-      </div>
-    </section>
-  );
+  return "text-gray-400";
 }
 
 export default function NoticeOverviewCard({ loading, notice }: Props) {
-  if (loading) return <SkeletonCard />;
-  if (!notice) return null;
+  if (loading || !notice) return <div className="h-64 rounded-3xl bg-gray-50 animate-pulse" />;
+
+  // 현재 상태에 맞는 색상 클래스 가져오기
+  const statusColorClass = getStatusColor(notice.status);
 
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-      <div className="mb-5 flex items-center gap-2">
-        <span className="inline-block h-5 w-1 rounded bg-green-400" />
+    <section className="rounded-3xl bg-white p-6 shadow-sm border border-gray-100">
+      {/* 섹션 제목 */}
+      <div className="mb-6 flex items-center gap-3">
+        <div className="h-5 w-1.5 rounded-full bg-[#00D179]" />
         <h2 className="text-lg font-bold text-gray-900">공고 기본 정보</h2>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="space-y-5">
-          <div>
-            <p className="text-xs text-gray-400">공고 등록 번호</p>
-            <p className="mt-1 text-base font-semibold text-gray-900">
-              {notice.noticeNo || "-"}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400">공고 등록일</p>
-            <p className="mt-1 text-base font-semibold text-gray-900">
-              {notice.regDate || "-"}
-            </p>
-          </div>
+      {/* 정보 그리드 */}
+      <div className="grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12">
+        <div>
+          <p className="text-xs font-medium text-gray-400">공고 등록 번호</p>
+          <p className="mt-1 text-base font-bold text-gray-900">{notice.noticeNo}</p>
         </div>
-
-        <div className="space-y-5">
-          <div>
-            <p className="text-xs text-gray-400">공고 분류</p>
-            <p className="mt-1 text-base font-semibold text-gray-900">
-              {categoryLabel(notice.category)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400">모집 공고 상태</p>
-            <p className="mt-1 text-base font-semibold text-green-600">
-              {statusLabel(notice.status)}
-            </p>
-          </div>
+        <div>
+          <p className="text-xs font-medium text-gray-400">공고 분류</p>
+          <p className="mt-1 text-base font-bold text-gray-900">{categoryLabel(notice.category)}</p>
+        </div>
+        <div>
+          <p className="text-xs font-medium text-gray-400">공고 등록일</p>
+          <p className="mt-1 text-base font-bold text-gray-900">{notice.regDate}</p>
+        </div>
+        <div>
+          <p className="text-xs font-medium text-gray-400">모집 공고 상태</p>
+          {/* 상태 텍스트 색상 적용 */}
+          <p className={`mt-1 text-base font-bold ${statusColorClass}`}>
+            {statusLabel(notice.status)}
+          </p>
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-green-100 bg-green-50 p-5">
-        <p className="mb-2 text-sm font-semibold text-green-700">청약 접수 기간</p>
-        <div className="flex items-center gap-2 text-sm text-gray-900">
-          <MaterialIcon name="event" className="text-green-700" />
-          <span className="font-semibold">
-            {notice.startDate ?? "-"} ~ {notice.endDate ?? "-"}
+      {/* 접수 기간 박스 */}
+      <div className="mt-8 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
+        <p className="mb-2 text-xs font-bold text-emerald-600">청약 접수 기간</p>
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-emerald-600">calendar_month</span>
+          <span className="text-base font-bold text-gray-900">
+            {notice.startDate} ~ {notice.endDate}
           </span>
         </div>
       </div>
