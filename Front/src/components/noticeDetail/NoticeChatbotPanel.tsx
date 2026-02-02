@@ -16,17 +16,17 @@ type Props = {
   noticeId?: number | null;
 };
 
-type QuickAction = {
-  icon: string;
-  label: string;
-};
+// type QuickAction = {
+//   icon: string;
+//   label: string;
+// };
 
-const QUICK_ACTIONS: QuickAction[] = [
-  { icon: "campaign", label: "최근 공고" },
-  { icon: "check_circle", label: "자격 요건" },
-  { icon: "description", label: "신청 방법" },
-  { icon: "calculate", label: "임대료 계산" },
-];
+// const QUICK_ACTIONS: QuickAction[] = [
+//   { icon: "campaign", label: "최근 공고" },
+//   { icon: "check_circle", label: "자격 요건" },
+//   { icon: "description", label: "신청 방법" },
+//   { icon: "calculate", label: "임대료 계산" },
+// ];
 
 async function postChat(message: string, noticeId?: number | null): Promise<string> {
   const payload = {
@@ -159,7 +159,7 @@ export default function NoticeChatbotPanel({ noticeTitle, noticeId }: Props) {
 
       {/* 입력 영역 */}
       <div className="bg-white border-t border-gray-100 p-4">
-        <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide">
+        {/* <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide">
           {QUICK_ACTIONS.map((item) => (
             <button
               key={item.label}
@@ -174,7 +174,7 @@ export default function NoticeChatbotPanel({ noticeTitle, noticeId }: Props) {
               {item.label}
             </button>
           ))}
-        </div>
+        </div> */}
 
         <div className="flex items-center gap-2">
           <input

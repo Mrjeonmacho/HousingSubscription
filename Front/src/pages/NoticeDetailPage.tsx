@@ -3,19 +3,29 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { Notice } from "./NoticesPage";
 import { getNoticeDetail } from "../api/NoticeApi";
 
-import NoticeDetailHeader from "../components/noticeDetail/NoticeDetailHeader";
 import NoticeOverviewCard from "../components/noticeDetail/NoticeOverviewCard";
 import NoticeQuickLinksCard from "../components/noticeDetail/NoticeQuickLinksCard";
 import NoticeChatbotPanel from "../components/noticeDetail/NoticeChatbotPanel";
 
-// D-Day 계산 유틸
-function calcDDay(endDate: string | null) {
-  if (!endDate) return null;
-  const today = new Date();
+import { computeNoticeStatus } from "../utils/noticeStatus";
+import { noticeStatusLabel } from "../utils/noticeFormat";
+
+// D-Day 문자열 및 남은 일수 계산
+function getDDayInfo(endDate: string | null) {
+  if (!endDate) return { text: null, days: null };
   const end = new Date(endDate);
-  today.setHours(0, 0, 0, 0);
-  end.setHours(0, 0, 0, 0);
-  return Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (Number.isNaN(end.getTime())) return { text: null, days: null };
+
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfEnd = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+  const diffMs = startOfEnd.getTime() - startOfToday.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays > 0) return { text: `D-${diffDays}`, days: diffDays };
+  if (diffDays === 0) return { text: "D-DAY", days: 0 };
+  return { text: null, days: null }; // 이미 지남
 }
 
 export default function NoticeDetailPage() {
@@ -30,7 +40,52 @@ export default function NoticeDetailPage() {
     return Number.isFinite(n) ? n : NaN;
   }, [noticeId]);
 
-  const dday = useMemo(() => (notice ? calcDDay(notice.endDate) : null), [notice]);
+  // 날짜 기반 상태 계산
+  const computedStatus = useMemo(
+    () => (notice ? computeNoticeStatus(notice.startDate, notice.endDate) : null),
+    [notice]
+  );
+
+  // 상태 텍스트
+  const statusText = noticeStatusLabel(computedStatus);
+
+  // D-Day 정보
+  const { text: dDayText, days: dDayDays } = useMemo(
+    () => (notice ? getDDayInfo(notice.endDate) : { text: null, days: null }),
+    [notice]
+  );
+
+  // 헤더용 뱃지 스타일
+  const headerBadgeStyle = useMemo(() => {
+    switch (computedStatus) {
+      case "DEADLINE_SOON":
+        return "bg-red-50 text-red-500 border border-red-100";
+      case "RECRUITING":
+        return "bg-primary/10 text-primary border border-primary/20";
+      case "UPCOMING":
+        return "bg-gray-100 text-gray-500 border border-gray-200";
+      case "CLOSED":
+        return "bg-gray-200 text-gray-400 border border-gray-300";
+      default:
+        return "bg-gray-50 text-gray-400";
+    }
+  }, [computedStatus]);
+
+  // 기본 정보 카드용 텍스트 색상
+  const overviewTextColor = useMemo(() => {
+    switch (computedStatus) {
+      case "DEADLINE_SOON":
+        return "text-[#FF5A5A]"; // 빨강
+      case "RECRUITING":
+        return "text-primary";   // 연두
+      case "UPCOMING":
+        return "text-[#8B95A1]"; // 회색
+      case "CLOSED":
+        return "text-gray-400";
+      default:
+        return "text-gray-400";
+    }
+  }, [computedStatus]);
 
   // 데이터 로딩
   useEffect(() => {
@@ -43,7 +98,6 @@ export default function NoticeDetailPage() {
       try {
         setLoading(true);
         const data = await getNoticeDetail(parsedId);
-
         if (!ignore) setNotice(data);
       } catch (e) {
         console.error(e);
@@ -51,7 +105,9 @@ export default function NoticeDetailPage() {
         if (!ignore) setLoading(false);
       }
     })();
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+    };
   }, [noticeId, parsedId]);
 
   const onBack = () => navigate("/notices");
@@ -89,16 +145,51 @@ export default function NoticeDetailPage() {
         </button>
       </div>
 
-      {/* 헤더 */}
+      {/* 헤더 영역 */}
       <div className="mb-8 border-b border-gray-100 pb-8">
-        <NoticeDetailHeader
-          noticeId={notice?.id ?? null}
-          title={notice?.title ?? "공고 로딩중..."}
-          status={notice?.status ?? null}
-          dday={dday}
-          loading={loading}
-          onShare={onShare}
-        />
+        {loading ? (
+          <div className="animate-pulse space-y-4">
+            <div className="h-6 w-24 rounded bg-gray-200" />
+            <div className="h-8 w-3/4 rounded bg-gray-200" />
+          </div>
+        ) : (
+          <div>
+            {/* 뱃지 라인 */}
+            <div className="flex items-center gap-2 mb-3">
+              {/* 상태 뱃지 */}
+              <span className={`px-2.5 py-1 text-xs font-bold rounded-md ${headerBadgeStyle}`}>
+                {statusText}
+              </span>
+
+              {/* D-Day */}
+              {computedStatus !== "CLOSED" && dDayText && (
+                <span className={`text-sm font-bold ${dDayDays !== null && dDayDays <= 3 ? "text-red-500" : "text-gray-500"}`}>
+                  {dDayText}
+                </span>
+              )}
+            </div>
+
+            {/* 타이틀 & 공유 버튼 */}
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="text-2xl font-bold leading-snug text-gray-900 sm:text-3xl">
+                {notice?.title}
+              </h1>
+              <button
+                onClick={onShare}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                title="공유하기"
+              >
+                <span className="material-symbols-outlined text-[22px]">share</span>
+              </button>
+            </div>
+
+            {/* 기간 표시 */}
+            <div className="mt-3 flex items-center gap-2 text-sm text-gray-500 font-medium">
+              <span className="material-symbols-outlined text-[18px]">calendar_today</span>
+              {notice?.startDate} ~ {notice?.endDate}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 레이아웃 */}
@@ -106,7 +197,12 @@ export default function NoticeDetailPage() {
         
         {/* 상세 정보 & 링크 */}
         <div className="lg:col-span-1 flex flex-col gap-6">
-          <NoticeOverviewCard loading={loading} notice={notice} />
+          <NoticeOverviewCard 
+            loading={loading} 
+            notice={notice} 
+            statusText={statusText} 
+            textColor={overviewTextColor}
+          />
 
           <NoticeQuickLinksCard
             loading={loading}
