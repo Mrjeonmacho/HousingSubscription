@@ -1,15 +1,11 @@
 package com.ssafy14.a606.global.security.jwt;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.security.Keys;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Date;
 
@@ -21,8 +17,9 @@ public class JwtTokenProvider {
 
     public JwtTokenProvider(JwtProperties props) {
         this.props = props;
-        byte[] keyBytes = Base64.getDecoder().decode(props.secret()); // ✅ 핵심
+        byte[] keyBytes = Base64.getDecoder().decode(props.secret());
         this.key = Keys.hmacShaKeyFor(keyBytes);
+
     }
 
     // accessToken 생성 (loginId, role 포함)
@@ -40,7 +37,6 @@ public class JwtTokenProvider {
     }
 
 
-
     // refreshToken 생성 (loginId만 포함)
     public String createRefreshToken(String loginId) {
         Date now = new Date();
@@ -53,7 +49,6 @@ public class JwtTokenProvider {
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
-
 
 
     // JWT에서 loginId 추출
@@ -84,5 +79,11 @@ public class JwtTokenProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    // 만료/위조 등을 예외로 구분해서 밖으로 던지는 검증 메서드
+    public void validateTokenOrThrow(String token)
+            throws ExpiredJwtException, JwtException, IllegalArgumentException {
+        parseClaims(token);
     }
 }

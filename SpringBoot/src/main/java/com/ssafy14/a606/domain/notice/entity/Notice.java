@@ -78,4 +78,17 @@ public class Notice {
         this.endDate = endDate;
         this.pdfUrl = pdfUrl;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Notice)) return false;
+        Notice notice = (Notice) o;
+        return id != null && id.equals(notice.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

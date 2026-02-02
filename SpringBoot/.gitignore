@@ -17,3 +17,6 @@ application-prod.yaml
 .env
 .env.local
 .env.production
+
+# ChromaDB 데이터 폴더 제외
+chroma_db/

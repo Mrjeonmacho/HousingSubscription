@@ -1,13 +1,18 @@
 package com.ssafy14.a606.domain.user.service;
 
 import com.ssafy14.a606.domain.user.dto.request.SignUpRequestDto;
+import com.ssafy14.a606.domain.user.dto.request.UserUpdateRequestDto;
 import com.ssafy14.a606.domain.user.dto.response.SignUpResponseDto;
+import com.ssafy14.a606.domain.user.dto.response.UserResponseDto;
 import com.ssafy14.a606.domain.user.entity.AuthType;
 import com.ssafy14.a606.domain.user.entity.Role;
 import com.ssafy14.a606.domain.user.entity.User;
+import com.ssafy14.a606.domain.user.entity.UserDetails;
+import com.ssafy14.a606.domain.user.repository.UserDetailsRepository;
 import com.ssafy14.a606.domain.user.repository.UserRepository;
 import com.ssafy14.a606.global.exceptions.DuplicateValueException;
 import com.ssafy14.a606.global.exceptions.InvalidValueException;
+import com.ssafy14.a606.global.exceptions.NotFoundException;
 import com.ssafy14.a606.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,6 +29,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserDetailsRepository userDetailsRepository;
 
     // 1. 회원가입
     @Override
@@ -54,6 +60,13 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         User saved = userRepository.save(user);
+
+        // 회원가입 시 user_details 테이블에 빈 row 생성
+        UserDetails details = UserDetails.builder()
+                .user(saved)
+                .build();
+
+        userDetailsRepository.save(details);
 
         return new SignUpResponseDto(saved.getId(), saved.getUserName(), saved.getRole().name());
     }
@@ -98,5 +111,67 @@ public class UserServiceImpl implements UserService {
                 "message", message
         );
     }
+
+    // 5. 회원 기본정보 조회
+    @Override
+    public UserResponseDto getMyInfo(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+        return toUserResponse(user);
+    }
+
+    // 6. 회원 기본정보 수정 (이름, 이메일)
+    @Override
+    @Transactional
+    public UserResponseDto updateMyInfo(Long userId, UserUpdateRequestDto request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+
+        // 이름 수정
+        if (request.getUserName() != null) {
+            String newName = request.getUserName().trim();
+            if (newName.isEmpty()) throw new InvalidValueException("userName은 공백일 수 없습니다.");
+            user.updateUserName(newName);
+        }
+
+        // 이메일 수정
+        if (request.getEmail() != null) {
+            String newEmail = request.getEmail().trim();
+            if (newEmail.isEmpty()) throw new InvalidValueException("email은 공백일 수 없습니다.");
+
+            if (!newEmail.equals(user.getEmail())) {
+                if (userRepository.existsByEmail(newEmail)) {
+                    throw new DuplicateValueException("이미 사용 중인 이메일입니다.");
+                }
+                user.updateEmail(newEmail);
+            }
+        }
+
+        return toUserResponse(user);
+    }
+
+    // 7. 회원탈퇴
+    @Override
+    @Transactional
+    public void deleteAccount(Long userId){
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(()->new NotFoundException("존재하지 않는 사용자입니다."));
+
+        userRepository.delete(user);
+
+    }
+
+
+    private UserResponseDto toUserResponse(User user) {
+        return UserResponseDto.builder()
+                .userId(user.getId())
+                .authType(user.getAuthType().name())
+                .loginId(user.getLoginId())
+                .userName(user.getUserName())
+                .email(user.getEmail())
+                .build();
+    }
+
 
 }

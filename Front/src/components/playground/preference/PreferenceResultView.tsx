@@ -1,21 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-type PreferenceAnswerItem = {
-  questionKey: string;
-  selectedOption: string;
-};
-
-type PreferenceResultResponse = {
-  preferenceType: string; // 예: "안정 추구형"
-  summary: string;
-  recommend: string;
-  noticeTip: string;
-};
-
-type ApiErrorResponse = {
-  code?: string;
-  message?: string;
-};
+import { categoryLabel } from "../../../utils/noticeFormat";
+import {
+  postPreferenceResult,
+  type PreferenceAnswerItem,
+  type PreferenceResultResponse,
+} from "../../../api/PreferenceApi";
 
 type PreferenceResultViewProps = {
   answers: Record<string, string>;
@@ -46,7 +37,6 @@ function MaterialIcon({
   );
 }
 
-
 type ResultIconSet = {
   center: string;
   left: string;
@@ -54,36 +44,12 @@ type ResultIconSet = {
 };
 
 const RESULT_ICON_MAP: Record<string, ResultIconSet> = {
-  "안정 추구형": {
-    center: "apartment",
-    left: "subway",
-    right: "directions_walk",
-  },
-  "자유 이동형": {
-    center: "luggage",
-    left: "swap_horiz",
-    right: "directions_walk",
-  },
-  "비용 보수형": {
-    center: "account_balance_wallet",
-    left: "paid",
-    right: "check_circle",
-  },
-  "기회 추구형": {
-    center: "domain",
-    left: "trending_up",
-    right: "star",
-  },
-  "입지 우선형": {
-    center: "place",
-    left: "subway",
-    right: "directions_bus",
-  },
-  "균형 추구형": {
-    center: "balance",
-    left: "domain",
-    right: "paid",
-  },
+  "안정 추구형": { center: "apartment", left: "subway", right: "directions_walk" },
+  "자유 이동형": { center: "luggage", left: "swap_horiz", right: "directions_walk" },
+  "비용 보수형": { center: "account_balance_wallet", left: "paid", right: "check_circle" },
+  "기회 추구형": { center: "domain", left: "trending_up", right: "star" },
+  "입지 우선형": { center: "place", left: "subway", right: "directions_bus" },
+  "균형 추구형": { center: "balance", left: "domain", right: "paid" },
 };
 
 const DEFAULT_ICONS: ResultIconSet = {
@@ -92,16 +58,25 @@ const DEFAULT_ICONS: ResultIconSet = {
   right: "directions_walk",
 };
 
-export default function PreferenceResultView({
-  answers,
-  onRestart,
-}: PreferenceResultViewProps) {
+export default function PreferenceResultView({ answers, onRestart }: PreferenceResultViewProps) {
   const payloadAnswers: PreferenceAnswerItem[] = useMemo(() => {
     return Object.entries(answers).map(([questionKey, selectedOption]) => ({
       questionKey,
       selectedOption,
     }));
   }, [answers]);
+
+  const navigate = useNavigate();
+
+  const goNoticeList = () => {
+    if (!data) return;
+
+    navigate("/notices", {
+      state: {
+        preselectedCategories: data.recommendedCategories,
+      },
+    });
+  };
 
   const [data, setData] = useState<PreferenceResultResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -115,37 +90,12 @@ export default function PreferenceResultView({
         setLoading(true);
         setErrorMsg("");
 
-        const res = await fetch("/api/games/preferences/result", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
-          body: JSON.stringify({ answers: payloadAnswers }),
-        });
-
-        if (!res.ok) {
-          let err: ApiErrorResponse | null = null;
-          try {
-            err = (await res.json()) as ApiErrorResponse;
-          } catch {
-            err = null;
-          }
-
-          const msg =
-            err?.message ||
-            (res.status === 401
-              ? "인증이 필요합니다."
-              : "결과를 불러오지 못했습니다.");
-
-          setErrorMsg(msg);
-          setData(null);
-          return;
-        }
-
-        const json = (await res.json()) as PreferenceResultResponse;
-        setData(json);
+        const result = await postPreferenceResult(payloadAnswers, controller.signal);
+        setData(result);
       } catch (e) {
         if ((e as { name?: string })?.name === "AbortError") return;
-        setErrorMsg("네트워크 오류가 발생했습니다.");
+        const msg = (e as { message?: string })?.message || "네트워크 오류가 발생했습니다.";
+        setErrorMsg(msg);
         setData(null);
       } finally {
         setLoading(false);
@@ -216,7 +166,7 @@ export default function PreferenceResultView({
   return (
     <section className="w-full">
       <div className="mx-auto max-w-5xl px-4 md:px-8 py-14 md:py-20">
-        {/* Top badge & Heading */}
+        {/* 상단 타이틀 및 아이콘 섹션 (변경 없음) */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center rounded-full bg-[#E3F6ED] px-5 py-2 text-sm font-bold text-green-600 mb-6">
             테스트 완료!
@@ -228,96 +178,90 @@ export default function PreferenceResultView({
           </h1>
         </div>
 
-        {/* Hero Section */}
         <div className="relative mx-auto w-full max-w-lg aspect-square md:aspect-[5/4] bg-gradient-to-br from-green-50 to-white p-10 md:p-14 shadow-[0_20px_60px_rgba(0,0,0,0.06)] rounded-[40px] flex items-center justify-center mb-10 overflow-hidden">
-          {/* Center Icon */}
           <div className="relative z-10 h-44 w-44 md:h-52 md:w-52 bg-white rounded-[40px] shadow-md flex items-center justify-center">
-            <MaterialIcon
-              name={icons.center}
-              sizePx={120}
-              className="text-gray-800"
-            />
+            <MaterialIcon name={icons.center} sizePx={120} className="text-gray-800" />
           </div>
 
-          {/* Floating Icon 1 (Left) */}
           <div className="absolute left-[12%] bottom-[18%] animate-bounce">
             <div className="h-14 w-14 md:h-16 md:w-16 bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex items-center justify-center">
-              <MaterialIcon
-                name={icons.left}
-                className="text-[28px] md:text-[32px] text-green-400"
-              />
+              <MaterialIcon name={icons.left} className="text-[28px] md:text-[32px] text-green-400" />
             </div>
           </div>
 
-          {/* Floating Icon 2 (Right) */}
-          <div
-            className="absolute right-[12%] top-[20%] animate-bounce"
-            style={{ animationDelay: "500ms" }}
-          >
+          <div className="absolute right-[12%] top-[20%] animate-bounce" style={{ animationDelay: "500ms" }}>
             <div className="h-12 w-12 md:h-14 md:w-14 bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex items-center justify-center">
-              <MaterialIcon
-                name={icons.right}
-                className="text-[26px] md:text-[30px] text-green-500"
-              />
+              <MaterialIcon name={icons.right} className="text-[26px] md:text-[30px] text-green-500" />
             </div>
           </div>
         </div>
 
-        {/* Summary */}
         <div className="text-center max-w-2xl mx-auto mb-16">
           <p className="korean-break text-gray-600 text-lg md:text-xl font-medium leading-relaxed break-keep">
             {data.summary}
           </p>
         </div>
 
-        {/* Bottom Cards */}
+        {/* 하단 카드 섹션 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left Card: Recommend */}
-          <div className="rounded-[32px] border border-gray-100 bg-white p-8 md:p-10 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+          {/* 왼쪽 카드: 추천 공고 타입 */}
+          <div className="rounded-[32px] border border-gray-100 bg-white p-8 md:p-10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col h-full">
             <div className="w-12 h-12 rounded-2xl bg-[#E3F6ED] flex items-center justify-center mb-6">
-              <MaterialIcon
-                name="place"
-                className="text-[24px] text-green-500"
-              />
+              <MaterialIcon name="place" className="text-[24px] text-green-500" />
             </div>
 
             <div className="mb-4">
               <h2 className="text-xl font-bold text-gray-900 inline-block pb-1">
                 추천하는 공고 타입
               </h2>
-              <div className="h-1 w-8 bg-green-400 mt-2 rounded-full" />
             </div>
 
-            <ul className="text-gray-600 font-medium leading-relaxed mt-5 space-y-2">
-              <li className="flex items-start gap-2.5">
-                <span className="text-gray-400 mt-1.5 text-[10px]">●</span>
-                <span className="korean-break break-keep">{data.recommend}</span>
-              </li>
+            <ul className="text-gray-600 font-medium leading-relaxed mt-2 space-y-2 flex-1">
+              {data.recommendedCategories.map((c) => (
+                <li key={c} className="flex items-start gap-2.5">
+                  <span className="text-gray-400 mt-1.5 text-[10px]">●</span>
+                  <span className="korean-break break-keep">
+                    {categoryLabel(c)}
+                  </span>
+                </li>
+              ))}
             </ul>
+
+            {/* ▼▼▼ 버튼 위치 이동 및 디자인 수정 (우측 하단, 배경 제거) ▼▼▼ */}
+            <div className="flex justify-end mt-6">
+              <button
+                type="button"
+                onClick={goNoticeList}
+                // 배경색(bg-green-50) 제거, 텍스트 색상 및 hover 효과 변경
+                className="group flex items-center gap-1.5 py-2 px-1 rounded-full text-green-600 text-sm font-bold transition-all hover:text-green-700 active:scale-95"
+              >
+                <span>관련 공고 보러가기</span>
+                {/* 아이콘 이동 애니메이션은 유지 */}
+                <div className="w-5 h-5 flex items-center justify-center transition-transform group-hover:translate-x-1">
+                  <MaterialIcon
+                    name="arrow_forward"
+                    className="text-[18px] leading-none"
+                  />
+                </div>
+              </button>
+            </div>
           </div>
 
-          {/* Right Card: Check Point */}
+          {/* 오른쪽 카드: Check Point (변경 없음) */}
           <div className="rounded-[32px] border border-gray-100 bg-white p-8 md:p-10 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
             <div className="w-12 h-12 rounded-2xl bg-[#E3F6ED] flex items-center justify-center mb-6">
-              <MaterialIcon
-                name="checklist"
-                className="text-[24px] text-green-500"
-              />
+              <MaterialIcon name="checklist" className="text-[24px] text-green-500" />
             </div>
 
             <div className="mb-4">
               <h2 className="text-xl font-bold text-gray-900 inline-block pb-1">
                 공고문 Check Point
               </h2>
-              <div className="h-1 w-8 bg-green-400 mt-2 rounded-full" />
             </div>
 
             <div className="mt-5 flex gap-3 items-start w-full">
-              <div className="mt-0.5 min-w-[20px] h-5 w-5 rounded-full border border-green-400 flex items-center justify-center bg-white">
-                <MaterialIcon
-                  name="check"
-                  className="text-[16px] text-green-500 leading-none"
-                />
+              <div className="mt-0.5 min-w-[20px] h-5 w-5 flex items-center justify-center bg-white">
+                <MaterialIcon name="check" className="text-[16px] text-green-500 leading-none" />
               </div>
 
               <p className="flex-1 korean-break text-gray-600 font-medium leading-relaxed break-keep">
@@ -327,7 +271,6 @@ export default function PreferenceResultView({
           </div>
         </div>
 
-        {/* Bottom actions */}
         {onRestart && (
           <div className="mt-16 flex justify-center">
             <button

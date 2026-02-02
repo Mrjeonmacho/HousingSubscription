@@ -1,9 +1,12 @@
 package com.ssafy14.a606.domain.user.entity;
 
+import com.ssafy14.a606.domain.notice.entity.Notice;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name="users")
@@ -81,11 +84,32 @@ public class User {
     private LocalDateTime updatedAt;
 
     /**
+     * 관심 공고 (ManyToMany)
+     * - User 기준 연관관계 주인
+     * - 중간 테이블: user_favorite_notices
+     */
+    @ManyToMany
+    @JoinTable(
+            name = "user_favorite_notices",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "notice_id")
+    )
+    private Set<Notice> favoriteNotices = new HashSet<>();
+
+    /**
      * 저장 직전 기본값 세팅
      * - JPA가 INSERT 시 role을 포함시키면 DB default가 안 먹는 경우가 있어 안전장치로 USER 세팅
      */
     @PrePersist
     public void prePersist() {
         if (this.role == null) this.role = Role.USER;
+    }
+
+    public void updateUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
     }
 }

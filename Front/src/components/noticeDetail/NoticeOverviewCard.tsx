@@ -1,20 +1,10 @@
 // Front/src/components/noticeDetail/NoticeOverviewCard.tsx
 import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
-import type { NoticeCategory, NoticeStatus } from "../../utils/noticeFormat";
-
-
-type NoticeOverview = {
-  no: string | null;
-  reg_date: string | null;
-  category: NoticeCategory | string | null;
-  status: NoticeStatus | string | null;
-  start_date: string | null;
-  end_date: string | null;
-};
+import type { Notice } from "../../pages/NoticesPage";
 
 type Props = {
   loading: boolean;
-  notice: NoticeOverview | null;
+  notice: Notice | null;
 };
 
 function MaterialIcon({
@@ -28,8 +18,7 @@ function MaterialIcon({
     <span
       className={`material-symbols-outlined ${className ?? ""}`}
       style={{
-        fontVariationSettings:
-          "'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24",
+        fontVariationSettings: "'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24",
       }}
     >
       {name}
@@ -93,13 +82,13 @@ export default function NoticeOverviewCard({ loading, notice }: Props) {
           <div>
             <p className="text-xs text-gray-400">공고 등록 번호</p>
             <p className="mt-1 text-base font-semibold text-gray-900">
-              {notice.no || "-"}
+              {notice.noticeNo || "-"}
             </p>
           </div>
           <div>
             <p className="text-xs text-gray-400">공고 등록일</p>
             <p className="mt-1 text-base font-semibold text-gray-900">
-              {notice.reg_date || "-"}
+              {notice.regDate || "-"}
             </p>
           </div>
         </div>
@@ -108,26 +97,24 @@ export default function NoticeOverviewCard({ loading, notice }: Props) {
           <div>
             <p className="text-xs text-gray-400">공고 분류</p>
             <p className="mt-1 text-base font-semibold text-gray-900">
-              {categoryLabel(notice.category as NoticeCategory | null | undefined)}
+              {categoryLabel(notice.category)}
             </p>
           </div>
           <div>
             <p className="text-xs text-gray-400">모집 공고 상태</p>
             <p className="mt-1 text-base font-semibold text-green-600">
-              {statusLabel(notice.status as NoticeStatus | null | undefined)}
+              {statusLabel(notice.status)}
             </p>
           </div>
         </div>
       </div>
 
       <div className="mt-6 rounded-2xl border border-green-100 bg-green-50 p-5">
-        <p className="mb-2 text-sm font-semibold text-green-700">
-          청약 접수 기간
-        </p>
+        <p className="mb-2 text-sm font-semibold text-green-700">청약 접수 기간</p>
         <div className="flex items-center gap-2 text-sm text-gray-900">
           <MaterialIcon name="event" className="text-green-700" />
           <span className="font-semibold">
-            {notice.start_date ?? "-"} ~ {notice.end_date ?? "-"}
+            {notice.startDate ?? "-"} ~ {notice.endDate ?? "-"}
           </span>
         </div>
       </div>

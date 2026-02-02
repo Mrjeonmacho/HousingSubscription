@@ -1,21 +1,23 @@
 // Front/src/components/noticeDetail/NoticeDetailHeader.tsx
-
-// import { statusLabel } from "../../utils/noticeFormat";
+import { useEffect, useMemo, useState } from "react";
 import type { Notice } from "../../pages/NoticesPage";
+import { statusLabel } from "../../utils/noticeFormat";
+import {
+  addFavoriteNotice,
+  getFavoriteNotices,
+  removeFavoriteNotice,
+} from "../../api/NoticeApi";
+
 
 type Props = {
+  noticeId: number | null;
   title: string;
   status: Notice["status"];
   dday: number | null;
   loading: boolean;
   onBack: () => void;
-  onFavorite?: () => void;
   onShare?: () => void;
 };
-
-// function statusBadgeLabel(status: Notice["status"]) {
-//   return statusLabel(status);
-// }
 
 function statusTone(status: Notice["status"]) {
   if (status === "RECEIVING") return "bg-emerald-50 text-emerald-700";
@@ -26,15 +28,17 @@ function statusTone(status: Notice["status"]) {
 function MaterialIcon({
   name,
   className,
+  filled,
 }: {
   name: string;
   className?: string;
+  filled?: boolean;
 }) {
   return (
     <span
       className={`material-symbols-outlined ${className ?? ""}`}
       style={{
-        fontVariationSettings: "'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24",
+        fontVariationSettings: `'FILL' ${filled ? 1 : 0}, 'wght' 500, 'GRAD' 0, 'opsz' 24`,
       }}
     >
       {name}
@@ -43,14 +47,69 @@ function MaterialIcon({
 }
 
 export default function NoticeDetailHeader({
+  noticeId,
   title,
   status,
   dday,
   loading,
   onBack,
-  onFavorite,
   onShare,
 }: Props) {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favPending, setFavPending] = useState(false);
+
+  const badgeText = useMemo(() => {
+    return statusLabel(status);
+  }, [status]);
+
+  // 1) 로그인 사용자 조회 + 찜 여부 조회
+  useEffect(() => {
+    if (!noticeId || loading) return;
+
+    let ignore = false;
+
+    (async () => {
+      try {
+        const favorites = await getFavoriteNotices();
+        if (ignore) return;
+
+        const favored = favorites.some((f) => f?.id === noticeId);
+        setIsFavorite(favored);
+      } catch {
+        // 로그인 안 됐거나 에러 → 찜 아님으로 처리
+        if (!ignore) setIsFavorite(false);
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, [noticeId, loading]);
+
+
+  // 2) 찜 토글
+  const onFavorite = async () => {
+    if (!noticeId || favPending) return;
+
+    const currently = isFavorite;
+
+    setFavPending(true);
+    setIsFavorite(!currently);
+
+    try {
+      const data = currently
+        ? await removeFavoriteNotice(noticeId)
+        : await addFavoriteNotice(noticeId);
+
+      setIsFavorite(Boolean(data.isFavorite));
+    } catch {
+      setIsFavorite(currently);
+      alert("로그인이 필요하거나 요청 처리 중 오류가 발생했습니다.");
+    } finally {
+      setFavPending(false);
+    }
+  };
+
   return (
     <header className="mb-8 flex flex-col gap-4">
       <button
@@ -70,16 +129,12 @@ export default function NoticeDetailHeader({
                 status
               )}`}
             >
-              {/* {statusBadgeLabel(status)} */}
+              {badgeText}
             </span>
 
             {typeof dday === "number" && (
               <span className="text-sm font-semibold text-red-500">
-                {dday > 0
-                  ? `D-${dday}`
-                  : dday === 0
-                  ? "D-DAY"
-                  : `D+${Math.abs(dday)}`}
+                {dday > 0 ? `D-${dday}` : dday === 0 ? "D-DAY" : `D+${Math.abs(dday)}`}
               </span>
             )}
           </div>
@@ -99,14 +154,20 @@ export default function NoticeDetailHeader({
             onClick={onFavorite}
             className="h-11 w-11 rounded-full border border-gray-200 bg-white shadow-sm hover:bg-gray-50 flex items-center justify-center"
             aria-label="찜"
+            disabled={loading || favPending}
           >
-            <MaterialIcon name="favorite" className="text-gray-700" />
+            <MaterialIcon
+              name="favorite"
+              className={isFavorite ? "text-red-500" : "text-gray-700"}
+              filled={isFavorite}
+            />
           </button>
           <button
             type="button"
             onClick={onShare}
             className="h-11 w-11 rounded-full border border-gray-200 bg-white shadow-sm hover:bg-gray-50 flex items-center justify-center"
             aria-label="공유"
+            disabled={loading}
           >
             <MaterialIcon name="share" className="text-gray-700" />
           </button>

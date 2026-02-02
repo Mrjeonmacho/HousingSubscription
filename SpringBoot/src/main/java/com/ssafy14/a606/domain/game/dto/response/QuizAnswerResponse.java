@@ -1,5 +1,8 @@
 package com.ssafy14.a606.domain.game.dto.response;
 
+import lombok.Getter;
+
+@Getter
 public class QuizAnswerResponse {
 
     private boolean isCorrect;
@@ -14,13 +17,5 @@ public class QuizAnswerResponse {
 
     public boolean isCorrect() {
         return isCorrect;
-    }
-
-    public String getCorrectAnswer() {
-        return correctAnswer;
-    }
-
-    public String getExplanation() {
-        return explanation;
     }
 }

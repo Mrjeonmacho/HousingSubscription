@@ -6,6 +6,7 @@ import com.ssafy14.a606.domain.notice.entity.NoticeStatus;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 public class NoticeResponseDto {
@@ -19,6 +20,7 @@ public class NoticeResponseDto {
     private LocalDate startDate;
     private LocalDate endDate;
     private String pdfUrl;
+    private List<HomeDto> homes;
 
     public NoticeResponseDto(Notice notice) {
         this.id = notice.getId();
@@ -30,5 +32,8 @@ public class NoticeResponseDto {
         this.startDate = notice.getStartDate();
         this.endDate = notice.getEndDate();
         this.pdfUrl = notice.getPdfUrl();
+        this.homes = notice.getHomes().stream()
+                .map(HomeDto::new)
+                .toList();
     }
 }

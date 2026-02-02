@@ -39,12 +39,7 @@ public class PreferenceService {
 
         PreferenceType resultType = determineResultType(scoreMap);
 
-        return new PreferenceResultResponse(
-                resultType.getDisplayName(),
-                resultType.getSummary(),
-                resultType.getRecommend(),
-                resultType.getNoticeTip()
-        );
+        return new PreferenceResultResponse(resultType);
     }
 
     /**
@@ -72,7 +67,6 @@ public class PreferenceService {
         return topTypes.get(0);
     }
 
-
     /**
      * 질문 + 선택지에 따른 점수 반영
      */
@@ -87,6 +81,7 @@ public class PreferenceService {
             case COMMUTE_TIME -> {
                 if (option == PreferenceOption.WITHIN_30_MIN) {
                     scoreMap.merge(PreferenceType.STABLE_SEEKER, 2, Integer::sum);
+                    scoreMap.merge(PreferenceType.LOCATION_PRIORITY, 1, Integer::sum);
                 } else if (option == PreferenceOption.NO_LIMIT) {
                     scoreMap.merge(PreferenceType.FLEXIBLE_MOVER, 2, Integer::sum);
                 }

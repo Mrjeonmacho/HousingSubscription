@@ -41,7 +41,7 @@ export default function QuizResultWrong({
         <div className="flex w-full justify-center gap-4 md:gap-12 mb-10">
             {/* User's Answer */}
             <div className="flex flex-col items-center flex-1">
-                <span className="text-xs text-gray-400 mb-2 font-medium">내가 입력한 정답</span>
+                <span className="text-xs text-gray-400 mb-2 font-medium">내가 선택한 답</span>
                 {/* decoration-gray-400으로 취소선 색상을 회색으로 변경했습니다. */}
                 <p className="text-xl md:text-2xl font-bold text-gray-400 break-keep line-through decoration-gray-400 decoration-2">
                     {answer ?? "-"}

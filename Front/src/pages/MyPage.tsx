@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-// import { saveUserAddInfo } from "../api/UserApi"; // API 연동 시 주석 해제
+import { getUserBasicInfo, updateUserBasicInfo, getUserAddInfo, updateUserAddInfo } from "../api/UserApi"; // API 연동 시 주석 해제
 import type { UserAddInfo } from "../types/user";
 
 // 기본 정보 폼 타입
@@ -22,40 +23,60 @@ interface AddInfoFormState {
 }
 
 export default function MyPage() {
-  const { user, logout } = useAuth();
-  
+  const { logout } = useAuth();
+  const { updateUserState } = useAuth();
+  const navigate = useNavigate();
+
   // 기본 정보 State
   const [isBasicEditing, setIsBasicEditing] = useState(false);
   const [basicFormData, setBasicFormData] = useState<BasicFormState>({
-    userName: user?.userName || "김서울",
-    loginId: "seoul_dummy_01",
-    email: "dummy@example.com"
+    userName: "",
+    loginId: "",
+    email: ""
   });
 
-  useEffect(() => {
-    if (user?.userName && basicFormData.userName !== user.userName) {
-      setBasicFormData(prev => ({ ...prev, userName: user.userName }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.userName]);
+  const handleLogout = () => {
+    logout(); 
+    navigate("/"); 
+  };
 
   const handleBasicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setBasicFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleBasicSubmit = (e: React.FormEvent) => {
+  const handleBasicSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!basicFormData.userName || !basicFormData.email) {
       alert("이름과 이메일은 필수입니다.");
       return;
     }
-    alert("저장되었습니다!");
-    setIsBasicEditing(false);
+
+    // API 호출
+    try {
+      await updateUserBasicInfo({
+        userName: basicFormData.userName,
+        email: basicFormData.email
+      });
+
+      updateUserState({
+        userName: basicFormData.userName
+      });
+
+      alert("저장되었습니다!");
+      setIsBasicEditing(false);
+      
+      navigate(0); // 페이지 새로고침
+    } catch (error) {
+      console.error("기본 정보 저장 실패:", error);
+      alert("저장에 실패했습니다. 다시 시도해주세요.");
+      return;
+    }
   };
 
   // 추가 정보 State
   const [isAddInfoEditing, setIsAddInfoEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // 로딩 상태
   
   // 초기값을 모두 빈 문자열("")로 설정
   const [addInfoFormData, setAddInfoFormData] = useState<AddInfoFormState>({
@@ -79,12 +100,49 @@ export default function MyPage() {
     income: null,
   });
 
+  // 페이지 접속 시 기존 추가 정보 로딩
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        // 두 API를 병렬로 동시에 요청
+        const [basicData, addData] = await Promise.all([
+          getUserBasicInfo(), // 기본 정보
+          getUserAddInfo()    // 추가 정보
+        ]);
+        console.log("Fetched UserAddInfo:", addData);
+        setSavedData(addData); // 화면 표시용 데이터 업데이트
+
+        setBasicFormData({
+          userName: basicData.userName,
+          loginId: basicData.loginId,
+          email: basicData.email,
+        });
+
+        // 수정 모드 진입 시 폼에 채워넣을 데이터 세팅 (null -> "")
+        setAddInfoFormData({
+          birthDate: addData.birthDate || "",
+          targetType: addData.targetType || "",
+          marriageStatus: addData.marriageStatus || "",
+          childCount: addData.childCount !== null ? String(addData.childCount) : "",
+          houseOwn: addData.houseOwn || "",
+          asset: addData.asset !== null ? String(addData.asset) : "",
+          income: addData.income !== null ? String(addData.income) : "",
+        });
+        console.log("추가 정보 로딩 완료:", addData);
+      } catch (error) {
+        console.error("추가 정보 로딩 실패:", error);
+        // 데이터가 없어도 에러는 아닐 수 있음 (처음 입력하는 경우 등)
+      }
+    };
+    fetchAllData();
+  }, []);
+
   const handleAddInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setAddInfoFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAddInfoSubmit = (e: React.FormEvent) => {
+  const handleAddInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // 빈 문자열이면 null, 값이 있으면 정확한 타입
@@ -110,13 +168,18 @@ export default function MyPage() {
     };
 
     console.log("서버로 전송될 데이터:", payload);
-
-    // API 호출(연결 시 주석 해제)
-    // await saveUserAddInfo(payload);
-    
-    setSavedData(payload); 
-    alert("저장되었습니다!");
-    setIsAddInfoEditing(false);
+    try{
+      // API 호출
+      await updateUserAddInfo(payload); // PUT 호출
+      alert("성공적으로 수정되었습니다!");
+      setSavedData(payload); // 화면 표시용 데이터 업데이트
+      setIsAddInfoEditing(false);
+    } catch (error) {
+      console.error("추가 정보 저장 실패:", error);
+      alert("저장에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 값 표시용
@@ -124,7 +187,7 @@ export default function MyPage() {
     if (value === null || value === "") return <span className="text-gray-300">미입력</span>;
 
     if (key === "targetType") {
-      if (value === "COLLEGE") return "대학생";
+      if (value === "STUDENT") return "대학생";
       if (value === "YOUTH") return "청년";
       if (value === "NEWLYWED") return "신혼부부";
       return value;
@@ -157,12 +220,9 @@ export default function MyPage() {
               <button className="w-full text-left px-4 py-3 bg-green-50 text-primary font-bold rounded-xl">
                 👤 내 정보 관리
               </button>
-              <button className="w-full text-left px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition-colors">
-                ❤️ 찜한 공고
-              </button>
             </nav>
             <div className="mt-8 pt-6 border-t border-gray-100">
-              <button onClick={logout} className="flex items-center gap-2 text-gray-400 hover:text-red-500 transition-colors">
+              <button onClick={handleLogout} className="flex items-center gap-2 text-gray-400 hover:text-red-500 transition-colors">
                 <span className="material-symbols-outlined text-sm">logout</span>
                 로그아웃
               </button>
@@ -199,7 +259,7 @@ export default function MyPage() {
               <form onSubmit={handleBasicSubmit} className="grid grid-cols-2 gap-6 animate-fade-in-down">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">이름</label>
-                  <input type="text" name="userName" value={basicFormData.userName} onChange={handleBasicChange} className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:border-primary outline-none" />
+                  <input type="text" name="userName" value={basicFormData.userName} onChange={handleBasicChange} className="w-full px-4 py-3 rounded-2xl border border-gray-200 text-gray-900 focus:border-primary outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">아이디</label>
@@ -207,7 +267,7 @@ export default function MyPage() {
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm font-bold text-gray-700 mb-2">이메일</label>
-                  <input type="email" name="email" value={basicFormData.email} onChange={handleBasicChange} className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:border-primary outline-none" />
+                  <input type="email" name="email" value={basicFormData.email} onChange={handleBasicChange} className="w-full px-4 py-3 rounded-2xl border border-gray-200 text-gray-900 focus:border-primary outline-none" />
                 </div>
                 <div className="col-span-2 flex gap-3 mt-2">
                   <button type="button" onClick={() => setIsBasicEditing(false)} className="flex-1 py-3.5 rounded-2xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">취소</button>
@@ -260,7 +320,7 @@ export default function MyPage() {
                   <label className="block text-sm font-bold text-gray-700 mb-2">대상 유형</label>
                   <select name="targetType" value={addInfoFormData.targetType} onChange={handleAddInfoChange} className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:border-primary outline-none appearance-none">
                     <option value="">선택 안 함</option>
-                    <option value="COLLEGE">대학생</option>
+                    <option value="STUDENT">대학생</option>
                     <option value="YOUTH">청년</option>
                     <option value="NEWLYWED">신혼부부</option>
                   </select>
@@ -307,7 +367,9 @@ export default function MyPage() {
 
                 <div className="col-span-2 flex gap-3 mt-2">
                   <button type="button" onClick={() => setIsAddInfoEditing(false)} className="flex-1 py-3.5 rounded-2xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">취소</button>
-                  <button type="submit" className="flex-2 py-3.5 rounded-2xl font-bold text-white bg-primary hover:brightness-105 shadow-lg shadow-primary/30 transition-all">저장하기</button>
+                  <button type="submit" disabled={isLoading} className="flex-[2] py-3.5 rounded-2xl font-bold text-white bg-primary hover:brightness-105 shadow-lg shadow-primary/30 transition-all disabled:opacity-50">
+                    {isLoading ? "저장 중..." : "저장하기"}
+                  </button>
                 </div>
               </form>
             ) : (

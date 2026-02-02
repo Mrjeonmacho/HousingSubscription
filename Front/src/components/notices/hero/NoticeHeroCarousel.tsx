@@ -1,9 +1,8 @@
-// Front/src/components/notices/NoticeHeroCarousel.tsx
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { Notice } from "../../pages/NoticesPage";
-import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
+import type { Notice } from "../../../pages/NoticesPage";
+import { categoryLabel, statusLabel } from "../../../utils/noticeFormat";
 
 type NoticeHeroCarouselProps = {
   items: Notice[];
@@ -19,16 +18,12 @@ export default function NoticeHeroCarousel({
   autoPlayMs = 5000,
 }: NoticeHeroCarouselProps) {
   const navigate = useNavigate();
+
   const slides = useMemo(() => {
     const base = items ?? [];
-
-    // "모집중" = RECEIVING
     const receiving = base.filter((n) => n.status === "RECEIVING");
 
-    receiving.sort((a, b) =>
-      (b.regDate ?? "").localeCompare(a.regDate ?? "")
-    );
-
+    receiving.sort((a, b) => (b.regDate ?? "").localeCompare(a.regDate ?? ""));
     return receiving.slice(0, 5);
   }, [items]);
 
@@ -38,7 +33,6 @@ export default function NoticeHeroCarousel({
   const [index, setIndex] = useState(0);
   const pausedRef = useRef(false);
 
-  // setState로 보정하지 않고, 렌더에서 안전한 인덱스를 계산해서 사용
   const activeIndex = useMemo(() => {
     if (count === 0) return 0;
     return Math.min(index, count - 1);
@@ -58,7 +52,6 @@ export default function NoticeHeroCarousel({
   const prev = () => go(activeIndex - 1);
   const next = () => go(activeIndex + 1);
 
-  // 자동재생
   useEffect(() => {
     if (!autoPlayMs || autoPlayMs <= 0) return;
     if (!canSlide) return;
@@ -92,7 +85,7 @@ export default function NoticeHeroCarousel({
           <button
             type="button"
             disabled
-            className="rounded-full bg-white/50 px-8 py-4 text-base font-semibold text-black/70 cursor-not-allowed"
+            className="cursor-not-allowed rounded-full bg-white/50 px-8 py-4 text-base font-semibold text-black/70"
           >
             공고 자세히 보기 →
           </button>
@@ -118,7 +111,8 @@ export default function NoticeHeroCarousel({
       <div className="p-6 md:p-20">
         <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold">
           <span>
-            {categoryLabel(current.category)} | {statusLabel(current.status)}
+            {categoryLabel(current.category ?? undefined)} |{" "}
+            {statusLabel(current.status ?? undefined)}
           </span>
         </div>
 
@@ -130,19 +124,20 @@ export default function NoticeHeroCarousel({
           <span className="material-symbols-outlined text-white/85 text-xl">
             event
           </span>
-          <span className="text-lg">마감일 : {formatDate(current.endDate)}</span>
+          <span className="text-lg">
+            마감일 : {formatDate(current.endDate)}
+          </span>
         </div>
 
         <div className="mt-12 flex justify-end">
           <button
             type="button"
             onClick={() => navigate(`/notices/${current.id}`)}
-            className="inline-flex items-center gap-3 rounded-full bg-white px-8 py-4 text-base font-semibold text-black/80 hover:bg-white/90 transition-colors"
+            className="cursor-pointer inline-flex items-center gap-3 rounded-full bg-white px-8 py-4 text-base font-semibold text-black/80 hover:bg-white/90 transition-colors"
           >
             공고 자세히 보기 <span aria-hidden>→</span>
           </button>
         </div>
-
       </div>
 
       {canSlide && (
@@ -151,7 +146,7 @@ export default function NoticeHeroCarousel({
             type="button"
             onClick={prev}
             aria-label="이전 공고"
-            className="absolute left-4 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full border border-white/20 bg-white/10 hover:bg-white/15 transition-colors"
+            className="cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full border border-white/20 bg-white/10 hover:bg-white/15 transition-colors"
           >
             ‹
           </button>
@@ -159,7 +154,7 @@ export default function NoticeHeroCarousel({
             type="button"
             onClick={next}
             aria-label="다음 공고"
-            className="absolute right-4 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full border border-white/20 bg-white/10 hover:bg-white/15 transition-colors"
+            className="cursor-pointer absolute right-4 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full border border-white/20 bg-white/10 hover:bg-white/15 transition-colors"
           >
             ›
           </button>
@@ -176,7 +171,7 @@ export default function NoticeHeroCarousel({
                 type="button"
                 onClick={() => go(i)}
                 aria-label={`슬라이드 ${i + 1}`}
-                className={`h-2.5 rounded-full transition-all ${
+                className={`cursor-pointer h-2.5 rounded-full transition-all ${
                   active ? "w-10 bg-white/90" : "w-2.5 bg-white/25"
                 }`}
               />

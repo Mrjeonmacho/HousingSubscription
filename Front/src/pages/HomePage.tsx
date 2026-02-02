@@ -11,7 +11,7 @@ export default function HomePage() {
         <div className="flex-1 w-full">
           <HeroSearch />
         </div>
-        <div className="flex items-center w-full lg:w-auto">
+        <div className="flex items-center w-auto">
           <LoginCard />
         </div>
       </section>
