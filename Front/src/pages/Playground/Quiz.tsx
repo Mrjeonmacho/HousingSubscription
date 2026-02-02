@@ -1,3 +1,4 @@
+// Front/src/pages/Playground/Quiz.tsx
 import { useEffect, useState } from "react";
 
 import QuizHeader from "../../components/playground/quiz/QuizHeader";
@@ -6,24 +7,29 @@ import QuizResultCorrect from "../../components/playground/quiz/QuizResultCorrec
 import QuizResultWrong from "../../components/playground/quiz/QuizResultWrong";
 import QuizResultDone from "../../components/playground/quiz/QuizResultDone";
 
-type QuizQuestion = {
-  questionId: number;
-  question: string;
-};
+import {
+  getQuizStart,
+  submitQuizAnswer,
+  getApiErrorMessage,
+  type QuizQuestion,
+} from "../../api/QuizApi";
 
 type QuizStatus = "question" | "correct" | "wrong" | "done";
 
-type QuizAnswerResponse = {
-  isCorrect?: boolean; // 백엔드가 isCorrect로 줄 수도 있고
-  correct?: boolean;   // 실제로는 correct로 주고 있음
-  correctAnswer?: string;
-  explanation?: string;
-};
+function shuffle<T>(arr: T[]) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 export default function Quiz() {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answer, setAnswer] = useState("");
+
+  const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
 
   const [status, setStatus] = useState<QuizStatus>("question");
   const [correctAnswer, setCorrectAnswer] = useState("");
@@ -31,64 +37,65 @@ export default function Quiz() {
 
   const [correctCount, setCorrectCount] = useState(0);
 
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const currentQuestion = questions[currentIndex];
   const isLastQuestion = currentIndex === questions.length - 1;
 
   useEffect(() => {
+    let ignore = false;
+
     const fetchQuiz = async () => {
+      setLoading(true);
+      setErrorMessage(null);
+
       try {
-        const res = await fetch("/api/games/quiz/start", {
-          credentials: "include",
-        });
-        if (!res.ok) return;
+        const list = await getQuizStart();
+        if (ignore) return;
 
-        const data = await res.json();
-
-        // start 응답이 "배열 자체"로 오고 있음
-        const list: QuizQuestion[] = Array.isArray(data)
-          ? data
-          : data?.questions ?? [];
-
-        setQuestions(list);
+        setQuestions(
+          list.map((q) => ({
+            ...q,
+            options: shuffle(q.options ?? []),
+          }))
+        );
         setCurrentIndex(0);
         setCorrectCount(0);
-        setAnswer("");
+        setSelectedOptionId(null);
         setCorrectAnswer("");
         setExplanation("");
         setStatus("question");
-      } catch {
-        // 필요 시 에러 처리 확장
+      } catch (e) {
+        if (ignore) return;
+        setErrorMessage(getApiErrorMessage(e));
+      } finally {
+        if (!ignore) setLoading(false);
       }
     };
 
     fetchQuiz();
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const handleSubmitAnswer = async () => {
     if (!currentQuestion) return;
+    if (selectedOptionId == null) return;
 
     try {
-      const res = await fetch("/api/games/quiz/answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          questionId: currentQuestion.questionId,
-          answer: answer.trim(),
-        }),
+      const data = await submitQuizAnswer({
+        questionId: currentQuestion.questionId,
+        selectedOptionId,
       });
-
-      if (!res.ok) return;
-
-      const data: QuizAnswerResponse = await res.json();
-
-      const isCorrect = (data.isCorrect ?? data.correct) ?? false;
 
       setCorrectAnswer(data.correctAnswer ?? "");
       setExplanation(data.explanation ?? "");
-      setStatus(isCorrect ? "correct" : "wrong");
+      setStatus(data.correct ? "correct" : "wrong");
 
-      if (isCorrect) setCorrectCount((prev) => prev + 1);
+      if (data.correct) setCorrectCount((prev) => prev + 1);
     } catch {
       // 필요 시 에러 처리 확장
     }
@@ -97,7 +104,7 @@ export default function Quiz() {
   const handleNextQuestion = () => {
     const isLast = currentIndex >= questions.length - 1;
 
-    setAnswer("");
+    setSelectedOptionId(null);
     setCorrectAnswer("");
     setExplanation("");
 
@@ -113,20 +120,40 @@ export default function Quiz() {
   const handleRestart = () => {
     setCurrentIndex(0);
     setCorrectCount(0);
-    setAnswer("");
+    setSelectedOptionId(null);
     setCorrectAnswer("");
     setExplanation("");
     setStatus("question");
   };
 
-  // 로딩 처리
-  if (questions.length === 0) {
+  if (loading) {
     return (
       <main className="flex-1 px-4 md:px-20 lg:px-40 py-12 flex items-center justify-center">
         <div className="text-gray-600">문제를 불러오는 중입니다.</div>
       </main>
     );
   }
+
+  if (errorMessage) {
+    return (
+      <main className="flex-1 px-4 md:px-20 lg:px-40 py-12 flex items-center justify-center">
+        <div className="text-gray-600">{errorMessage}</div>
+      </main>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <main className="flex-1 px-4 md:px-20 lg:px-40 py-12 flex items-center justify-center">
+        <div className="text-gray-600">표시할 문제가 없습니다.</div>
+      </main>
+    );
+  }
+
+  const selectedText =
+    selectedOptionId == null
+      ? ""
+      : currentQuestion?.options.find((o) => o.optionId === selectedOptionId)?.text ?? "";
 
   return (
     <main className="flex-1 px-4 md:px-20 lg:px-40 py-12 flex flex-col items-center">
@@ -147,8 +174,9 @@ export default function Quiz() {
         {status === "question" && (
           <QuizQuestionView
             question={currentQuestion?.question}
-            answer={answer}
-            onChangeAnswer={setAnswer}
+            options={currentQuestion?.options ?? []}
+            selectedOptionId={selectedOptionId}
+            onChangeOption={setSelectedOptionId}
             onSubmit={handleSubmitAnswer}
           />
         )}
@@ -164,7 +192,7 @@ export default function Quiz() {
 
         {status === "wrong" && (
           <QuizResultWrong
-            answer={answer}
+            answer={selectedText}
             correctAnswer={correctAnswer}
             explanation={explanation}
             onNext={handleNextQuestion}

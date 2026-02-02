@@ -35,7 +35,7 @@ export default function QuizResultCorrect({
 
         {/* Answer Display */}
         <div className="flex flex-col items-center mb-10 w-full">
-          <span className="text-xs text-gray-400 mb-2 font-medium">입력한 정답</span>
+          <span className="text-xs text-gray-400 mb-2 font-medium">선택한 정답</span>
           <p className="text-3xl md:text-4xl font-black text-gray-900 break-keep leading-tight">
             {correctAnswer ?? "-"}
           </p>
