@@ -10,10 +10,12 @@ import com.ssafy14.a606.domain.user.entity.User;
 import com.ssafy14.a606.domain.user.entity.UserDetails;
 import com.ssafy14.a606.domain.user.repository.UserDetailsRepository;
 import com.ssafy14.a606.domain.user.repository.UserRepository;
+import com.ssafy14.a606.global.exceptions.AuthenticationException;
 import com.ssafy14.a606.global.exceptions.DuplicateValueException;
 import com.ssafy14.a606.global.exceptions.InvalidValueException;
 import com.ssafy14.a606.global.exceptions.NotFoundException;
 import com.ssafy14.a606.global.security.jwt.JwtTokenProvider;
+import com.ssafy14.a606.global.security.user.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -160,6 +162,30 @@ public class UserServiceImpl implements UserService {
 
         userRepository.delete(user);
 
+    }
+
+    // 8. 비밀번호 검증
+    public void confirmPassword(Long userId, String rawPassword){
+
+        // 요청값 검증 (400)
+        if(rawPassword == null || rawPassword.isBlank()){
+            throw new InvalidValueException("요청 값이 올바르지 않습니다.");
+        }
+
+        // 사용자 조회 (404)
+        User user = userRepository.findById(userId)
+                .orElseThrow(()-> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+
+        // 로컬 회원가입 사용자만 비밀번호 검증 가능
+        if (user.getAuthType() != AuthType.LOCAL) {
+            throw new InvalidValueException("소셜 로그인 사용자는 비밀번호 확인이 불가합니다.");
+        }
+
+        // 비밀번호 불일치 (403)
+        if(!passwordEncoder.matches(rawPassword, user.getPassword())){
+            throw new AuthenticationException("비밀번호가 일치하지 않습니다.");
+        }
     }
 
 

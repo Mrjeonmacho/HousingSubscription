@@ -1,8 +1,10 @@
 package com.ssafy14.a606.domain.user.controller;
 
+import com.ssafy14.a606.domain.user.dto.request.PasswordConfirmRequestDto;
 import com.ssafy14.a606.domain.user.dto.request.SignUpRequestDto;
 import com.ssafy14.a606.domain.user.dto.request.UserDetailsRequestDto;
 import com.ssafy14.a606.domain.user.dto.request.UserUpdateRequestDto;
+import com.ssafy14.a606.domain.user.dto.response.PasswordConfirmResponseDto;
 import com.ssafy14.a606.domain.user.dto.response.SignUpResponseDto;
 import com.ssafy14.a606.domain.user.dto.response.UserDetailsResponseDto;
 import com.ssafy14.a606.domain.user.dto.response.UserResponseDto;
@@ -83,6 +85,17 @@ public class UserController {
         Long userId = principal.getUserId();
         userService.deleteAccount(userId);
         return ResponseEntity.ok(Map.of("message", "ACCOUNT_DELETE_SUCCESS"));
+    }
+
+    // 비밀번호 검증 -> 회원탈퇴 시
+    @PostMapping("/me/confirmation")
+    public ResponseEntity<PasswordConfirmResponseDto> confirmPassword(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestBody PasswordConfirmRequestDto request
+    ){
+        Long userId = principal.getUserId();
+        userService.confirmPassword(userId, request.getPassword());
+        return ResponseEntity.ok(new PasswordConfirmResponseDto("PASSWORD_CONFIRM_SUCCESS"));
     }
 
 
