@@ -119,3 +119,14 @@ export const logoutAPI = async (): Promise<void> => {
     console.error("로그아웃 요청 실패", error);
   }
 };
+
+// 회원 탈퇴
+export async function withdrawAccount() {
+  try {
+    const response = await apiClient.delete("/users/me");
+    return response.data;;
+  } catch (error: unknown) {
+    console.error("회원 탈퇴 실패:", error);
+    throw error;
+  }
+}
