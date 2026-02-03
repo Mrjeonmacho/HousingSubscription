@@ -6,5 +6,4 @@ public enum NoticeCategory {
     NATIONAL_RENTAL, // 국민임대
     PUBLIC_RENTAL, // 공공임대
     LONG_TERM_RENTAL, // 장기전세
-    SALE_HOUSE // 분양주택
 }
