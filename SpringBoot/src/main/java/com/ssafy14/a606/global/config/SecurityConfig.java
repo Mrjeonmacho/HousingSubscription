@@ -2,7 +2,9 @@ package com.ssafy14.a606.global.config;
 
 import com.ssafy14.a606.global.security.jwt.JwtAuthenticationFilter;
 import com.ssafy14.a606.global.security.jwt.JwtExceptionFilter;
+import com.ssafy14.a606.global.security.oauth.handler.OAuth2FailureHandler;
 import com.ssafy14.a606.global.security.oauth.handler.OAuth2SuccessHandler;
+import com.ssafy14.a606.global.security.oauth.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,12 +26,13 @@ import java.util.Collections;
 public class SecurityConfig {
 
     private final OAuth2SuccessHandler OAuth2SuccessHandler;
+    private final OAuth2FailureHandler OAuth2FailureHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtExceptionFilter jwtExceptionFilter;
 
     // 회원가입, 로그인 구현중 -> 일단 permitAll()로 전체에 접근 권한 부여
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService) throws Exception {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
@@ -58,7 +61,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth
-                        .successHandler(OAuth2SuccessHandler))
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(OAuth2SuccessHandler)
+                        .failureHandler(OAuth2FailureHandler)
+                )
                 .addFilterBefore(jwtExceptionFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
