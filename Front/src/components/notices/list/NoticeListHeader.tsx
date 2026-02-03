@@ -1,5 +1,6 @@
 // Front/src/components/notices/list/NoticeListHeader.tsx
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { SortType } from "./NoticeListLayout";
 import { getIsAdmin } from "../../../api/UserApi";
 
@@ -14,19 +15,27 @@ export default function NoticeListHeader({
   sortType,
   onChangeSort,
 }: Props) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => getIsAdmin());
 
-  // 관리자 여부 조회
   useEffect(() => {
-    (async () => {
-      const ok = await getIsAdmin();
-      setIsAdmin(ok);
-    })();
-  }, []);
+    const sync = () => setIsAdmin(getIsAdmin());
 
+    // 같은 탭에서 로그인/로그아웃 반영 (커스텀 이벤트)
+    window.addEventListener("auth-changed", sync);
+
+    // 다른 탭에서 변경 반영 (storage 이벤트)
+    window.addEventListener("storage", sync);
+
+    return () => {
+      window.removeEventListener("auth-changed", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+  
   // 드롭다운 바깥 클릭 시 닫기 (원래 로직 복구)
   useEffect(() => {
     if (!open) return;
@@ -42,13 +51,13 @@ export default function NoticeListHeader({
   }, [open]);
 
   const onClickCreateNotice = () => {
-    alert("공고 등록 페이지는 아직 준비 중입니다.");
+    navigate("/admin/notices/create");
   };
 
   return (
-    <div className="flex items-end justify-between px-1">
-      <div className="flex items-end gap-3">
-        <h3 className="text-xl font-bold text-gray-900 leading-none">
+    <div className="flex items-baseline justify-between px-1">
+      <div className="flex items-baseline gap-3">
+        <h3 className="text-xl font-bold text-gray-900 leading-tight">
           검색결과 <span className="text-gray-900">({totalCount})</span>
         </h3>
 
@@ -56,9 +65,10 @@ export default function NoticeListHeader({
           <button
             type="button"
             onClick={onClickCreateNotice}
-            className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary/90 transition-colors"
+            className="group inline-flex items-center px-1 text-[11px] text-gray-400 transition-colors hover:text-primary"
           >
-            + 공고 등록
+            <span className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 mr-1.5 group-hover:border-primary">+</span>
+            공고 등록
           </button>
         )}
       </div>
@@ -67,7 +77,7 @@ export default function NoticeListHeader({
         <button
           type="button"
           onClick={() => setOpen((prev) => !prev)}
-          className="inline-flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors"
+          className="h-9 inline-flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors"
           aria-label="정렬"
         >
           {sortType === "REG_DATE" ? "최신 등록순" : "마감 임박순"}
