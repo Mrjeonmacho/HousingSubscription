@@ -47,6 +47,7 @@ public class NoticeService {
                 .startDate(noticeRequestDto.getStartDate())
                 .endDate(noticeRequestDto.getEndDate())
                 .pdfUrl(noticeRequestDto.getPdfUrl())
+                .summary(noticeRequestDto.getSummary())
                 .build();
         noticeRepository.save(notice);
         return new NoticeResponseDto(notice);
@@ -68,7 +69,8 @@ public class NoticeService {
                 noticeRequestDto.getRegDate(),
                 noticeRequestDto.getStartDate(),
                 noticeRequestDto.getEndDate(),
-                noticeRequestDto.getPdfUrl()
+                noticeRequestDto.getPdfUrl(),
+                noticeRequestDto.getSummary()
         );
 
         return new NoticeResponseDto(notice);

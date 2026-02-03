@@ -19,4 +19,5 @@ public class NoticeRequestDto {
     private LocalDate startDate;
     private LocalDate endDate;
     private String pdfUrl;
+    private String summary;
 }
