@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from chromadb.utils import embedding_functions
 
 from schema import ChatRequest, ChatResponse
-from chatbot_service import get_rag_answer
+from notice_chatbot import get_rag_answer
 
 # 전역 상태 저장소
 app_state = {}
@@ -90,7 +90,7 @@ async def chat(request: ChatRequest):
     # return ChatResponse(message=answer)
 
     # 비동기 환경에서 원활하게 돌아가도록 await 적용 가능하게 구성
-    answer = await get_rag_answer(request.message, app_state["collection"])
+    answer = await get_rag_answer(request.message, app_state["collection"], request.noticeNo)
     return ChatResponse(message=answer)
 
 # 5. 챗봇 API 테스트

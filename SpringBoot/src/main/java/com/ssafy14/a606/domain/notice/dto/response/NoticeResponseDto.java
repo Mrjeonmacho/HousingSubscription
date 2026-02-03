@@ -20,9 +20,9 @@ public class NoticeResponseDto {
     private LocalDate startDate;
     private LocalDate endDate;
     private String pdfUrl;
-    private List<HomeDto> homes;
+    private String summary;
 
-    public NoticeResponseDto(Notice notice) {
+    public  NoticeResponseDto(Notice notice) {
         this.id = notice.getId();
         this.noticeNo = notice.getNoticeNo();
         this.title = notice.getTitle();
@@ -32,8 +32,6 @@ public class NoticeResponseDto {
         this.startDate = notice.getStartDate();
         this.endDate = notice.getEndDate();
         this.pdfUrl = notice.getPdfUrl();
-        this.homes = notice.getHomes().stream()
-                .map(HomeDto::new)
-                .toList();
+        this.summary = notice.getSummary();
     }
 }

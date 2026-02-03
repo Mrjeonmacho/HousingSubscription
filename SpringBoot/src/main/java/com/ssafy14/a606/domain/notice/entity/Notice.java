@@ -1,6 +1,5 @@
 package com.ssafy14.a606.domain.notice.entity;
 
-import com.ssafy14.a606.domain.notice.entity.Home;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -51,13 +50,14 @@ public class Notice {
     // SH 공고 pdf 링크
     private String pdfUrl;
 
-    // 집 위치가 확인될 때 쓰는 공고의 집 목록 모음
-    @OneToMany(mappedBy = "notice", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Home> homes = new ArrayList<>();
+    // SH 공고 요약본
+    @Lob
+    private String summary;
+
 
     // 생성자 빌더
     @Builder
-    public Notice(String noticeNo, String title, NoticeCategory category, NoticeStatus status, LocalDate regDate, LocalDate startDate, LocalDate endDate, String pdfUrl) {
+    public Notice(String noticeNo, String title, NoticeCategory category, NoticeStatus status, LocalDate regDate, LocalDate startDate, LocalDate endDate, String pdfUrl, String summary) {
         this.noticeNo = noticeNo;
         this.title = title;
         this.category = category;
@@ -66,9 +66,10 @@ public class Notice {
         this.startDate = startDate;
         this.endDate = endDate;
         this.pdfUrl = pdfUrl;
+        this.summary =  summary;
     }
 
-    public void update(String noticeNo, String title, NoticeCategory category, NoticeStatus status, LocalDate regDate, LocalDate startDate, LocalDate endDate, String pdfUrl) {
+    public void update(String noticeNo, String title, NoticeCategory category, NoticeStatus status, LocalDate regDate, LocalDate startDate, LocalDate endDate, String pdfUrl, String summary) {
         this.noticeNo = noticeNo;
         this.title = title;
         this.category = category;
@@ -77,6 +78,7 @@ public class Notice {
         this.startDate = startDate;
         this.endDate = endDate;
         this.pdfUrl = pdfUrl;
+        this.summary = summary;
     }
 
     @Override
