@@ -60,15 +60,13 @@ export const updateUserAddInfo = async (data: UserAddInfo) => {
   }
 };
 
-
-
 /**
- * 관리자 여부 확인
- * - /users/me 응답의 userRole을 확인해서 boolean 반환
- * - 실패(비로그인/만료 등) 시 false
+ * 관리자 여부 확인 (서버 기준)
  */
 export const getIsAdmin = (): boolean => {
-  const role = localStorage.getItem("userRole");
+  const token = localStorage.getItem("accessToken");
+  if (!token) return false;
 
+  const role = localStorage.getItem("userRole");
   return role === "ROLE_ADMIN" || role === "ADMIN";
 };

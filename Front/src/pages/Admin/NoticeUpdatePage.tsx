@@ -108,22 +108,20 @@ export default function NoticeUpdatePage() {
     url: "",
   }));
 
-  // 관리자 체크 + 비정상 id 방어
   useEffect(() => {
-    (async () => {
-      try {
-        if (!Number.isFinite(noticeId) || noticeId <= 0) {
-          navigate("/notices", { replace: true });
-          return;
-        }
-
-        const ok = await Promise.resolve(getIsAdmin());
-        setAllowed(Boolean(ok));
-        if (!ok) navigate(`/notices/${noticeId}`, { replace: true });
-      } finally {
-        setChecking(false);
+    try {
+      if (!Number.isFinite(noticeId) || noticeId <= 0) {
+        navigate("/notices", { replace: true });
+        return;
       }
-    })();
+
+      const ok = getIsAdmin();
+      setAllowed(ok);
+
+      if (!ok) navigate(`/notices/${noticeId}`, { replace: true });
+    } finally {
+      setChecking(false);
+    }
   }, [navigate, noticeId]);
 
   // 기존 공고 데이터 로딩

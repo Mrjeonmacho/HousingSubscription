@@ -107,6 +107,8 @@ export const login = async (loginData: LoginData): Promise<User | null> => {
     if (accessToken) localStorage.setItem("accessToken", accessToken);
     if (userRole) localStorage.setItem("userRole", userRole);
 
+    window.dispatchEvent(new Event("auth-changed"));
+
     console.log("로그인 성공:", response.data);
     return response.data;
   } catch (error) {
@@ -124,6 +126,8 @@ export const logoutAPI = async (): Promise<void> => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("userRole");
 
+    window.dispatchEvent(new Event("auth-changed"));
+    
     alert("로그아웃 되었습니다");
   } catch (error) {
     console.error("로그아웃 요청 실패", error);
