@@ -17,16 +17,23 @@ export default function NoticeListHeader({
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => getIsAdmin());
 
-  // 관리자 여부 조회
   useEffect(() => {
-    (async () => {
-      const ok = await getIsAdmin();
-      setIsAdmin(ok);
-    })();
-  }, []);
+    const sync = () => setIsAdmin(getIsAdmin());
 
+    // 같은 탭에서 로그인/로그아웃 반영 (커스텀 이벤트)
+    window.addEventListener("auth-changed", sync);
+
+    // 다른 탭에서 변경 반영 (storage 이벤트)
+    window.addEventListener("storage", sync);
+
+    return () => {
+      window.removeEventListener("auth-changed", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+  
   // 드롭다운 바깥 클릭 시 닫기 (원래 로직 복구)
   useEffect(() => {
     if (!open) return;
