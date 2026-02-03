@@ -1,5 +1,5 @@
 // Front/src/pages/NoticesPage.tsx
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { AxiosError } from "axios";
@@ -98,11 +98,16 @@ function isStarted(startDate: string | null) {
 
 type NoticePresetState = {
   preselectedCategories?: string[];
+  scrollToList?: boolean;
 };
 
 export default function NoticesPage() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // 스크롤 앵커 + 1회 실행 가드
+  const listTopRef = useRef<HTMLDivElement | null>(null);
+  const didScrollRef = useRef(false);
 
   // 이동 시 전달된 preset을 "처음 렌더에서" 읽기
   const presetCategories = useMemo(() => {
@@ -110,6 +115,12 @@ export default function NoticesPage() {
     const preset = state?.preselectedCategories;
     if (!Array.isArray(preset) || preset.length === 0) return null;
     return Array.from(new Set(preset));
+  }, [location.state]);
+
+  // scroll 플래그도 같이 읽기
+  const shouldScrollToList = useMemo(() => {
+    const state = location.state as NoticePresetState | null;
+    return !!state?.scrollToList;
   }, [location.state]);
 
   // 필터 초기값에 preset 반영 (처음부터 체크된 상태)
@@ -126,11 +137,27 @@ export default function NoticesPage() {
   // 처음부터 펼친 상태로 시작
   const [defaultExpandFilters] = useState<boolean>(() => !!presetCategories);
 
-  // state 재적용 방지용으로 한 번만 지움
+  // state 지우는 로직은 유지하되, "필요한 처리(스크롤) 이후"에 실행되게끔 effect 분리/순서 보장
   useEffect(() => {
-    if (!presetCategories) return;
+    if (!presetCategories && !shouldScrollToList) return;
+    // replace로 state 제거 (뒤로가기/새로고침 시 재적용 방지)
     navigate(location.pathname, { replace: true, state: null });
-  }, [presetCategories, navigate, location.pathname]);
+  }, [presetCategories, shouldScrollToList, navigate, location.pathname]);
+
+  // 자동 스크롤: 최초 1회만
+  useEffect(() => {
+    if (!shouldScrollToList) return;
+    if (didScrollRef.current) return;
+
+    // 렌더가 한 번 돈 뒤 스크롤되도록 rAF 사용
+    requestAnimationFrame(() => {
+      const el = listTopRef.current;
+      if (!el) return;
+
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      didScrollRef.current = true;
+    });
+  }, [shouldScrollToList]);
 
   // 정렬 상태는 Header(sortType) 기준으로만 사용
   const [sortType, setSortType] = useState<SortType>("REG_DATE");
@@ -307,6 +334,8 @@ export default function NoticesPage() {
       <NoticeHeroCarousel items={featured} />
 
       <FavoritesNoticeSection items={favorites} onChangedFavorites={loadFavorites} />
+
+      <div ref={listTopRef} />
 
       <NoticeListLayout
         totalCount={totalCount}
