@@ -28,9 +28,21 @@ function normalizeNoticeDetail(data: unknown): Notice {
   };
 }
 
+type NotFoundLikeError = Error & { status?: number };
+
 export async function getNoticeDetail(id: number): Promise<Notice> {
   const res = await apiClient.get<unknown>(`/notices/${id}`);
-  return normalizeNoticeDetail(res.data);
+  const notice = normalizeNoticeDetail(res.data);
+
+  // 응답이 공고 상세가 아니면(빈 객체/에러 바디 등) 404로 처리
+  if (!Number.isFinite(notice.id) || notice.id !== id) {
+    const err: NotFoundLikeError = Object.assign(new Error("NOT_FOUND"), {
+      status: 404,
+    });
+    throw err;
+  }
+
+  return notice;
 }
 
 /**
