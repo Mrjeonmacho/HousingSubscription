@@ -47,7 +47,7 @@ export default function NoticeListLayout({
   defaultExpandFilters = false,
 }: Props) {
   return (
-    <section className={["space-y-6", className ?? ""].join(" ")}>
+    <section className={["space-y-3", className ?? ""].join(" ")}>
       <NoticeListHeader
         totalCount={totalCount}
         sortType={sortType}

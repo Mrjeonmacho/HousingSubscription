@@ -23,6 +23,9 @@ import Preference from "../pages/Playground/Preference";
 // 챗봇 페이지
 import Chatbot from "../pages/Chatbot";
 
+// 관리자(admin) 페이지
+import NoticeCreatePage from "../pages/Admin/NoticeCreatePage";
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -53,12 +56,16 @@ export default function App() {
 
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            
+            {/* 관리자 페이지 */}
+            <Route path="/admin/notices/create" element={<NoticeCreatePage />} />
           </Route>
 
           {/* 챗봇 페이지: ChatbotLayout 적용 */}
           <Route element={<ChatbotLayout />}>
             <Route path="/chatbot" element={<Chatbot />} />
           </Route>
+
         </Routes>
       </AuthProvider>
     </BrowserRouter>
