@@ -56,8 +56,13 @@ def expand_context(best_id, collection):
 
     return "\n\n".join(sorted_documents)
 
+from constants import SOURCE_MAP
+
 async def get_rag_answer(user_question: str, collection, noticeNo: str):
     """RAG 파이프라인을 실행하여 사용자의 질문에 답변합니다."""
+
+    # 0. noticeNo를 실제 이름으로 변환
+    source_name = SOURCE_MAP.get(noticeNo, noticeNo)
 
     # 1. 유사도 검색 (가장 관련 있는 1개 청크 확보)
     if collection is None:
@@ -77,29 +82,28 @@ async def get_rag_answer(user_question: str, collection, noticeNo: str):
         if results['distances'][0][0] <= 0.6: # 1.2 이하일 경우 관련성이 있다고 판단
             is_relevant_result = True
 
-    # 2-1. 검색 결과가 없을 경우: 일반적인 답변 생성, 혹은 유사도 점수가 낮으면
+    # 2. 검색 결과 유효성 검사 및 분기
     if not is_relevant_result:
+        # 2-1. 검색 결과가 없거나 관련성이 낮을 경우: 일반적인 답변 생성
         general_prompt_template = ChatPromptTemplate.from_messages([
             ("system", (
-                "당신은 AI 챗봇 '서울집사'입니다."
+                "답변 제일 첫문장에 '해당 질문은 서울집사 서비스에서 찾기 어려워 정확성이 떨어질 수 있습니다.' 이 문장을 꼭 넣어줘 왜냐하면 여기 조건문은 db에 질문이랑 매칭되지 않아서 질문 자체를 gms를 통해 답변하는거니까."
+                "당신은 AI 챗봇 '서울집사'입니다. "
                 "사용자의 질문에 대해 당신이 아는 정보를 바탕으로 최대한 친절하고 상세하게 답변해주세요. "
                 "모든 답변은 '순수 평문(Plain Text)'으로만 작성해야 합니다. "
                 "절대로 별표(*), 특수기호(#), 대시(-) 등을 사용한 마크다운 형식을 쓰지 마세요. "
                 "강조가 필요하다면 괄호 [ ] 를 사용하거나 줄바꿈을 활용하세요. "
                 "목록을 나열할 때는 1. 2. 3. 처럼 숫자와 마침표만 사용하세요. "
-                "답변 제일 첫문장에 '해당 질문은 서울집사 서비스에서 찾기 어려워 정확성이 떨어질 수 있습니다.' 이 문장을 꼭 넣어줘 왜냐하면 여기 조건문은 db에 질문이랑 매칭되지 않아서 질문 자체를 gms를 통해 답변하는거니까."
                 "챗봇 형태이기 때문에 짧으면 한문장, 길면 5문장 이내로 압축해서 핵심적이고 읽기 쉽게 만들어줘 마무리로"
             )),
             ("human", "{question}")
         ])
         full_prompt = general_prompt_template.format(question=user_question)
         return await call_gemini_api(full_prompt)
-
-
     else:
+        # 2-2. 검색 결과가 유효할 경우: RAG 답변 생성
         # 3. 문맥 확장 (슬라이딩 윈도우 방식으로 주변 텍스트 병합)
         best_id = results['ids'][0][0]
-        source_folder = noticeNo
         final_context = expand_context(best_id, collection)
 
         # 4. 프롬프트 구성 (시스템 역할을 통한 전문가 페르소나 부여)
@@ -115,11 +119,11 @@ async def get_rag_answer(user_question: str, collection, noticeNo: str):
                 "절대로 별표(*), 특수기호(#), 대시(-) 등을 사용한 마크다운 형식을 쓰지 마세요. "
                 "강조가 필요하다면 괄호 [ ] 를 사용하거나 줄바꿈을 활용하세요. "
                 "목록을 나열할 때는 1. 2. 3. 처럼 숫자와 마침표만 사용하세요. "
-                "챗봇 형태이기 때문에 짧으면 한문장, 길면 5문장 이내로 압축해서 핵심적이고 읽기 쉽게 만들어줘 답면 크기는 압축적이면 좋아"
+                "챗봇 형태이기 때문에 짧으면 한문장, 길면 5문장 이내로 압축해서 핵심적이고 읽기 쉽게 만들어줘 마무리로"
             )),
             ("human", "내용:\n{context}\n\n질문: {question}")
         ])
-        full_prompt = prompt_template.format(context=final_context, question=user_question, source_folder=source_folder)
+        full_prompt = prompt_template.format(context=final_context, question=user_question, source_folder=source_name)
 
         # 5. Gemini API 호출 (비동기 처리)
         return await call_gemini_api(full_prompt)
