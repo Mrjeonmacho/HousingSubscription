@@ -43,7 +43,7 @@ export default function App() {
             {/* 공고 관련 */}
             <Route path="/notices">
               <Route index element={<NoticesPage />} />
-              <Route path=":noticeId(\\d+)" element={<NoticeDetailPage />} />
+              <Route path=":noticeId" element={<NoticeDetailPage />} />
             </Route>
 
             {/* 놀이터 관련 */}
@@ -63,7 +63,7 @@ export default function App() {
             
             {/* 관리자 페이지 */}
             <Route path="/admin/notices/create" element={<NoticeCreatePage />} />
-            <Route path="/admin/notices/:noticeId(\\d+)/update" element={<NoticeUpdatePage />} />
+            <Route path="/admin/notices/:noticeId/update" element={<NoticeUpdatePage />} />
 
             {/* 404 Not Found 페이지 */}
             <Route path="*" element={<NotFoundPage />} />

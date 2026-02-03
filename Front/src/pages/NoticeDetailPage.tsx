@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { Notice } from "./NoticesPage";
 import { getNoticeDetail } from "../api/NoticeApi";
 
+import NotFoundPage from "../pages/NotFoundPage";
+
 import NoticeDetailHeader from "../components/noticeDetail/NoticeDetailHeader";
 import NoticeOverviewCard from "../components/noticeDetail/NoticeOverviewCard";
 import NoticeQuickLinksCard from "../components/noticeDetail/NoticeQuickLinksCard";
@@ -10,6 +12,8 @@ import NoticeChatbotPanel from "../components/noticeDetail/NoticeChatbotPanel";
 
 import { computeNoticeStatus } from "../utils/noticeStatus";
 import { noticeStatusLabel } from "../utils/noticeFormat";
+
+import { AxiosError } from "axios";
 
 // D-Day 계산 유틸
 function getDDayInfo(endDate: string | null) {
@@ -35,10 +39,13 @@ export default function NoticeDetailPage() {
 
   const [notice, setNotice] = useState<Notice | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [notFound, setNotFound] = useState<boolean>(false);
 
   const parsedId = useMemo(() => {
+    if (!noticeId) return NaN;
     const n = Number(noticeId);
-    return Number.isFinite(n) ? n : NaN;
+    if (!Number.isInteger(n) || n <= 0) return NaN;
+    return n;
   }, [noticeId]);
 
   // 날짜 기반 상태 계산
@@ -62,7 +69,7 @@ export default function NoticeDetailPage() {
       case "DEADLINE_SOON":
         return "bg-red-50 text-red-500 border border-red-100";
       case "RECRUITING":
-        return "bg-primary/10 text-primary border border-primary/20"; // ★ Primary(#00E676) 적용
+        return "bg-primary/10 text-primary border border-primary/20";
       case "UPCOMING":
         return "bg-gray-100 text-gray-500 border border-gray-200";
       case "CLOSED":
@@ -75,36 +82,92 @@ export default function NoticeDetailPage() {
   // 기본 정보 카드용 텍스트 색상
   const overviewTextColor = useMemo(() => {
     switch (computedStatus) {
-      case "DEADLINE_SOON": return "text-[#FF5A5A]";
-      case "RECRUITING": return "text-primary";
-      case "UPCOMING": return "text-[#8B95A1]";
-      case "CLOSED": return "text-gray-400";
-      default: return "text-gray-400";
+      case "DEADLINE_SOON":
+        return "text-[#FF5A5A]";
+      case "RECRUITING":
+        return "text-primary";
+      case "UPCOMING":
+        return "text-[#8B95A1]";
+      case "CLOSED":
+        return "text-gray-400";
+      default:
+        return "text-gray-400";
     }
   }, [computedStatus]);
 
   // 데이터 로딩
   useEffect(() => {
+    // 파라미터 형식 자체가 잘못되면 즉시 404 처리
     if (!noticeId || Number.isNaN(parsedId)) {
+      setNotice(null);
+      setNotFound(true);
       setLoading(false);
       return;
     }
+
     let ignore = false;
+
     (async () => {
       try {
         setLoading(true);
+        setNotFound(false);
+
         const data = await getNoticeDetail(parsedId);
+
+        // 서버가 200을 주더라도 데이터가 비정상(없음)이면 404로 처리
+        if (!data || data.id !== parsedId) {
+          if (!ignore) {
+            setNotice(null);
+            setNotFound(true);
+          }
+          return;
+        }
+
         if (!ignore) setNotice(data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        if (!ignore) setLoading(false);
-      }
+        } catch (e: unknown) {
+          // 1) AxiosError(서버가 진짜 404 내려준 경우)
+          if (e instanceof AxiosError) {
+            if (!ignore && e.response?.status === 404) {
+              setNotice(null);
+              setNotFound(true);
+            }
+            console.error(e);
+            return;
+          }
+
+          // 2) 커스텀 404(서버가 200을 줬지만 우리가 404로 간주한 경우)
+          const status =
+            typeof e === "object" && e !== null && "status" in e
+              ? (e as { status?: number }).status
+              : undefined;
+
+          if (!ignore && status === 404) {
+            setNotice(null);
+            setNotFound(true);
+          }
+
+          console.error(e);
+        } finally {
+          if (!ignore) setLoading(false);
+        }
     })();
-    return () => { ignore = true; };
+
+    return () => {
+      ignore = true;
+    };
   }, [noticeId, parsedId]);
 
-  const onBack = () => navigate("/notices");
+  // 1. 로딩 중일 때는 화면을 그리지 않음 (가장 중요)
+    if (loading) {
+      return null; 
+    }
+
+    // 2. 404 상태이거나 로딩이 끝났는데 데이터(notice)가 없는 경우 처리
+    if (notFound || !notice) {
+      return <NotFoundPage />;
+    }
+
+    const onBack = () => navigate("/notices");
 
   const onShare = async () => {
     const url = window.location.href;
@@ -126,7 +189,6 @@ export default function NoticeDetailPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-8 md:px-6">
-      {/* 뒤로가기 버튼 */}
       <div className="mb-6 mt-4">
         <button
           onClick={onBack}
@@ -139,7 +201,6 @@ export default function NoticeDetailPage() {
         </button>
       </div>
 
-      {/* 헤더 컴포넌트 재사용 */}
       <div className="mb-8 border-b border-gray-100 pb-8">
         <NoticeDetailHeader
           noticeId={notice?.id ?? null}
@@ -147,42 +208,32 @@ export default function NoticeDetailPage() {
           title={notice?.title ?? ""}
           startDate={notice?.startDate ?? ""}
           endDate={notice?.endDate ?? ""}
-          
-          // 계산된 스타일과 텍스트 전달
           statusText={statusText}
           badgeStyle={headerBadgeStyle}
           dDayText={dDayText}
-          isUrgent={dDayDays !== null && dDayDays <= 3} // 3일 이하 남았으면 D-Day 빨간색
-          
+          isUrgent={dDayDays !== null && dDayDays <= 3}
           onShare={onShare}
         />
       </div>
 
-      {/* 레이아웃 */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        
-        {/* 상세 정보 & 링크 */}
         <div className="lg:col-span-1 flex flex-col gap-6">
-          <NoticeOverviewCard 
-            loading={loading} 
-            notice={notice} 
-            statusText={statusText}        // 상태 텍스트
-            textColor={overviewTextColor}  // 글자 색상
+          <NoticeOverviewCard
+            loading={loading}
+            notice={notice}
+            statusText={statusText}
+            textColor={overviewTextColor}
           />
 
           <NoticeQuickLinksCard
             loading={loading}
             pdf={notice?.pdfUrl ?? null}
-            url={notice?.url ?? null} 
+            url={notice?.url ?? null}
           />
         </div>
 
-        {/* AI 챗봇 */}
         <div className="lg:col-span-2 sticky top-6 h-[calc(100vh-100px)] min-h-[600px] overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
-          <NoticeChatbotPanel 
-            noticeTitle={notice?.title} 
-            noticeId={notice?.id}
-          />
+          <NoticeChatbotPanel noticeTitle={notice?.title} noticeId={notice?.id} />
         </div>
       </div>
     </div>
