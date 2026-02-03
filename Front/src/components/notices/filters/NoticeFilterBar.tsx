@@ -10,8 +10,8 @@ import type { ComputedNoticeStatus } from "../../../utils/noticeStatus";
 import NoticeFilterCollapsed from "./NoticeFilterCollapsed";
 import NoticeFilterExpanded from "./NoticeFilterExpanded";
 
-type Option = {
-  value: string;
+type Option<T extends string = string> = {
+  value: T;
   label: string;
 };
 
@@ -28,8 +28,8 @@ type NoticeFilterBarProps = {
   value: Filters;
   onChange: (next: Filters) => void;
 
-  categoryOptions?: Option[];
-  statusOptions?: Option[];
+  categoryOptions?: Option<string>[];
+  statusOptions?: Option<ComputedNoticeStatus>[];
 
   placeholder?: string;
   className?: string;
@@ -85,7 +85,7 @@ export default function NoticeFilterBar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.category]);
 
-  const defaultCategoryOptions = useMemo<Option[]>(() => {
+  const defaultCategoryOptions = useMemo<Option<NoticeCategory>[]>(() => {
     const categories: NoticeCategory[] = [
       "YOUTH_RESIDENCE",
       "HAPPY_HOUSE",
@@ -93,13 +93,14 @@ export default function NoticeFilterBar({
       "PUBLIC_RENTAL",
       "LONG_TERM_RENTAL",
     ];
+
     return categories
       .filter((c) => !EXCLUDED_CATEGORIES.has(String(c)))
       .map((c) => ({ value: c, label: categoryLabel(c) }));
   }, []);
 
   // 진행상태는 날짜 기반 computed 상태로 고정
-  const defaultStatusOptions = useMemo<Option[]>(() => {
+  const defaultStatusOptions = useMemo<Option<ComputedNoticeStatus>[]>(() => {
     const statuses: ComputedNoticeStatus[] = [
       "UPCOMING",
       "RECRUITING",
@@ -110,12 +111,14 @@ export default function NoticeFilterBar({
   }, []);
 
   // 외부에서 categoryOptions를 주더라도, 필터에서 제외 대상은 한번 더 걸러줌
-  const categories = useMemo<Option[]>(() => {
-    const base = categoryOptions ?? defaultCategoryOptions;
+  const categories = useMemo<Option<string>[]>(() => {
+    const base: Option<string>[] =
+      categoryOptions ?? (defaultCategoryOptions as Option<string>[]);
     return base.filter((opt) => !EXCLUDED_CATEGORIES.has(opt.value));
   }, [categoryOptions, defaultCategoryOptions]);
 
-  const statuses = statusOptions ?? defaultStatusOptions;
+  const statuses: Option<ComputedNoticeStatus>[] =
+    statusOptions ?? defaultStatusOptions;
 
   const commitKeyword = () => {
     const next = localKeyword.trim();
