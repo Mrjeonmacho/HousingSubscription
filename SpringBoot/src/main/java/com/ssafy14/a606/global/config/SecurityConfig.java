@@ -2,6 +2,7 @@ package com.ssafy14.a606.global.config;
 
 import com.ssafy14.a606.global.security.jwt.JwtAuthenticationFilter;
 import com.ssafy14.a606.global.security.jwt.JwtExceptionFilter;
+import com.ssafy14.a606.global.security.oauth.handler.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,7 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final OAuth2SuccessHandler OAuth2SuccessHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtExceptionFilter jwtExceptionFilter;
 
@@ -42,6 +44,10 @@ public class SecurityConfig {
                                 "/api/users/email/**",
                                 "/api/chatbot/**" // 챗봇 엔드포인트 임시 허용
                         ).permitAll()
+                        .requestMatchers(
+                                "/oauth2/**",
+                                "/login/oauth2/**"
+                        ).permitAll()
                         .requestMatchers("/api/notices/favorites/**").authenticated()
                         .requestMatchers("/api/users/me/**").authenticated()
                         .requestMatchers("/api/auth/logout").permitAll()
@@ -51,6 +57,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
+                .oauth2Login(oauth -> oauth
+                        .successHandler(OAuth2SuccessHandler))
                 .addFilterBefore(jwtExceptionFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
