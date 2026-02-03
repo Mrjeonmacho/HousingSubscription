@@ -45,10 +45,11 @@ public class AuthServiceImpl implements AuthService{
             throw new AuthorizationException("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
 
+        Long userId = user.getId();
         String role = user.getRole().name(); // enum이면 name()
 
-        String accessToken = jwtTokenProvider.createAccessToken(user.getLoginId(), role);
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getLoginId());
+        String accessToken = jwtTokenProvider.createAccessToken(userId, role);
+        String refreshToken = jwtTokenProvider.createRefreshToken(userId);
 
         String userRole = "ROLE_" + user.getRole().name();
 
@@ -78,10 +79,10 @@ public class AuthServiceImpl implements AuthService{
             throw new AuthorizationException("RefreshToken이 없습니다.");
         }
 
-        // 2) + 3) 만료/유효하지 않음 분기 + loginId 추출
-        final String loginId;
+        // 2) + 3) 만료/유효하지 않음 분기 + userId 추출
+        final Long userId;
         try {
-            loginId = jwtTokenProvider.getLoginId(refreshToken);
+            userId = jwtTokenProvider.getUserId(refreshToken);
         } catch (ExpiredJwtException e) {
             throw new AuthorizationException("RefreshToken이 만료되었습니다.");
         } catch (JwtException | IllegalArgumentException e) {
@@ -89,10 +90,9 @@ public class AuthServiceImpl implements AuthService{
         }
 
         // 4) loginId로 사용자 조회
-        User user = userRepository.findByLoginId(loginId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AuthorizationException("사용자 정보를 찾을 수 없습니다."));
 
-        Long userId = user.getId();
         String role = user.getRole().name();
 
         // 5) Redis 저장값과 일치 확인 (rotation 검증)
@@ -101,8 +101,8 @@ public class AuthServiceImpl implements AuthService{
         }
 
         // 6) 새 access/refresh 발급
-        String newAccessToken = jwtTokenProvider.createAccessToken(loginId, role);
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(loginId);
+        String newAccessToken = jwtTokenProvider.createAccessToken(userId, role);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(userId);
 
         // 7) Redis 덮어쓰기 (기존 refresh 폐기)
         refreshTokenStore.save(userId, newRefreshToken);

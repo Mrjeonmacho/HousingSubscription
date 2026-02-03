@@ -45,11 +45,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 이미 인증이 들어있으면 중복 세팅 방지
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // 4. JWT에서 loginId 추출
-            String loginId = jwtTokenProvider.getLoginId(token);
+            // 4. JWT에서 userId 추출
+            Long userId = jwtTokenProvider.getUserId(token);
 
             // 5. DB에서 UserDetails로 조회
-            UserDetails userDetails = customUserDetailsService.loadUserByUsername(loginId);
+            UserDetails userDetails = customUserDetailsService.loadUserByUserId(userId);
 
             // 6. UserDetails 기반으로 Authentication 생성
             UsernamePasswordAuthenticationToken authentication =
