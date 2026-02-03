@@ -46,7 +46,7 @@ public class NoticeService {
     @Transactional
     public NoticeResponseDto createNotice(NoticeRequestDto noticeRequestDto) {
         // 1. FastAPI에 요약 요청 보내기
-        SummaryRequestDto summaryRequest = new SummaryRequestDto(noticeRequestDto.getNoticeNo());
+        SummaryRequestDto summaryRequest = new SummaryRequestDto(noticeRequestDto.getTitle());
 
         SummaryResponseDto summaryResponse = webClient.post()
                 .uri("/summary")

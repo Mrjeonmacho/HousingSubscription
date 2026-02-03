@@ -37,11 +37,11 @@ async def call_summary_gemini_api(prompt_text: str):
 CHUNK_LIMIT = 15
 
 # noticeNo를 기반으로 DB에서 모든 문서를 가져와 합치는 함수
-def get_full_text(noticeNo: str, collection):
+def get_full_text(title: str, collection):
     """
-    특정 noticeNo에 해당하는 모든 문서를 데이터베이스에서 가져와 하나의 문자열로 합칩니다.
+    특정 title에 해당하는 모든 문서를 데이터베이스에서 가져와 하나의 문자열로 합칩니다.
     """
-    retrieved_data = collection.get(where={"noticeNo": noticeNo}, include=['documents'])
+    retrieved_data = collection.get(where={"title": title}, include=['documents'])
 
     if not retrieved_data or not retrieved_data.get('documents'):
         return None
