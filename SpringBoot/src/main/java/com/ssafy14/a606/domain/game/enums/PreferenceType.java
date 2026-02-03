@@ -39,12 +39,13 @@ public enum PreferenceType {
 
     OPPORTUNITY_SEEKER(
             "기회 추구형",
-            "초기 비용이나 대출 부담을 감수하더라도, 입지나 향후 가치 상승 가능성을 중시하는 유형입니다.",
+            "초기 비용이나 제약을 어느 정도 감수하더라도, 입지와 향후 생활 편의(교통·인프라) 가치를 중시하는 유형입니다.",
             List.of(
-                    NoticeCategory.SALE_HOUSE,
+                    NoticeCategory.YOUTH_RESIDENCE,
+                    NoticeCategory.HAPPY_HOUSE,
                     NoticeCategory.LONG_TERM_RENTAL
             ),
-            "대출 조건과 상환 계획, 분양 전환 가능 여부를 반드시 확인하세요."
+            "역세권 여부, 직주근접, 모집 물량 대비 경쟁률, 소득·자산요건 및 거주의무기간을 우선 확인하세요."
     ),
 
     LOCATION_PRIORITY(
@@ -52,8 +53,7 @@ public enum PreferenceType {
             "주거 비용보다 출퇴근과 통학 편의성, 생활 인프라 접근성을 가장 중요하게 생각하는 유형입니다.",
             List.of(
                     NoticeCategory.YOUTH_RESIDENCE,
-                    NoticeCategory.HAPPY_HOUSE,
-                    NoticeCategory.SALE_HOUSE
+                    NoticeCategory.HAPPY_HOUSE
             ),
             "교통 노선과 실제 출퇴근 시간을 기준으로 공고를 살펴보세요."
     ),
