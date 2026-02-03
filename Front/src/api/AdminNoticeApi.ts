@@ -57,3 +57,16 @@ export async function patchAdminUpdateNotice(
   const res = await apiClient.patch(`/admin/notices/${noticeId}`, payload);
   return res.data as { id: number };
 }
+
+export type AdminDeleteNoticeResponse = {
+  code?: string;
+  message?: string;
+  noticeId?: number;
+};
+
+export async function deleteAdminNotice(noticeId: number) {
+  const res = await apiClient.delete<AdminDeleteNoticeResponse>(
+    `/admin/notices/${noticeId}`
+  );
+  return res.data;
+}
