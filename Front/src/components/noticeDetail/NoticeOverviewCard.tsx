@@ -4,46 +4,32 @@ import type { Notice } from "../../pages/NoticesPage";
 type Props = {
   loading: boolean;
   notice: Notice | null;
+  statusText?: string;
+  textColor?: string;
 };
 
-function getStatusColor(status: string | null) {
+// Fallback 색상 로직 (props 없을 때)
+function getFallbackColor(status: string | null) {
   if (!status) return "text-gray-400";
   const s = status as string;
-
-  // 접수중 -> #F97316 (주황색)
-  if (s === "RECEIVING" || s === "OPEN" || s === "RECRUITING") {
-    return "text-[#F97316]";
-  }
   
-  // 마감임박 -> #FF5A5A (빨간색)
-  if (s === "DEADLINE_APPROACHING") {
-    return "text-[#FF5A5A]";
-  }
-
-  // 예정 -> #8B95A1 (블루그레이)
-  if (s === "TO_BE_ANNOUNCED" || s === "SCHEDULED") {
-    return "text-[#8B95A1]";
-  }
-
-  // 마감 / 종료 -> Gray
-  if (s === "COMPLETED" || s === "CLOSED" || s === "ENDED") {
-    return "text-gray-400";
-  }
-
+  if (s === "RECEIVING" || s === "OPEN" || s === "RECRUITING") return "text-primary"; 
+  if (s === "DEADLINE_APPROACHING") return "text-[#FF5A5A]";
+  if (s === "TO_BE_ANNOUNCED" || s === "SCHEDULED") return "text-[#8B95A1]";
   return "text-gray-400";
 }
 
-export default function NoticeOverviewCard({ loading, notice }: Props) {
+export default function NoticeOverviewCard({ loading, notice, statusText, textColor }: Props) {
   if (loading || !notice) return <div className="h-64 rounded-3xl bg-gray-50 animate-pulse" />;
 
-  // 현재 상태에 맞는 색상 클래스 가져오기
-  const statusColorClass = getStatusColor(notice.status);
+  const displayStatus = statusText || statusLabel(notice.status);
+  const displayColor = textColor || getFallbackColor(notice.status);
 
   return (
     <section className="rounded-3xl bg-white p-6 shadow-sm border border-gray-100">
       {/* 섹션 제목 */}
       <div className="mb-6 flex items-center gap-3">
-        <div className="h-5 w-1.5 rounded-full bg-[#00D179]" />
+        <div className="h-5 w-1.5 rounded-full bg-primary" />
         <h2 className="text-lg font-bold text-gray-900">공고 기본 정보</h2>
       </div>
 
@@ -61,11 +47,11 @@ export default function NoticeOverviewCard({ loading, notice }: Props) {
           <p className="text-xs font-medium text-gray-400">공고 등록일</p>
           <p className="mt-1 text-base font-bold text-gray-900">{notice.regDate}</p>
         </div>
+        
         <div>
           <p className="text-xs font-medium text-gray-400">모집 공고 상태</p>
-          {/* 상태 텍스트 색상 적용 */}
-          <p className={`mt-1 text-base font-bold ${statusColorClass}`}>
-            {statusLabel(notice.status)}
+          <p className={`mt-1 text-base font-bold ${displayColor}`}>
+            {displayStatus}
           </p>
         </div>
       </div>

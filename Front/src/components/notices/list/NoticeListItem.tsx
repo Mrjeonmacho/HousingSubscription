@@ -20,26 +20,9 @@ function formatDateRange(start: string | null, end: string | null) {
 }
 
 // D-Day 로직은 "그대로 유지"
-function calcDDay(endDate: string | null) {
-  if (!endDate) return null;
-  const end = new Date(endDate);
-  if (Number.isNaN(end.getTime())) return null;
-
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfEnd = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-
-  const diffMs = startOfEnd.getTime() - startOfToday.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays > 0) return `D-${diffDays}`;
-  if (diffDays === 0) return "D-DAY";
-  return null;
-}
-
-// D-Day 로직은 "그대로 유지"
 function getDDayInfo(endDate: string | null) {
-  if (!endDate) return { text: null as string | null, daysLeft: null as number | null };
+  if (!endDate)
+    return { text: null as string | null, daysLeft: null as number | null };
 
   const end = new Date(endDate);
   if (Number.isNaN(end.getTime())) return { text: null, daysLeft: null };
@@ -63,16 +46,11 @@ function ddayTone(daysLeft: number | null) {
   return "text-gray-400";
 }
 
-function rightTone() {
-  return "text-primary";
-}
-
 function statusTone(statusText: string, isClosed: boolean) {
   if (isClosed) return "text-gray-400";
 
   const normalized = statusText.replace(/\s+/g, "");
 
-  // 날짜 기반 상태 문구 기준으로 톤 결정
   if (normalized.includes("마감") && normalized.includes("임박")) return "text-red-500";
   if (normalized.includes("접수중")) return "text-primary";
   if (normalized.includes("예정")) return "text-[#8B95A1]";
@@ -106,17 +84,10 @@ export default function NoticeListItem({
   const isClosed = useMemo(() => computedStatus === "CLOSED", [computedStatus]);
 
   // 4) D-Day는 기존 로직 그대로 (endDate 기준)
-  const dday = useMemo(() => calcDDay(n.endDate), [n.endDate]);
-  const { text: ddayText, daysLeft } = useMemo(() => getDDayInfo(n.endDate), [n.endDate]);
-
-  // 5) 우측 텍스트는 "기존처럼" D-Day 우선, 없으면 상태 표시
-  const rightText = dday ?? statusText;
-
-  const rightTextClass = isClosed
-    ? "text-gray-400"
-    : ddayText
-      ? ddayTone(daysLeft)
-      : rightTone();
+  const { text: ddayText, daysLeft } = useMemo(
+    () => getDDayInfo(n.endDate),
+    [n.endDate]
+  );
 
   const leftStatusClass = statusTone(statusText, isClosed);
 
@@ -125,17 +96,24 @@ export default function NoticeListItem({
       onClick={() => onOpen(n.id)}
       className={[
         "group relative",
-        "grid grid-cols-[95px_1fr_92px_64px] items-center",
+        "grid grid-cols-[150px_1fr_80px] items-center",
         "px-6 py-5 bg-white",
         "transition-colors duration-150 hover:bg-primary/8",
         "cursor-pointer",
       ].join(" ")}
     >
-      {/* 1열: 모집 상태 */}
-      <div className="flex items-center justify-center px-2">
+      {/* 1열: 모집 상태 + D-Day */}
+      <div className="flex flex-col items-center justify-center px-2 leading-tight">
         <span className={`text-[15px] font-bold tracking-tight ${leftStatusClass}`}>
           {statusText}
         </span>
+
+        {/* D-Day: 있을 때만 렌더링 (끝나면 숨김) */}
+        {ddayText && (
+          <span className={["mt-0.5 text-[13px] font-medium", ddayTone(daysLeft)].join(" ")}>
+            {ddayText}
+          </span>
+        )}
       </div>
 
       {/* 2열: 공고 본문 (카테고리뱃지 / 공고명 / 모집기간) */}
@@ -154,14 +132,7 @@ export default function NoticeListItem({
         </div>
       </div>
 
-      {/* 3열: D-day */}
-      <div className="flex justify-center px-2">
-        <span className={`text-[15px] font-bold tracking-tight whitespace-nowrap ${rightTextClass}`}>
-          {rightText}
-        </span>
-      </div>
-
-      {/* 4열: 관심공고 */}
+      {/* 3열: 관심공고 */}
       <div className="flex justify-center px-2">
         <button
           type="button"

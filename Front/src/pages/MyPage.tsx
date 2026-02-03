@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getUserBasicInfo, updateUserBasicInfo, getUserAddInfo, updateUserAddInfo } from "../api/UserApi"; // API 연동 시 주석 해제
 import type { UserAddInfo } from "../types/user";
+import { withdrawAccount } from "../api/AuthApi";
 
 // 기본 정보 폼 타입
 interface BasicFormState {
@@ -23,7 +24,6 @@ interface AddInfoFormState {
 }
 
 export default function MyPage() {
-  const { logout } = useAuth();
   const { updateUserState } = useAuth();
   const navigate = useNavigate();
 
@@ -35,9 +35,33 @@ export default function MyPage() {
     email: ""
   });
 
-  const handleLogout = () => {
-    logout(); 
-    navigate("/"); 
+  // ★ [수정] 회원탈퇴 핸들러 (기존 로그아웃 대체)
+  const handleWithdraw = async () => {
+    // 1. 실수로 누르는 것을 방지하기 위해 확인 창 띄우기
+    if (
+      !window.confirm(
+        "정말 탈퇴하시겠습니까?\n탈퇴 시 계정 정보와 활동 내역이 모두 삭제되며 복구할 수 없습니다."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      // 2. 탈퇴 API 호출 (/users/me)
+      await withdrawAccount();
+
+      // 3. 성공 시: 프론트엔드 정리 (토큰 삭제 & 이동)
+      localStorage.removeItem("accessToken");
+      
+      alert("회원 탈퇴가 완료되었습니다.\n그동안 이용해 주셔서 감사합니다.");
+      
+      // 로그인 페이지로 이동 (새로고침 효과를 위해 window.location 사용 추천)
+      window.location.href = "/login";
+
+    } catch (error) {
+      console.error("탈퇴 실패:", error);
+      alert("탈퇴 처리에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    }
   };
 
   const handleBasicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,10 +245,13 @@ export default function MyPage() {
                 👤 내 정보 관리
               </button>
             </nav>
-            <div className="mt-8 pt-6 border-t border-gray-100">
-              <button onClick={handleLogout} className="flex items-center gap-2 text-gray-400 hover:text-red-500 transition-colors">
-                <span className="material-symbols-outlined text-sm">logout</span>
-                로그아웃
+            <div className="mt-8 border-t border-gray-100 pt-6">
+              <button
+                onClick={handleWithdraw}
+                className="inline-flex items-center gap-1 text-sm font-medium text-gray-400 hover:text-red-500 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">person_remove</span>
+                회원 탈퇴하기
               </button>
             </div>
           </div>

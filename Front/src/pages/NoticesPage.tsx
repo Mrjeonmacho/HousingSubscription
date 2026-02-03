@@ -1,5 +1,5 @@
 // Front/src/pages/NoticesPage.tsx
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { AxiosError } from "axios";
@@ -70,15 +70,46 @@ function toMs(dateStr: string | null) {
   return Number.isNaN(t) ? 0 : t;
 }
 
+function calcDaysLeft(endDate: string | null) {
+  if (!endDate) return null;
+
+  const end = new Date(endDate);
+  if (Number.isNaN(end.getTime())) return null;
+
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfEnd = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+  const diffMs = startOfEnd.getTime() - startOfToday.getTime();
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24)); // 오늘 0, 내일 1 ...
+}
+
+function isStarted(startDate: string | null) {
+  if (!startDate) return true;
+  const s = new Date(startDate);
+  if (Number.isNaN(s.getTime())) return true;
+
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfStart = new Date(s.getFullYear(), s.getMonth(), s.getDate());
+  return startOfStart.getTime() <= startOfToday.getTime();
+}
+
+
 type NoticePresetState = {
   preselectedCategories?: string[];
+  scrollToList?: boolean;
 };
 
 export default function NoticesPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ 이동 시 전달된 preset을 "처음 렌더에서" 읽기
+  // 스크롤 앵커 + 1회 실행 가드
+  const listTopRef = useRef<HTMLDivElement | null>(null);
+  const didScrollRef = useRef(false);
+
+  // 이동 시 전달된 preset을 "처음 렌더에서" 읽기
   const presetCategories = useMemo(() => {
     const state = location.state as NoticePresetState | null;
     const preset = state?.preselectedCategories;
@@ -86,27 +117,49 @@ export default function NoticesPage() {
     return Array.from(new Set(preset));
   }, [location.state]);
 
-  // ✅ 필터 초기값에 preset 반영 (처음부터 체크된 상태)
+  // scroll 플래그도 같이 읽기
+  const shouldScrollToList = useMemo(() => {
+    const state = location.state as NoticePresetState | null;
+    return !!state?.scrollToList;
+  }, [location.state]);
+
+  // 필터 초기값에 preset 반영 (처음부터 체크된 상태)
   const [filters, setFilters] = useState<Filters>(() => {
     if (!presetCategories) return DEFAULT_FILTERS;
     return {
       ...DEFAULT_FILTERS,
       category: presetCategories,
-      keyword: "", // 원하시면 유지로 바꿔드릴게요
-      status: [],  // 원하시면 유지로 바꿔드릴게요
+      keyword: "",
+      status: [],
     };
   });
 
-  // ✅ 처음부터 펼친 상태로 시작
+  // 처음부터 펼친 상태로 시작
   const [defaultExpandFilters] = useState<boolean>(() => !!presetCategories);
 
-  // ✅ state 재적용 방지용으로 한 번만 지움
+  // state 지우는 로직은 유지하되, "필요한 처리(스크롤) 이후"에 실행되게끔 effect 분리/순서 보장
   useEffect(() => {
-    if (!presetCategories) return;
+    if (!presetCategories && !shouldScrollToList) return;
+    // replace로 state 제거 (뒤로가기/새로고침 시 재적용 방지)
     navigate(location.pathname, { replace: true, state: null });
-  }, [presetCategories, navigate, location.pathname]);
+  }, [presetCategories, shouldScrollToList, navigate, location.pathname]);
 
-  // ✅ 정렬 상태는 Header(sortType) 기준으로만 사용
+  // 자동 스크롤: 최초 1회만
+  useEffect(() => {
+    if (!shouldScrollToList) return;
+    if (didScrollRef.current) return;
+
+    // 렌더가 한 번 돈 뒤 스크롤되도록 rAF 사용
+    requestAnimationFrame(() => {
+      const el = listTopRef.current;
+      if (!el) return;
+
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      didScrollRef.current = true;
+    });
+  }, [shouldScrollToList]);
+
+  // 정렬 상태는 Header(sortType) 기준으로만 사용
   const [sortType, setSortType] = useState<SortType>("REG_DATE");
 
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -220,7 +273,35 @@ export default function NoticesPage() {
       return copied;
     }
 
-    copied.sort((a, b) => toMs(a.endDate) - toMs(b.endDate));
+    // 마감 임박순
+    const today = new Date();
+    const startOfToday = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    ).getTime();
+
+    copied.sort((a, b) => {
+      const aEnd = toMs(a.endDate);
+      const bEnd = toMs(b.endDate);
+
+      const aClosed = aEnd < startOfToday;
+      const bClosed = bEnd < startOfToday;
+
+      // 1️. 마감 여부 우선 (마감 안 된 것 먼저)
+      if (aClosed !== bClosed) {
+        return aClosed ? 1 : -1;
+      }
+
+      // 2️. 둘 다 마감 안 됐으면 → 마감 빠른 순
+      if (!aClosed && !bClosed) {
+        return aEnd - bEnd;
+      }
+
+      // 3️. 둘 다 마감됐으면 → 최신 마감일 순(선택)
+      return bEnd - aEnd;
+    });
+
     return copied;
   }, [filtered, sortType]);
 
@@ -233,12 +314,19 @@ export default function NoticesPage() {
   }, [sorted, page]);
 
   const featured = useMemo(() => {
-    const list = [...(notices ?? [])].sort((a, b) => {
-      const aRec = a.status === "RECEIVING" ? 0 : 1;
-      const bRec = b.status === "RECEIVING" ? 0 : 1;
-      return aRec - bRec;
-    });
-    return list.slice(0, 3);
+    const base = notices ?? [];
+
+    return [...base]
+      .map((n) => ({
+        n,
+        daysLeft: calcDaysLeft(n.endDate),
+      }))
+      // 마감 안 지난 것만 (D-1 이하는 제외)
+      .filter((x) => x.daysLeft !== null && x.daysLeft >= 0 && isStarted(x.n.startDate))
+      // D-day 작은 순 (임박 우선)
+      .sort((a, b) => (a.daysLeft! - b.daysLeft!))
+      .slice(0, 5)
+      .map((x) => x.n);
   }, [notices]);
 
   return (
@@ -246,6 +334,8 @@ export default function NoticesPage() {
       <NoticeHeroCarousel items={featured} />
 
       <FavoritesNoticeSection items={favorites} onChangedFavorites={loadFavorites} />
+
+      <div ref={listTopRef} />
 
       <NoticeListLayout
         totalCount={totalCount}

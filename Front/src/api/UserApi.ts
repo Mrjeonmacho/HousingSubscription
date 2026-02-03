@@ -59,3 +59,20 @@ export const updateUserAddInfo = async (data: UserAddInfo) => {
     throw error;
   }
 };
+
+
+
+/**
+ * 관리자 여부 확인
+ * - /users/me 응답의 userRole을 확인해서 boolean 반환
+ * - 실패(비로그인/만료 등) 시 false
+ */
+export const getIsAdmin = async (): Promise<boolean> => {
+  try {
+    const response = await apiClient.get("/users/me");
+    return response.data?.userRole === "ROLE_ADMIN";
+  } catch (error: unknown) {
+    console.error("관리자 권한 조회 실패:", error);
+    return false;
+  }
+};

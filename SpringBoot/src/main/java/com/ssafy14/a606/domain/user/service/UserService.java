@@ -5,6 +5,8 @@ import com.ssafy14.a606.domain.user.dto.request.SignUpRequestDto;
 import com.ssafy14.a606.domain.user.dto.request.UserUpdateRequestDto;
 import com.ssafy14.a606.domain.user.dto.response.SignUpResponseDto;
 import com.ssafy14.a606.domain.user.dto.response.UserResponseDto;
+import com.ssafy14.a606.global.security.user.CustomUserDetails;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Map;
 
@@ -29,5 +31,8 @@ public interface UserService {
     UserResponseDto updateMyInfo(Long userId, UserUpdateRequestDto request);
 
     // 7. 회원탈퇴 (hard delete)
-    void deleteAccount(Long userId);
+    void deleteAccount(Long userId, HttpServletResponse response);
+
+    // 8. 비밀번호 검증
+    void confirmPassword(Long userId, String rawPassword);
 }

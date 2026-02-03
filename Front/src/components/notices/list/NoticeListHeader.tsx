@@ -1,6 +1,7 @@
-// Front/src/components/notices/list/NoticeListHeader.tsx  => 검색결과, 전체 공고
+// Front/src/components/notices/list/NoticeListHeader.tsx
 import { useEffect, useRef, useState } from "react";
 import type { SortType } from "./NoticeListLayout";
+import { getIsAdmin } from "../../../api/UserApi";
 
 type Props = {
   totalCount: number;
@@ -16,6 +17,17 @@ export default function NoticeListHeader({
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // 관리자 여부 조회
+  useEffect(() => {
+    (async () => {
+      const ok = await getIsAdmin();
+      setIsAdmin(ok);
+    })();
+  }, []);
+
+  // 드롭다운 바깥 클릭 시 닫기 (원래 로직 복구)
   useEffect(() => {
     if (!open) return;
 
@@ -29,11 +41,27 @@ export default function NoticeListHeader({
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
 
+  const onClickCreateNotice = () => {
+    alert("공고 등록 페이지는 아직 준비 중입니다.");
+  };
+
   return (
     <div className="flex items-end justify-between px-1">
-      <h3 className="text-xl font-bold text-gray-900 leading-none">
-        검색결과 <span className="text-gray-900">({totalCount})</span>
-      </h3>
+      <div className="flex items-end gap-3">
+        <h3 className="text-xl font-bold text-gray-900 leading-none">
+          검색결과 <span className="text-gray-900">({totalCount})</span>
+        </h3>
+
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={onClickCreateNotice}
+            className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary/90 transition-colors"
+          >
+            + 공고 등록
+          </button>
+        )}
+      </div>
 
       <div className="relative" ref={dropdownRef}>
         <button

@@ -1,14 +1,17 @@
 package com.ssafy14.a606.domain.user.controller;
 
+import com.ssafy14.a606.domain.user.dto.request.PasswordConfirmRequestDto;
 import com.ssafy14.a606.domain.user.dto.request.SignUpRequestDto;
 import com.ssafy14.a606.domain.user.dto.request.UserDetailsRequestDto;
 import com.ssafy14.a606.domain.user.dto.request.UserUpdateRequestDto;
+import com.ssafy14.a606.domain.user.dto.response.PasswordConfirmResponseDto;
 import com.ssafy14.a606.domain.user.dto.response.SignUpResponseDto;
 import com.ssafy14.a606.domain.user.dto.response.UserDetailsResponseDto;
 import com.ssafy14.a606.domain.user.dto.response.UserResponseDto;
 import com.ssafy14.a606.domain.user.service.UserDetailsService;
 import com.ssafy14.a606.domain.user.service.UserService;
 import com.ssafy14.a606.global.security.user.CustomUserDetails;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -79,10 +82,24 @@ public class UserController {
 
     // 회원탈퇴 -> hard delete
     @DeleteMapping("/me")
-    public ResponseEntity<Map<String, String>> deleteMe(@AuthenticationPrincipal CustomUserDetails principal){
+    public ResponseEntity<Map<String, String>> deleteMe(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            HttpServletResponse response
+    ){
         Long userId = principal.getUserId();
-        userService.deleteAccount(userId);
+        userService.deleteAccount(userId, response);
         return ResponseEntity.ok(Map.of("message", "ACCOUNT_DELETE_SUCCESS"));
+    }
+
+    // 비밀번호 검증 -> 회원탈퇴 시
+    @PostMapping("/me/confirmation")
+    public ResponseEntity<PasswordConfirmResponseDto> confirmPassword(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestBody PasswordConfirmRequestDto request
+    ){
+        Long userId = principal.getUserId();
+        userService.confirmPassword(userId, request.getPassword());
+        return ResponseEntity.ok(new PasswordConfirmResponseDto("PASSWORD_CONFIRM_SUCCESS"));
     }
 
 
