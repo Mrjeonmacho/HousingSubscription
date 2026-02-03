@@ -33,4 +33,22 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return new CustomUserDetails(userId, user.getLoginId(), password, role);
     }
+
+    public UserDetails loadUserByUserId(Long userId) throws UsernameNotFoundException {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found. userId=" + userId)
+                );
+
+        String role = user.getRole().name();
+        String password = user.getPassword();
+        if (password == null) password = "";
+
+        // loginId가 소셜 유저면 null일 수 있으니 null-safe
+        String loginId = user.getLoginId();
+        if (loginId == null) loginId = "";
+
+        return new CustomUserDetails(user.getId(), loginId, password, role);
+    }
 }

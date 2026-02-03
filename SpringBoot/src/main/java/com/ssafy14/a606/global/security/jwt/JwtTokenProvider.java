@@ -22,13 +22,13 @@ public class JwtTokenProvider {
 
     }
 
-    // accessToken 생성 (loginId, role 포함)
-    public String createAccessToken(String loginId, String role) {
+    // accessToken 생성 (userId, role 포함)
+    public String createAccessToken(Long userId, String role) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + props.accessExpirationMs());
 
         return Jwts.builder()
-                .subject(loginId)
+                .subject(String.valueOf(userId))
                 .claim("role", role)
                 .issuedAt(now)
                 .expiration(expiry)
@@ -37,13 +37,13 @@ public class JwtTokenProvider {
     }
 
 
-    // refreshToken 생성 (loginId만 포함)
-    public String createRefreshToken(String loginId) {
+    // refreshToken 생성 (userId만 포함)
+    public String createRefreshToken(Long userId) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + props.refreshExpirationMs());
 
         return Jwts.builder()
-                .subject(loginId)
+                .subject(String.valueOf(userId))
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -51,9 +51,14 @@ public class JwtTokenProvider {
     }
 
 
-    // JWT에서 loginId 추출
-    public String getLoginId(String token) {
-        return parseClaims(token).getSubject();
+    // JWT에서 userId 추출
+    public Long getUserId(String token) {
+        String sub = parseClaims(token).getSubject();
+        try {
+            return Long.valueOf(sub);
+        } catch (NumberFormatException e) {
+            throw new JwtException("JWT subject is not a userId");
+        }
     }
 
     // JWT에서 role 추출
