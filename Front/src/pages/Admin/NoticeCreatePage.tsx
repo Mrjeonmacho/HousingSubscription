@@ -79,15 +79,14 @@ export default function NoticeCreatePage() {
   const [errors, setErrors] = useState<FieldErrors>({});
 
   useEffect(() => {
-    (async () => {
-      try {
-        const ok = await Promise.resolve(getIsAdmin());
-        setAllowed(Boolean(ok));
-        if (!ok) navigate("/notices", { replace: true });
-      } finally {
-        setChecking(false);
-      }
-    })();
+    try {
+      const ok = getIsAdmin();
+      setAllowed(ok);
+
+      if (!ok) navigate("/notices", { replace: true });
+    } finally {
+      setChecking(false);
+    }
   }, [navigate]);
 
   const categoryOptions = useMemo(

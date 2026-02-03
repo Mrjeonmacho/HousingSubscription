@@ -48,15 +48,19 @@ export default function NoticeDetailHeader({
   const [isFavorite, setIsFavorite] = useState(false);
 
   // 관리자 여부
-  const [isAdmin, setIsAdmin] = useState<boolean>(() => Boolean(getIsAdmin()));
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // 삭제 중 상태
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    const sync = () => setIsAdmin(Boolean(getIsAdmin()));
+    const sync = () => setIsAdmin(getIsAdmin());
+
+    sync(); // 최초 1회
+
     window.addEventListener("auth-changed", sync);
     window.addEventListener("storage", sync);
+
     return () => {
       window.removeEventListener("auth-changed", sync);
       window.removeEventListener("storage", sync);

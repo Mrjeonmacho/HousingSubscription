@@ -19,15 +19,15 @@ export default function NoticeListHeader({
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  const [isAdmin, setIsAdmin] = useState<boolean>(() => getIsAdmin());
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const sync = () => setIsAdmin(getIsAdmin());
 
-    // 같은 탭에서 로그인/로그아웃 반영 (커스텀 이벤트)
-    window.addEventListener("auth-changed", sync);
+    // 최초 1회
+    sync();
 
-    // 다른 탭에서 변경 반영 (storage 이벤트)
+    window.addEventListener("auth-changed", sync);
     window.addEventListener("storage", sync);
 
     return () => {

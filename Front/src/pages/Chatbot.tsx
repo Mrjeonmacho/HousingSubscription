@@ -13,7 +13,6 @@ const ROOT_ACTIONS = [
 ];
 
 const TERM_QUESTIONS = [
-  { label: "💰 소득 기준 계산 방법", value: "term_q1" },
   { label: "🏠 무주택 기준이 정확히 뭐예요?", value: "term_q2" },
   { label: "💼 직장인도 청년 지원 받을 수 있나요?", value: "term_q3" },
   { label: "🏢 부모님 집에 살아도 무주택인가요?", value: "term_q4" },
@@ -35,7 +34,9 @@ const POLICY_LIST: Record<string, { label: string; value: string }[]> = {
     { label: "청년월세지원", value: "policy5" },
     { label: "청년임차보증금 이자지원", value: "policy6" },
     { label: "청년전세임대", value: "policy7" },
+    { label: "한지붕세대공감", value: "policy8" },
     { label: "행복기숙사", value: "policy9" },
+    { label: "행복주택", value: "policy10" },
     { label: "희망하우징", value: "policy11" },
   ],
 };
@@ -46,6 +47,8 @@ const POLICY_QUESTIONS = [
   { label: "❓ 자주 헷갈리는 조건", value: "faq" },
 ];
 
+// 뒤로가기 버튼
+const BACK_ACTION = { label: "⬅️ 이전 단계", value: "ACTION_BACK" };
 
 export default function Chatbot() {
   const location = useLocation();
@@ -57,6 +60,14 @@ export default function Chatbot() {
 
   const [chatContext, setChatContext] = useState<string | null>(null);
   const [quickActions, setQuickActions] = useState(ROOT_ACTIONS);
+
+  // ★ [수정] 히스토리 스택: 메시지 상태(messages)까지 함께 저장
+  const [, setHistoryStack] = useState<{ 
+    actions: { label: string; value: string }[]; 
+    context: string | null;
+    messages: ChatMessage[]; // 대화 내용 백업용
+  }[]>([]);
+
   const isInputActive = chatContext !== null;
 
   const autoSentRef = useRef(false);
@@ -73,7 +84,7 @@ export default function Chatbot() {
           id: "welcome",
           role: "assistant",
           type: "text",
-          text: "안녕하세요! 서울집사 AI입니다.\n부동산 용어가 어렵거나, 나에게 맞는 정책이 궁금하신가요?",
+          text: "안녕하세요! **서울집사 AI**입니다.\n**부동산 용어**가 어렵거나, **나에게 맞는 정책**이 궁금하신가요?",
           createdAt: new Date().toISOString(),
         },
       ]);
@@ -147,56 +158,124 @@ export default function Chatbot() {
 
   // 버튼 클릭 핸들러
   const handleQuickAction = (label: string, value: string) => {
-    if (value === "ROOT_TERM") {
+    // 뒤로가기 버튼
+    if (value === "ACTION_BACK") {
+      setHistoryStack((prev) => {
+        const newStack = [...prev];
+        const lastState = newStack.pop(); // 가장 최근 상태를 꺼냅니다.
+
+        if (lastState) {
+          setQuickActions(lastState.actions); // 이전 버튼 목록 복원
+          setChatContext(lastState.context);  // 이전 문맥 복원
+          setMessages(lastState.messages);    // 대화 내용 복원
+        }
+        return newStack;
+      });
+      return;
+    }
+
+    const addUserBubble = (text: string) => {
       setMessages((prev) => [
         ...prev,
         {
-          id: `sys-${Date.now()}`,
-          role: "assistant",
+          id: `u-${Date.now()}`,
+          role: "user",
           type: "text",
-          text: "📘 어려운 용어 이해를 원하시는군요!\n궁금한 점을 아래에서 선택하거나 직접 물어보세요!",
+          text: text, 
           createdAt: new Date().toISOString(),
         },
       ]);
-      setChatContext("keyword1"); 
-      setQuickActions(TERM_QUESTIONS);
+    };
+
+    // 다음 단계로 이동 (히스토리 저장 포함)
+    const navigateTo = (
+      nextActions: { label: string; value: string }[], 
+      nextContext: string | null
+    ) => {
+      // 현재 상태 저장
+      setHistoryStack((prev) => [
+        ...prev,
+        { actions: quickActions, context: chatContext, messages: messages }
+      ]);
+
+      // 다음 상태로 이동 ('이전 단계' 버튼 추가)
+      setQuickActions([...nextActions, BACK_ACTION]);
+      setChatContext(nextContext);
+    };
+
+    if (value === "ROOT_TERM") {
+      addUserBubble(label);
+
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `sys-${Date.now()}`,
+            role: "assistant",
+            type: "text",
+            text: "**부동산 용어 이해**를 원하시는군요!\n궁금한 점을 **아래에서 선택**하거나 **직접** 물어보세요!",
+            createdAt: new Date().toISOString(),
+          },
+        ]);
+        navigateTo(TERM_QUESTIONS, "keyword1");
+      }, 300);
       return;
     }
 
     if (value === "ROOT_POLICY") {
-      setMessages((prev) => [
-        ...prev,
-        { id: `sys-${Date.now()}`, role: "assistant", type: "text", text: "어떤 대상 유형에 해당하시나요?", createdAt: new Date().toISOString() },
-      ]);
-      setQuickActions(TARGET_ACTIONS);
+      addUserBubble(label);
+
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          { id: `sys-${Date.now()}`, 
+            role: "assistant", 
+            type: "text", 
+            text: "어떤 **유형**에 해당하시나요?", 
+            createdAt: new Date().toISOString() 
+          },
+        ]);
+        navigateTo(TARGET_ACTIONS, null); // 문맥 초기화
+      }, 300);
       return;
     }
 
     if (value.startsWith("TARGET_")) {
+      addUserBubble(label);
+      
       const nextList = POLICY_LIST[value];
       if (nextList) {
-        setMessages((prev) => [
-          ...prev,
-          { id: `sys-${Date.now()}`, role: "assistant", type: "text", text: "관심 있는 정책을 선택해주세요.", createdAt: new Date().toISOString() },
-        ]);
-        setQuickActions(nextList);
+        setTimeout(() => {
+          setMessages((prev) => [
+            ...prev,
+            { id: `sys-${Date.now()}`, 
+              role: "assistant", 
+              type: "text", 
+              text: "**관심 있는 정책**을 선택해주세요.", 
+              createdAt: new Date().toISOString() },
+          ]);
+          navigateTo(nextList, chatContext);
+        }, 300);
       }
       return;
     }
 
     if (value.startsWith("policy")) {
-      setMessages((prev) => [
-        ...prev,
-        { 
-          id: `sys-${Date.now()}`, 
-          role: "assistant", 
-          type: "text", 
-          text: `'${label}'에 대해 어떤 것이 궁금하신가요?`, 
-          createdAt: new Date().toISOString() 
-        },
-      ]);
-      setChatContext(value); 
-      setQuickActions(POLICY_QUESTIONS); 
+      addUserBubble(label);
+
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          { 
+            id: `sys-${Date.now()}`, 
+            role: "assistant", 
+            type: "text", 
+            text: `**'${label}'**에 대해 어떤 것이 궁금하신가요?\n궁금한 점을 **아래에서 선택**하거나 **직접** 물어보세요!`, 
+            createdAt: new Date().toISOString() 
+          },
+        ]);
+        navigateTo(POLICY_QUESTIONS, value); // 문맥 설정
+      }, 300);
       return;
     }
 
