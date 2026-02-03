@@ -9,7 +9,7 @@ export default function NotFoundPage() {
       <h1 className="mb-4 text-6xl font-extrabold text-gray-800">404</h1>
 
       <p className="mb-2 text-xl font-semibold text-gray-700">
-        페이지를 찾을 수 없습니다
+        페이지를 찾을 수 없습니다.
       </p>
 
       <p className="mb-8 text-gray-500">
