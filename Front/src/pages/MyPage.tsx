@@ -30,6 +30,15 @@ export default function MyPage() {
 
   // 기본 정보 State
   const [isBasicEditing, setIsBasicEditing] = useState(false);
+
+  // 저장된 기본 정보
+  const [savedBasicData, setSavedBasicData] = useState<BasicFormState>({
+    userName: "",
+    loginId: "",
+    email: ""
+  });
+
+  // 폼 입력값 관리
   const [basicFormData, setBasicFormData] = useState<BasicFormState>({
     userName: "",
     loginId: "",
@@ -97,6 +106,11 @@ export default function MyPage() {
         userName: basicFormData.userName
       });
 
+      setSavedBasicData({
+        ...basicFormData,
+        loginId: savedBasicData.loginId 
+      });
+
       alert("저장되었습니다!");
       setIsBasicEditing(false);
       
@@ -145,6 +159,12 @@ export default function MyPage() {
         ]);
         console.log("Fetched UserAddInfo:", addData);
         setSavedData(addData); // 화면 표시용 데이터 업데이트
+        
+        setSavedBasicData({
+          userName: basicData.userName,
+          loginId: basicData.loginId,
+          email: basicData.email,
+        });
 
         setBasicFormData({
           userName: basicData.userName,
@@ -280,7 +300,7 @@ export default function MyPage() {
           {/* 상단 프로필 */}
           <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{basicFormData.userName}님</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{savedBasicData.userName}님</h1>
               <p className="text-gray-500">Seoul Jibsa Housing Support Member</p>
             </div>
           </div>
@@ -314,15 +334,24 @@ export default function MyPage() {
                   <input type="email" name="email" value={basicFormData.email} onChange={handleBasicChange} className="w-full px-4 py-3 rounded-2xl border border-gray-200 text-gray-900 focus:border-primary outline-none" />
                 </div>
                 <div className="col-span-2 flex gap-3 mt-2">
-                  <button type="button" onClick={() => setIsBasicEditing(false)} className="flex-1 py-3.5 rounded-2xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">취소</button>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setIsBasicEditing(false); 
+                      setBasicFormData(savedBasicData); // 입력하던 값을 저장된 원본 값으로 초기화
+                    }} 
+                    className="flex-1 py-3.5 rounded-2xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+                  >
+                    취소
+                  </button>
                   <button type="submit" className="flex-2 py-3.5 rounded-2xl font-bold text-white bg-primary hover:brightness-105 shadow-lg shadow-primary/30 transition-all">저장하기</button>
                 </div>
               </form>
             ) : (
               <div className="grid grid-cols-2 gap-8 animate-fade-in-up">
-                <div><p className="text-sm text-gray-400 mb-1">이름</p><p className="font-bold text-lg text-gray-900">{basicFormData.userName}</p></div>
-                <div><p className="text-sm text-gray-400 mb-1">아이디</p><p className="font-bold text-lg text-gray-900">{basicFormData.loginId}</p></div>
-                <div><p className="text-sm text-gray-400 mb-1">이메일</p><p className="font-bold text-lg text-gray-900">{basicFormData.email}</p></div>
+                <div><p className="text-sm text-gray-400 mb-1">이름</p><p className="font-bold text-lg text-gray-900">{savedBasicData.userName}</p></div>
+                <div><p className="text-sm text-gray-400 mb-1">아이디</p><p className="font-bold text-lg text-gray-900">{savedBasicData.loginId}</p></div>
+                <div><p className="text-sm text-gray-400 mb-1">이메일</p><p className="font-bold text-lg text-gray-900">{savedBasicData.email}</p></div>
               </div>
             )}
           </div>
