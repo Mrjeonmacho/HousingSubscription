@@ -1,26 +1,34 @@
-// Front/src/components/chatbot/ChatMessageItem.tsx => 개별 채팅 메시지
 import type { ChatMessage } from "../../data/chat";
 
 type ChatMessageItemProps = {
   message: ChatMessage;
 };
 
-function formatKoreanTime(isoString: string) {
-  const d = new Date(isoString);
-  if (Number.isNaN(d.getTime())) return "";
-
-  return new Intl.DateTimeFormat("ko-KR", {
-    timeZone: "Asia/Seoul",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(d);
-}
+// 볼드체 및 줄바꿈 처리 함수
+const formatText = (text: string) => {
+  // 1. 줄바꿈(\n)을 기준으로 먼저 나누고
+  // 2. 각 줄마다 **로 감싸진 부분을 찾아서 <strong> 태그로 변환
+  return text.split("\n").map((line, i) => (
+    <span key={i} className="block min-h-[1.2em]">
+      {line.split(/(\*\*.*?\*\*)/g).map((part, j) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          // **로 감싸진 부분 -> 볼드체 적용
+          return (
+            <strong key={j} className="font-bold text-gray-900">
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        // 일반 텍스트
+        return part;
+      })}
+    </span>
+  ));
+};
 
 export default function ChatMessageItem({ message }: ChatMessageItemProps) {
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
-  const timeLabel = formatKoreanTime(message.createdAt);
   const isAnnouncement = message.type === "announcement";
 
   return (
@@ -48,21 +56,10 @@ export default function ChatMessageItem({ message }: ChatMessageItemProps) {
           }
         >
           <div className="whitespace-pre-line text-[14px] leading-6">
-            {message.text}
+            {formatText(message.text)}
           </div>
         </div>
 
-        {timeLabel ? (
-          <div
-            className={
-              isUser
-                ? "mt-2 text-right text-[11px] text-gray-400"
-                : "mt-2 text-left text-[11px] text-gray-400"
-            }
-          >
-            {timeLabel}
-          </div>
-        ) : null}
       </div>
 
       {isUser ? (
