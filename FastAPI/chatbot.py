@@ -78,8 +78,7 @@ async def get_rag_answer(user_question: str, collection, noticeNo: str):
     is_relevant_result = False
     if results and results['ids'] and results['ids'][0]:
         # 결과가 있을 경우, 유사도 임계값(Threshold) 확인
-        # L2 거리 기준으로, 값이 작을수록 유사하며 보통 1.2 미만일 때 관련성이 있다고 판단합니다.
-        if results['distances'][0][0] <= 0.6: # 1.2 이하일 경우 관련성이 있다고 판단
+        if results['distances'][0][0] <= 0.6:
             is_relevant_result = True
 
     # 2. 검색 결과 유효성 검사 및 분기
