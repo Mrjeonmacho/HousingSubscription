@@ -130,3 +130,16 @@ export async function withdrawAccount() {
     throw error;
   }
 }
+
+// 비밀번호 검증 API (회원 탈퇴 전 확인용)
+export const confirmPasswordAPI = async (password: string): Promise<boolean> => {
+  try {
+    const response = await apiClient.post("/users/me/confirmation", {
+      password: password,
+    });
+    return response.status === 200;
+  } catch (error) {
+    console.error("비밀번호 검증 실패:", error);
+    return false; // 비밀번호 불일치 또는 에러
+  }
+};
