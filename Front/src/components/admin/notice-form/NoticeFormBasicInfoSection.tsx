@@ -1,3 +1,4 @@
+// Front\src\components\admin\notice-form\NoticeFormBasicInfoSection.tsx
 import type { AdminCreateNoticeRequest } from "../../../api/AdminNoticeApi";
 import type { NoticeCategory } from "../../../utils/noticeFormat";
 import CardSection from "./NoticeFormCardSection";
@@ -10,7 +11,6 @@ type Props = {
   errors: FieldErrors;
 
   categoryOptions: Array<{ value: string; label: string }>;
-  statusOptions: Array<{ value: string; label: string }>;
 
   onChange: <K extends keyof AdminCreateNoticeRequest>(
     key: K,

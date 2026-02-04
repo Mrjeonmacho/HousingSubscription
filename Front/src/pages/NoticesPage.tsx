@@ -30,25 +30,18 @@ type NoticeCategory =
   | "SALE_HOUSE"
   | string;
 
-type NoticeStatus =
-  | "RECEIVING"
-  | "DEADLINE_APPROACHING"
-  | "COMPLETED"
-  | "TO_BE_ANNOUNCED"
-  | string;
-
 export type Notice = {
   id: number;
   noticeNo: string | null;
   title: string;
   category: NoticeCategory | null;
   regDate: string | null;
-  status: NoticeStatus | null;
+  status: string | null;
   summary: string | null;
   startDate: string | null;
   endDate: string | null;
   pdfUrl: string | null;
-  url: string | null;
+  originUrl: string | null;
 };
 
 type ApiErrorResponse = {
@@ -179,18 +172,19 @@ export default function NoticesPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
+  // ✅ [수정] 즐겨찾기 매핑에서 noticeNo / status 주입 제거 (항상 null)
   const mapFavoriteToNotice = (f: FavoriteNotice): Notice => ({
     id: f.id,
-    noticeNo: f.no ?? null,
+    noticeNo: null,
     title: f.title ?? "",
     category: f.category ?? null,
     regDate: f.reg_date ?? null,
-    status: f.status ?? null,
+    status: null,
     summary: f.summary ?? null,
     startDate: f.start_date ?? null,
     endDate: f.end_date ?? null,
     pdfUrl: f.pdf ?? null,
-    url: f.url ?? null,
+    originUrl: f.url ?? null,
   });
 
   const loadFavorites = useCallback(

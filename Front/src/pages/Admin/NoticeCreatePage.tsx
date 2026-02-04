@@ -1,3 +1,4 @@
+// Front\src\pages\Admin\NoticeCreatePage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { AxiosError } from "axios";
@@ -9,8 +10,8 @@ import {
   type AdminCreateNoticeResponse,
 } from "../../api/AdminNoticeApi";
 
-import type { NoticeCategory, NoticeStatus } from "../../utils/noticeFormat";
-import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
+import type { NoticeCategory } from "../../utils/noticeFormat";
+import { categoryLabel } from "../../utils/noticeFormat";
 
 import NoticeCreateHeader from "../../components/admin/notice-form/NoticeFormHeader";
 import NoticeCreateBasicInfoSection from "../../components/admin/notice-form/NoticeFormBasicInfoSection";
@@ -31,13 +32,6 @@ const CATEGORY_VALUES: NoticeCategory[] = [
   "PUBLIC_RENTAL",
   "LONG_TERM_RENTAL",
   "SALE_HOUSE",
-];
-
-const STATUS_VALUES: NoticeStatus[] = [
-  "TO_BE_ANNOUNCED",
-  "RECEIVING",
-  "DEADLINE_APPROACHING",
-  "COMPLETED",
 ];
 
 function todayYYYYMMDD() {
@@ -66,11 +60,9 @@ export default function NoticeCreatePage() {
   const [serverError, setServerError] = useState<string | null>(null);
 
   const [form, setForm] = useState<AdminCreateNoticeRequest>(() => ({
-    notice_no: "",
     title: "",
     category: "YOUTH_RESIDENCE",
     reg_date: todayYYYYMMDD(),
-    status: "RECEIVING",
     start_date: todayYYYYMMDD(),
     end_date: todayYYYYMMDD(),
     pdf: "",
@@ -95,11 +87,6 @@ export default function NoticeCreatePage() {
     []
   );
 
-  const statusOptions = useMemo(
-    () => STATUS_VALUES.map((v) => ({ value: v, label: statusLabel(v) })),
-    []
-  );
-
   const onChange = <K extends keyof AdminCreateNoticeRequest>(
     key: K,
     value: AdminCreateNoticeRequest[K]
@@ -112,14 +99,8 @@ export default function NoticeCreatePage() {
   const validate = (v: AdminCreateNoticeRequest) => {
     const next: FieldErrors = {};
 
-    // notice_no는 선택 입력 (필수 체크 제거)
-    // 형식 제한을 둘 거면 입력했을 때만 체크
-    // if (v.notice_no.trim().length > 0) { ... }
-
     if (!v.title.trim()) next.title = "공고 제목은 필수입니다.";
-
     if (!v.category) next.category = "공고 종류를 선택해 주세요.";
-    if (!v.status) next.status = "공고 상태를 선택해 주세요.";
 
     if (!v.reg_date || !isValidDateString(v.reg_date))
       next.reg_date = "등록일을 올바르게 입력해 주세요.";
@@ -155,10 +136,7 @@ export default function NoticeCreatePage() {
     try {
       setSubmitting(true);
 
-      // postAdminCreateNotice가 Promise<AdminCreateNoticeResponse>를 반환하도록
-      // AdminNoticeApi.ts도 같이 타입 지정해두는 걸 권장합니다.
       const data: AdminCreateNoticeResponse = await postAdminCreateNotice(form);
-
       navigate(`/notices/${data.noticeId}`, { replace: true });
     } catch (e) {
       const err = e as AxiosError<ApiErrorResponse>;
@@ -191,7 +169,6 @@ export default function NoticeCreatePage() {
           form={form}
           errors={errors}
           categoryOptions={categoryOptions}
-          statusOptions={statusOptions}
           onChange={onChange}
         />
 
@@ -207,8 +184,8 @@ export default function NoticeCreatePage() {
         onCancel={onCancel}
         onSubmit={onSubmit}
       />
-      { submitting && <LoadingOverlay text="요약본 생성 중입니다." /> }
 
+      {submitting && <LoadingOverlay text="요약본 생성 중입니다." />}
     </main>
   );
 }

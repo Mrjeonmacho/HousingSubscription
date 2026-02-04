@@ -1,7 +1,7 @@
-// Front\src\components\notices\list\NoticeListItem.tsx => 개별 공고
+// Front/src/components/notices/list/NoticeListItem.tsx => 개별 공고
 import { useMemo } from "react";
 import type { Notice } from "../../../pages/NoticesPage";
-import { noticeStatusLabel, statusLabel } from "../../../utils/noticeFormat";
+import { noticeStatusLabel } from "../../../utils/noticeFormat";
 import { computeNoticeStatus } from "../../../utils/noticeStatus";
 import CategoryBadge from "../../../components/common/CategoryBadge";
 
@@ -67,18 +67,16 @@ export default function NoticeListItem({
   onToggleFavorite,
 }: Props) {
   // 1) 날짜 기반 상태 계산 (startDate/endDate 기준)
+  //    status fallback은 제거하고, null일 때만 안전하게 UPCOMING 처리
   const computedStatus = useMemo(
-    () => computeNoticeStatus(n.startDate, n.endDate),
+    () => computeNoticeStatus(n.startDate, n.endDate) ?? "UPCOMING",
     [n.startDate, n.endDate]
   );
 
-  // 2) 좌측 상태 텍스트는 날짜 기반을 우선 사용
-  //    (start/end가 없거나 파싱 실패면 기존 DB statusLabel로 fallback)
+  // 2) 좌측 상태 텍스트는 날짜 기반만 사용
   const statusText = useMemo(() => {
-    const fromDates = noticeStatusLabel(computedStatus);
-    if (fromDates !== "-") return String(fromDates);
-    return String(statusLabel(n.status));
-  }, [computedStatus, n.status]);
+    return String(noticeStatusLabel(computedStatus));
+  }, [computedStatus]);
 
   // 3) 마감 여부도 날짜 기반으로만 판단
   const isClosed = useMemo(() => computedStatus === "CLOSED", [computedStatus]);

@@ -1,7 +1,7 @@
+// Front/src/components/noticeDetail/NoticeOverviewCard.tsx
 import { categoryLabel } from "../../utils/noticeFormat";
-// import { statusLabel, noticeStatusLabel } from "../../utils/noticeFormat";
 import { computeNoticeStatus, type ComputedNoticeStatus } from "../../utils/noticeStatus";
-import { getNoticeComputedStatusText } from "../../utils/noticeComputedText";
+import { noticeStatusLabel } from "../../utils/noticeFormat"; // 이 함수는 computed -> 한글 라벨
 import type { Notice } from "../../pages/NoticesPage";
 
 type Props = {
@@ -12,16 +12,6 @@ type Props = {
   statusText?: string;
   textColor?: string;
 };
-
-function getFallbackColorByBackendStatus(status: string | null) {
-  if (!status) return "text-gray-400";
-  const s = status as string;
-
-  if (s === "RECEIVING" || s === "OPEN" || s === "RECRUITING") return "text-primary";
-  if (s === "DEADLINE_APPROACHING") return "text-[#FF5A5A]";
-  if (s === "TO_BE_ANNOUNCED" || s === "SCHEDULED") return "text-[#8B95A1]";
-  return "text-gray-400";
-}
 
 function getColorByComputedStatus(status: ComputedNoticeStatus | null) {
   switch (status) {
@@ -34,7 +24,7 @@ function getColorByComputedStatus(status: ComputedNoticeStatus | null) {
     case "CLOSED":
       return "text-gray-400";
     default:
-      return null;
+      return "text-gray-400";
   }
 }
 
@@ -46,23 +36,14 @@ export default function NoticeOverviewCard({
 }: Props) {
   if (loading || !notice) return <div className="h-64 rounded-3xl bg-gray-50 animate-pulse" />;
 
-  // 1) 날짜 기반 상태(코드값) 계산
+  // 1) 날짜 기반 상태 계산
   const computed = computeNoticeStatus(notice.startDate, notice.endDate);
 
-  // 2) 최종 표시 텍스트 결정: 날짜 기반 라벨 우선, 안 되면 백엔드 status 라벨
-  const computedText = getNoticeComputedStatusText({
-    startDate: notice.startDate,
-    endDate: notice.endDate,
-    status: notice.status,
-  });
+  // 2) 표시 텍스트: (외부 지정) > (날짜 기반 라벨)
+  const displayStatus = statusText || noticeStatusLabel(computed);
 
-  // 3) 컬러 결정: (외부 지정) > (날짜 기반) > (백엔드 status fallback)
-  const computedColor = getColorByComputedStatus(computed);
-  const backendColor = getFallbackColorByBackendStatus(notice.status);
-  const displayColor = textColor || computedColor || backendColor;
-
-  // 4) 표시 텍스트: (외부 지정) > (computed 최종 텍스트)
-  const displayStatus = statusText || computedText;
+  // 3) 컬러: (외부 지정) > (날짜 기반)
+  const displayColor = textColor || getColorByComputedStatus(computed);
 
   return (
     <section className="rounded-3xl bg-white p-6 shadow-sm border border-gray-100">

@@ -5,13 +5,10 @@ import type { AxiosError } from "axios";
 
 import { getIsAdmin } from "../../api/UserApi";
 import { getNoticeDetail } from "../../api/NoticeApi";
-import {
-  patchAdminUpdateNotice,
-  type AdminCreateNoticeRequest,
-} from "../../api/AdminNoticeApi";
+import { patchAdminUpdateNotice, type AdminCreateNoticeRequest } from "../../api/AdminNoticeApi";
 
-import type { NoticeCategory, NoticeStatus } from "../../utils/noticeFormat";
-import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
+import type { NoticeCategory } from "../../utils/noticeFormat";
+import { categoryLabel } from "../../utils/noticeFormat";
 
 import NoticeFormHeader from "../../components/admin/notice-form/NoticeFormHeader";
 import NoticeFormBasicInfoSection from "../../components/admin/notice-form/NoticeFormBasicInfoSection";
@@ -34,13 +31,6 @@ const CATEGORY_VALUES: NoticeCategory[] = [
   "SALE_HOUSE",
 ];
 
-const STATUS_VALUES: NoticeStatus[] = [
-  "TO_BE_ANNOUNCED",
-  "RECEIVING",
-  "DEADLINE_APPROACHING",
-  "COMPLETED",
-];
-
 function todayYYYYMMDD() {
   const d = new Date();
   const y = d.getFullYear();
@@ -59,26 +49,22 @@ function compareDate(a: string, b: string) {
 
 // NoticeDetail(카멜/스네이크 혼재 가능) -> AdminCreateNoticeRequest(스네이크)로 변환
 function toEditForm(detail: {
-  noticeNo: string | null;
   title: string;
   category: string | null;
   regDate: string | null;
-  status: string | null;
   startDate: string | null;
   endDate: string | null;
   pdfUrl: string | null;
-  url: string | null;
+  originUrl: string | null;
 }): AdminCreateNoticeRequest {
   return {
-    notice_no: detail.noticeNo ?? "",
     title: detail.title ?? "",
     category: (detail.category ?? "YOUTH_RESIDENCE") as NoticeCategory,
     reg_date: detail.regDate ?? todayYYYYMMDD(),
-    status: (detail.status ?? "RECEIVING") as NoticeStatus,
     start_date: detail.startDate ?? todayYYYYMMDD(),
     end_date: detail.endDate ?? todayYYYYMMDD(),
     pdf: detail.pdfUrl ?? "",
-    url: detail.url ?? "",
+    url: detail.originUrl ?? "",
   };
 }
 
@@ -97,11 +83,9 @@ export default function NoticeUpdatePage() {
   const [errors, setErrors] = useState<FieldErrors>({});
 
   const [form, setForm] = useState<AdminCreateNoticeRequest>(() => ({
-    notice_no: "",
     title: "",
     category: "YOUTH_RESIDENCE",
     reg_date: todayYYYYMMDD(),
-    status: "RECEIVING",
     start_date: todayYYYYMMDD(),
     end_date: todayYYYYMMDD(),
     pdf: "",
@@ -137,20 +121,17 @@ export default function NoticeUpdatePage() {
         setServerError(null);
 
         const detail = await getNoticeDetail(noticeId);
-
         if (ignore) return;
 
         setForm(
           toEditForm({
-            noticeNo: detail.noticeNo ?? null,
             title: detail.title ?? "",
             category: detail.category ?? null,
             regDate: detail.regDate ?? null,
-            status: detail.status ?? null,
             startDate: detail.startDate ?? null,
             endDate: detail.endDate ?? null,
             pdfUrl: detail.pdfUrl ?? null,
-            url: detail.url ?? null,
+            originUrl: detail.originUrl ?? null,
           })
         );
       } catch (e) {
@@ -176,11 +157,6 @@ export default function NoticeUpdatePage() {
     []
   );
 
-  const statusOptions = useMemo(
-    () => STATUS_VALUES.map((v) => ({ value: v, label: statusLabel(v) })),
-    []
-  );
-
   const onChange = <K extends keyof AdminCreateNoticeRequest>(
     key: K,
     value: AdminCreateNoticeRequest[K]
@@ -193,11 +169,8 @@ export default function NoticeUpdatePage() {
   const validate = (v: AdminCreateNoticeRequest) => {
     const next: FieldErrors = {};
 
-    if (!v.notice_no.trim()) next.notice_no = "공고 등록 번호는 필수입니다.";
     if (!v.title.trim()) next.title = "공고 제목은 필수입니다.";
-
     if (!v.category) next.category = "공고 종류를 선택해 주세요.";
-    if (!v.status) next.status = "공고 상태를 선택해 주세요.";
 
     if (!v.reg_date || !isValidDateString(v.reg_date))
       next.reg_date = "등록일을 올바르게 입력해 주세요.";
@@ -234,9 +207,7 @@ export default function NoticeUpdatePage() {
       setSubmitting(true);
       const data = await patchAdminUpdateNotice(noticeId, form);
 
-      // 수정 API 응답이 NoticeResponseDto 형태면 id가 들어옵니다.
       const nextId = (data as { id?: number }).id ?? noticeId;
-
       navigate(`/notices/${nextId}`, { replace: true });
     } catch (e) {
       const err = e as AxiosError<ApiErrorResponse>;
@@ -264,13 +235,11 @@ export default function NoticeUpdatePage() {
         onBack={onCancel}
       />
 
-      {/* 로딩 중이면 섹션만 스켈레톤/비활성 처리하고 싶으면 컴포넌트 내부에서 disabled 처리도 가능 */}
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <NoticeFormBasicInfoSection
           form={form}
           errors={errors}
           categoryOptions={categoryOptions}
-          statusOptions={statusOptions}
           onChange={onChange}
         />
 
@@ -286,7 +255,8 @@ export default function NoticeUpdatePage() {
         onCancel={onCancel}
         onSubmit={onSubmit}
       />
-      { submitting && <LoadingOverlay text="요약본 생성 중입니다." /> }
+
+      {submitting && <LoadingOverlay text="요약본 생성 중입니다." />}
     </main>
   );
 }

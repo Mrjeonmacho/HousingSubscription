@@ -1,4 +1,5 @@
 // Front/src/utils/noticeFormat.ts => 코드값 → 한글 라벨(표시 텍스트) 변환
+
 export type NoticeCategory =
   | "YOUTH_RESIDENCE"
   | "HAPPY_HOUSE"
@@ -6,12 +7,6 @@ export type NoticeCategory =
   | "PUBLIC_RENTAL"
   | "LONG_TERM_RENTAL"
   | "SALE_HOUSE";
-
-export type NoticeStatus =
-  | "RECEIVING"
-  | "DEADLINE_APPROACHING"
-  | "COMPLETED"
-  | "TO_BE_ANNOUNCED";
 
 /**
  * 공고 카테고리
@@ -44,27 +39,7 @@ export function categoryLabel(category: string | null | undefined) {
 }
 
 /**
- * 공고 상태 (Back 기준)
- */
-export function statusLabel(status: string | null | undefined) {
-  switch (status) {
-    case "RECEIVING":
-      return "접수중";
-    case "DEADLINE_APPROACHING":
-      return "마감임박";
-    case "COMPLETED":
-      return "접수마감";
-    case "TO_BE_ANNOUNCED":
-      return "발표예정";
-    default:
-      return "-";
-  }
-}
-
-
-
-/**
- * 공고 상태 (Front 기준)
+ * 공고 상태 (Front 기준: 날짜 기반 computed)
  */
 import type { ComputedNoticeStatus } from "./noticeStatus";
 
