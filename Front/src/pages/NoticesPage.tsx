@@ -44,6 +44,7 @@ export type Notice = {
   category: NoticeCategory | null;
   regDate: string | null;
   status: NoticeStatus | null;
+  summary: string | null;
   startDate: string | null;
   endDate: string | null;
   pdfUrl: string | null;
@@ -185,6 +186,7 @@ export default function NoticesPage() {
     category: f.category ?? null,
     regDate: f.reg_date ?? null,
     status: f.status ?? null,
+    summary: f.summary ?? null,
     startDate: f.start_date ?? null,
     endDate: f.end_date ?? null,
     pdfUrl: f.pdf ?? null,

@@ -3,12 +3,17 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { Notice } from "./NoticesPage";
 import { getNoticeDetail } from "../api/NoticeApi";
 
+interface NoticeWithSummary extends Notice {
+  summary: string | null;
+}
+
 import NotFoundPage from "../pages/NotFoundPage";
 
 import NoticeDetailHeader from "../components/noticeDetail/NoticeDetailHeader";
 import NoticeOverviewCard from "../components/noticeDetail/NoticeOverviewCard";
 import NoticeQuickLinksCard from "../components/noticeDetail/NoticeQuickLinksCard";
 import NoticeChatbotPanel from "../components/noticeDetail/NoticeChatbotPanel";
+import NoticeAiSummary from "../components/noticeDetail/NoticeAiSummary";
 
 import { computeNoticeStatus } from "../utils/noticeStatus";
 import { noticeStatusLabel } from "../utils/noticeFormat";
@@ -37,7 +42,7 @@ export default function NoticeDetailPage() {
   const navigate = useNavigate();
   const { noticeId } = useParams<{ noticeId: string }>();
 
-  const [notice, setNotice] = useState<Notice | null>(null);
+  const [notice, setNotice] = useState<NoticeWithSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [notFound, setNotFound] = useState<boolean>(false);
 
@@ -125,7 +130,7 @@ export default function NoticeDetailPage() {
 
         if (!ignore) setNotice(data);
         } catch (e: unknown) {
-          // 1) AxiosError(서버가 진짜 404 내려준 경우)
+          // AxiosError(서버가 진짜 404 내려준 경우)
           if (e instanceof AxiosError) {
             if (!ignore && e.response?.status === 404) {
               setNotice(null);
@@ -135,7 +140,7 @@ export default function NoticeDetailPage() {
             return;
           }
 
-          // 2) 커스텀 404(서버가 200을 줬지만 우리가 404로 간주한 경우)
+          // 커스텀 404(서버가 200을 줬지만 우리가 404로 간주한 경우)
           const status =
             typeof e === "object" && e !== null && "status" in e
               ? (e as { status?: number }).status
@@ -157,12 +162,12 @@ export default function NoticeDetailPage() {
     };
   }, [noticeId, parsedId]);
 
-  // 1. 로딩 중일 때는 화면을 그리지 않음 (가장 중요)
+  // 로딩 중일 때는 화면을 그리지 않음
     if (loading) {
       return null; 
     }
 
-    // 2. 404 상태이거나 로딩이 끝났는데 데이터(notice)가 없는 경우 처리
+    // 404 상태이거나 로딩이 끝났는데 데이터(notice)가 없는 경우 처리
     if (notFound || !notice) {
       return <NotFoundPage />;
     }
@@ -225,6 +230,10 @@ export default function NoticeDetailPage() {
             textColor={overviewTextColor}
           />
 
+          {!loading && notice && (
+             <NoticeAiSummary summary={notice.summary ?? undefined} />
+          )}
+          
           <NoticeQuickLinksCard
             loading={loading}
             pdf={notice?.pdfUrl ?? null}
@@ -233,7 +242,7 @@ export default function NoticeDetailPage() {
         </div>
 
         <div className="lg:col-span-2 sticky top-6 h-[calc(100vh-100px)] min-h-[600px] overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
-          <NoticeChatbotPanel noticeTitle={notice?.title} noticeId={notice?.id} />
+          <NoticeChatbotPanel noticeTitle={notice?.title} />
         </div>
       </div>
     </div>
