@@ -158,3 +158,15 @@ export const confirmPasswordAPI = async (password: string): Promise<boolean> => 
     return false; // 비밀번호 불일치 또는 에러
   }
 };
+
+// 토큰 재발급 요청 (쿠키에 있는 RefreshToken 사용)
+export const refreshTokenAPI = async () => {
+  try {
+    // 백엔드의 /api/auth/refresh 엔드포인트 호출
+    const response = await apiClient.post("/auth/refresh");
+    return response.data; 
+  } catch (error) {
+    console.error("토큰 재발급 실패:", error);
+    throw error;
+  }
+};
