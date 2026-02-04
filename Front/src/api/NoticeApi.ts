@@ -26,7 +26,7 @@ function normalizeNoticeDetail(data: unknown): Notice {
     startDate: (d.startDate ?? d.start_date ?? null) as string | null,
     endDate: (d.endDate ?? d.end_date ?? null) as string | null,
     pdfUrl: (d.pdfUrl ?? d.pdf ?? null) as string | null,
-    url: (d.url ?? null) as string | null,
+    originUrl: (d.originUrl ?? d.url ?? null) as string | null,
   };
 }
 

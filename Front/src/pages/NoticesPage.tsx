@@ -48,7 +48,7 @@ export type Notice = {
   startDate: string | null;
   endDate: string | null;
   pdfUrl: string | null;
-  url: string | null;
+  originUrl: string | null;
 };
 
 type ApiErrorResponse = {
@@ -190,7 +190,7 @@ export default function NoticesPage() {
     startDate: f.start_date ?? null,
     endDate: f.end_date ?? null,
     pdfUrl: f.pdf ?? null,
-    url: f.url ?? null,
+    originUrl: f.url ?? null,
   });
 
   const loadFavorites = useCallback(
