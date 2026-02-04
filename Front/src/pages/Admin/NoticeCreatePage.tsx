@@ -6,6 +6,7 @@ import { getIsAdmin } from "../../api/UserApi";
 import {
   postAdminCreateNotice,
   type AdminCreateNoticeRequest,
+  type AdminCreateNoticeResponse,
 } from "../../api/AdminNoticeApi";
 
 import type { NoticeCategory, NoticeStatus } from "../../utils/noticeFormat";
@@ -111,7 +112,10 @@ export default function NoticeCreatePage() {
   const validate = (v: AdminCreateNoticeRequest) => {
     const next: FieldErrors = {};
 
-    if (!v.notice_no.trim()) next.notice_no = "공고 등록 번호는 필수입니다.";
+    // notice_no는 선택 입력 (필수 체크 제거)
+    // 형식 제한을 둘 거면 입력했을 때만 체크
+    // if (v.notice_no.trim().length > 0) { ... }
+
     if (!v.title.trim()) next.title = "공고 제목은 필수입니다.";
 
     if (!v.category) next.category = "공고 종류를 선택해 주세요.";
@@ -150,8 +154,12 @@ export default function NoticeCreatePage() {
 
     try {
       setSubmitting(true);
-      const data = await postAdminCreateNotice(form);
-      navigate(`/notices/${data.id}`, { replace: true });
+
+      // postAdminCreateNotice가 Promise<AdminCreateNoticeResponse>를 반환하도록
+      // AdminNoticeApi.ts도 같이 타입 지정해두는 걸 권장합니다.
+      const data: AdminCreateNoticeResponse = await postAdminCreateNotice(form);
+
+      navigate(`/notices/${data.noticeId}`, { replace: true });
     } catch (e) {
       const err = e as AxiosError<ApiErrorResponse>;
       const msg =

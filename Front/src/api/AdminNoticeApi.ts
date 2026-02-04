@@ -1,16 +1,17 @@
+// Front/src/api/AdminNoticeApi.ts
 import { apiClient } from "./axiosConfig";
 import type { NoticeCategory, NoticeStatus } from "../utils/noticeFormat";
 
 export type AdminCreateNoticeRequest = {
-  notice_no: string;
+  notice_no: string; // 선택 입력(비우면 전송하지 않음)
   title: string;
   category: NoticeCategory;
-  reg_date: string;
+  reg_date: string; // YYYY-MM-DD
   status: NoticeStatus;
-  start_date: string;
-  end_date: string;
-  pdf: string;
-  url: string;
+  start_date: string; // YYYY-MM-DD
+  end_date: string; // YYYY-MM-DD
+  pdf: string; // URL
+  url: string; // URL
 };
 
 export type AdminCreateNoticeResponse = {
@@ -19,11 +20,18 @@ export type AdminCreateNoticeResponse = {
   noticeId: number;
 };
 
-export async function postAdminCreateNotice(
-  body: AdminCreateNoticeRequest
-) {
-  const payload = {
-    noticeNo: body.notice_no,
+export type AdminUpdateNoticeResponse = {
+  noticeId: number;
+};
+
+export type AdminDeleteNoticeResponse = {
+  code?: string;
+  message?: string;
+  noticeId?: number;
+};
+
+function buildUpsertPayload(body: AdminCreateNoticeRequest): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
     title: body.title,
     category: body.category,
     status: body.status,
@@ -34,39 +42,35 @@ export async function postAdminCreateNotice(
     url: body.url,
   };
 
-  const res = await apiClient.post("/admin/notices", payload);
-  return res.data;
+  const noticeNo = body.notice_no.trim();
+  if (noticeNo) payload.noticeNo = noticeNo;
+
+  return payload;
 }
 
+export async function postAdminCreateNotice(
+  body: AdminCreateNoticeRequest
+): Promise<AdminCreateNoticeResponse> {
+  const payload = buildUpsertPayload(body);
+  const res = await apiClient.post<AdminCreateNoticeResponse>("/admin/notices", payload);
+  return res.data;
+}
 
 export async function patchAdminUpdateNotice(
   noticeId: number,
   body: AdminCreateNoticeRequest
-) {
-  const payload = {
-    noticeNo: body.notice_no,
-    title: body.title,
-    category: body.category,
-    status: body.status,
-    regDate: body.reg_date,
-    startDate: body.start_date,
-    endDate: body.end_date,
-    pdfUrl: body.pdf,
-  };
-
-  const res = await apiClient.patch(`/admin/notices/${noticeId}`, payload);
-  return res.data as { id: number };
+): Promise<AdminUpdateNoticeResponse> {
+  const payload = buildUpsertPayload(body);
+  const res = await apiClient.patch<AdminUpdateNoticeResponse>(
+    `/admin/notices/${noticeId}`,
+    payload
+  );
+  return res.data;
 }
 
-export type AdminDeleteNoticeResponse = {
-  code?: string;
-  message?: string;
-  noticeId?: number;
-};
-
-export async function deleteAdminNotice(noticeId: number) {
-  const res = await apiClient.delete<AdminDeleteNoticeResponse>(
-    `/admin/notices/${noticeId}`
-  );
+export async function deleteAdminNotice(
+  noticeId: number
+): Promise<AdminDeleteNoticeResponse> {
+  const res = await apiClient.delete<AdminDeleteNoticeResponse>(`/admin/notices/${noticeId}`);
   return res.data;
 }
