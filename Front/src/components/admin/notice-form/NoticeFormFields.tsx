@@ -21,6 +21,7 @@ export function TextField({
         <span className="text-sm font-bold text-gray-900">{label}</span>
         {required && <span className="text-sm font-bold text-primary">*</span>}
       </div>
+      {helper && !error && <p className="mb-2 mt-2 text-xs text-gray-400">{helper}</p>}
 
       <input
         value={value}
@@ -33,8 +34,6 @@ export function TextField({
             : "border-gray-200 focus:border-gray-300",
         ].join(" ")}
       />
-
-      {helper && !error && <p className="mt-2 text-xs text-gray-400">{helper}</p>}
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
     </div>
   );
@@ -89,12 +88,14 @@ export function DateField({
   required,
   value,
   error,
+  helper,
   onChange,
 }: {
   label: string;
   required?: boolean;
   value: string;
   error?: string;
+  helper?: string;
   onChange: (v: string) => void;
 }) {
   return (
@@ -103,7 +104,7 @@ export function DateField({
         <span className="text-sm font-bold text-gray-900">{label}</span>
         {required && <span className="text-sm font-bold text-primary">*</span>}
       </div>
-
+      {helper && !error && <p className="mb-2 mt-2 text-xs text-gray-400">{helper}</p>}
       <input
         type="date"
         value={value}
@@ -115,7 +116,6 @@ export function DateField({
             : "border-gray-200 focus:border-gray-300",
         ].join(" ")}
       />
-
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
     </div>
   );

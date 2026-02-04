@@ -7,7 +7,6 @@ type Props = {
 
 export default function NoticeCreateHeader({
   title,
-  subtitle,
   serverError,
   onBack,
 }: Props) {
@@ -28,7 +27,6 @@ export default function NoticeCreateHeader({
         <h1 className="text-3xl font-black tracking-tight text-gray-900">
           {title}
         </h1>
-        {subtitle && <p className="mt-2 text-sm text-gray-500">{subtitle}</p>}
       </header>
 
       {serverError && (
