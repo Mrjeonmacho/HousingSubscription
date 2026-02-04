@@ -22,7 +22,8 @@ public class OAuthAttributes {
 
         return switch (provider){
             case GOOGLE -> ofGoogle(attributes);
-            case KAKAO -> throw new IllegalArgumentException("아직 구현되지 않았습니다.");
+            case KAKAO -> ofKakao(attributes);
+            default -> throw new IllegalArgumentException("지원하지 않는 OAuth 제공자입니다.");
         };
     }
 
@@ -39,6 +40,38 @@ public class OAuthAttributes {
                 .providerId(providerId)
                 .email(userInfo.getEmail())
                 .name(userInfo.getName())
+                .attributes(attributes)
+                .build();
+    }
+
+    private static OAuthAttributes ofKakao(Map<String, Object> attributes) {
+        Object idObj = attributes.get("id");
+
+        if (idObj == null) {
+            throw new IllegalArgumentException("카카오 OAuth 사용자 식별자(id)가 전달되지 않았습니다.");
+        }
+
+        String providerId = String.valueOf(idObj);
+
+        Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+
+        String email = null;
+        String name = null;
+
+        if (kakaoAccount != null) {
+            email = (String) kakaoAccount.get("email");
+
+            Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
+            if (profile != null) {
+                name = (String) profile.get("nickname");
+            }
+        }
+
+        return OAuthAttributes.builder()
+                .provider(OAuthProvider.KAKAO)
+                .providerId(providerId)
+                .email(email)
+                .name(name)
                 .attributes(attributes)
                 .build();
     }
