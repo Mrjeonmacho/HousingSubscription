@@ -56,7 +56,7 @@ export default function NoticeQuickLinksCard({ loading, pdf, url }: Props) {
           type="button"
           onClick={() => pdf && safeExternalOpen(pdf)}
           disabled={!pdf}
-          className="w-full rounded-xl bg-green-400 px-4 py-3 text-left font-semibold text-gray-900 hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
+          className="w-full rounded-xl bg-green-400 px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
         >
           <span className="flex items-center gap-3">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/70">
@@ -71,7 +71,7 @@ export default function NoticeQuickLinksCard({ loading, pdf, url }: Props) {
           type="button"
           onClick={() => url && safeExternalOpen(url)}
           disabled={!url}
-          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-left font-semibold text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
+          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
         >
           <span className="flex items-center gap-3">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
