@@ -10,6 +10,7 @@ export type AdminCreateNoticeRequest = {
   end_date: string; // YYYY-MM-DD
   pdf: string; // URL
   url: string; // URL
+  summary: string | null; // 요약문
 };
 
 export type AdminCreateNoticeResponse = {
@@ -38,7 +39,8 @@ function buildUpsertPayload(
     startDate: body.start_date,
     endDate: body.end_date,
     pdfUrl: body.pdf,
-    url: body.url,
+    originUrl: body.url,
+    summary: body.summary,
   };
 
   return payload;
