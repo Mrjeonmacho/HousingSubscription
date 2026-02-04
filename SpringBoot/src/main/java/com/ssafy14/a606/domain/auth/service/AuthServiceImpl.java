@@ -1,6 +1,8 @@
 package com.ssafy14.a606.domain.auth.service;
 
+import com.ssafy14.a606.domain.auth.dto.request.FindIdRequestDto;
 import com.ssafy14.a606.domain.auth.dto.request.SignInRequestDto;
+import com.ssafy14.a606.domain.auth.dto.response.FindIdResponseDto;
 import com.ssafy14.a606.domain.auth.dto.response.SignInResponseDto;
 import com.ssafy14.a606.domain.auth.dto.response.TokenReissueResponseDto;
 import com.ssafy14.a606.domain.auth.refresh.RefreshTokenStore;
@@ -8,6 +10,8 @@ import com.ssafy14.a606.domain.user.entity.AuthType;
 import com.ssafy14.a606.domain.user.entity.User;
 import com.ssafy14.a606.domain.user.repository.UserRepository;
 import com.ssafy14.a606.global.exceptions.AuthorizationException;
+import com.ssafy14.a606.global.exceptions.InvalidValueException;
+import com.ssafy14.a606.global.exceptions.NotFoundException;
 import com.ssafy14.a606.global.security.jwt.JwtTokenProvider;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -143,6 +147,31 @@ public class AuthServiceImpl implements AuthService{
                 .build();
 
         response.addHeader("Set-Cookie", expiredCookie.toString());
+    }
+
+    // 아이디찾기
+    @Override
+    public FindIdResponseDto findLoginId(FindIdRequestDto requestDto) {
+
+        // 1) email로 사용자 조회
+        User user = userRepository.findByEmail(requestDto.getEmail())
+                .orElseThrow(() -> new NotFoundException("일치하는 계정을 찾을 수 없습니다.")); // USR-ERR-404 매핑
+
+        // 2) 소셜 가입 계정 방어
+        if (user.getAuthType() != AuthType.LOCAL) {
+            throw new InvalidValueException("소셜 로그인으로 가입한 계정입니다. 구글/카카오 로그인을 이용해주세요."); // USR-ERR-002
+        }
+
+        // 3) loginId 반환 (마스킹 X)
+        String loginId = user.getLoginId();
+        if (loginId == null || loginId.isBlank()) {
+            throw new InvalidValueException("요청 값이 올바르지 않습니다."); // 케이스상 거의 없지만 방어
+        }
+
+        return FindIdResponseDto.builder()
+                .loginId(loginId)
+                .message("아이디 조회에 성공했습니다.")
+                .build();
     }
 
 }

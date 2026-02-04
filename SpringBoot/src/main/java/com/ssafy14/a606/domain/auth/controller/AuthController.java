@@ -1,6 +1,8 @@
 package com.ssafy14.a606.domain.auth.controller;
 
+import com.ssafy14.a606.domain.auth.dto.request.FindIdRequestDto;
 import com.ssafy14.a606.domain.auth.dto.request.SignInRequestDto;
+import com.ssafy14.a606.domain.auth.dto.response.FindIdResponseDto;
 import com.ssafy14.a606.domain.auth.dto.response.TokenReissueResponseDto;
 import com.ssafy14.a606.domain.auth.dto.response.SignInResponseDto;
 import com.ssafy14.a606.domain.auth.service.AuthService;
@@ -77,6 +79,13 @@ public class AuthController {
         } catch (IOException | java.io.IOException e){
             throw new RuntimeException("리다이렉트 처리 중 오류가 발생했습니다.");
         }
+    }
+
+    // 아이디 찾기
+    @PostMapping("/recovery/id")
+    public ResponseEntity<FindIdResponseDto> findLoginId(@Valid @RequestBody FindIdRequestDto requestDto) {
+        FindIdResponseDto responseDto = authService.findLoginId(requestDto);
+        return ResponseEntity.ok(responseDto);
     }
 
 
