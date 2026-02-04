@@ -41,7 +41,7 @@ public class Notice {
     // SH 공고 pdf 링크
     private String pdfUrl;
 
-    // SH 공고 pdf 링크
+    // SH 링크
     private String originUrl;
 
     // SH 공고 요약본
