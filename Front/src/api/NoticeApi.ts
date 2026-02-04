@@ -17,9 +17,18 @@ function normalizeNoticeDetail(data: unknown): Notice {
 
   return {
     id: Number(d.id),
+
+    // ✅ 최소수정: Notice 타입에서 요구하는 필드 채우기
+    // - noticeNo: 백엔드가 noticeNo / notice_no / no 등으로 줄 수도 있으니 다 커버
+    noticeNo: (d.noticeNo ?? d.notice_no ?? d.no ?? null) as string | null,
+
     title: (d.title ?? "") as string,
     category: (d.category ?? null) as Notice["category"],
     regDate: (d.regDate ?? d.reg_date ?? null) as string | null,
+
+    // ✅ 최소수정: status도 채우기 (없으면 null)
+    status: (d.status ?? null) as string | null,
+
     summary: (d.summary ?? null) as string | null,
     startDate: (d.startDate ?? d.start_date ?? null) as string | null,
     endDate: (d.endDate ?? d.end_date ?? null) as string | null,
