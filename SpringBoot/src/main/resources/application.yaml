@@ -89,5 +89,5 @@ app:
     redirect-url: ${FRONT_REDIRECT_URL:http://localhost:5173/}
 
   email:
-    dev-mode: ${EMAIL_DEV_MODE:true} #배포에서는 false로 넣어야됨!!
+    dev-mode: ${EMAIL_DEV_MODE:false}
     from: ${MAIL_FROM:${MAIL_USERNAME}}
