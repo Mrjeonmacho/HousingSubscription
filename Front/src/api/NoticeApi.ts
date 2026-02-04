@@ -22,6 +22,7 @@ function normalizeNoticeDetail(data: unknown): Notice {
     category: (d.category ?? null) as Notice["category"],
     regDate: (d.regDate ?? d.reg_date ?? null) as string | null,
     status: (d.status ?? null) as Notice["status"],
+    summary: (d.summary ?? null) as string | null,
     startDate: (d.startDate ?? d.start_date ?? null) as string | null,
     endDate: (d.endDate ?? d.end_date ?? null) as string | null,
     pdfUrl: (d.pdfUrl ?? d.pdf ?? null) as string | null,
@@ -57,6 +58,7 @@ export type FavoriteNotice = {
   category: string;
   reg_date: string;
   status: string;
+  summary: string | null;
   start_date: string | null;
   end_date: string | null;
   pdf: string | null;
