@@ -61,8 +61,8 @@ export type FavoriteNotice = {
   summary: string | null;
   start_date: string | null;
   end_date: string | null;
-  pdf: string | null;
-  url: string;
+  pdfUrl: string | null;
+  originUrl: string;
 };
 
 function isLoggedIn() {

@@ -189,8 +189,8 @@ export default function NoticesPage() {
     summary: f.summary ?? null,
     startDate: f.start_date ?? null,
     endDate: f.end_date ?? null,
-    pdfUrl: f.pdf ?? null,
-    originUrl: f.url ?? null,
+    pdfUrl: f.pdfUrl ?? null,
+    originUrl: f.originUrl ?? null,
   });
 
   const loadFavorites = useCallback(

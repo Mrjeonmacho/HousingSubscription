@@ -236,8 +236,8 @@ export default function NoticeDetailPage() {
           
           <NoticeQuickLinksCard
             loading={loading}
-            pdf={notice?.pdfUrl ?? null}
-            url={notice?.originUrl ?? null}
+            pdfUrl={notice?.pdfUrl ?? null}
+            originUrl={notice?.originUrl ?? null}
           />
         </div>
 
