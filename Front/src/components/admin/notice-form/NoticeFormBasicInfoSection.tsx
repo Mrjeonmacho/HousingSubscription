@@ -53,6 +53,7 @@ export default function NoticeCreateBasicInfoSection({
           required
           value={form.reg_date}
           error={errors.reg_date}
+          helper="SH 공식 홈페이지 내 공지사항 기준 일자입니다."
           onChange={(v) => onChange("reg_date", v)}
         />
 

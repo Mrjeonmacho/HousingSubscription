@@ -31,7 +31,7 @@ export default function NoticeCreateAttachmentsSection({
           value={form.pdf}
           placeholder="https://...pdf"
           error={errors.pdf}
-          helper="스펙상 JSON이므로 파일 업로드는 불가하며, 링크 저장을 권장합니다."
+          helper="파일 업로드는 불가하며, 링크 저장을 권장합니다."
           onChange={(v) => onChange("pdf", v)}
         />
 
@@ -85,9 +85,9 @@ export default function NoticeCreateAttachmentsSection({
             <div className="mt-6 flex flex-col gap-2 sm:flex-row">
               <a
                 className={[
-                  "flex-1 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-all",
+                  "flex-1 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm transition-all",
                   form.pdf
-                    ? "bg-primary text-white shadow-sm shadow-primary/20 hover:bg-primary/90"
+                    ? "bg-primary text-white shadow-primary/20 hover:bg-primary/90"
                     : "bg-gray-100 text-gray-400 pointer-events-none",
                 ].join(" ")}
                 href={form.pdf || undefined}
@@ -99,9 +99,9 @@ export default function NoticeCreateAttachmentsSection({
 
               <a
                 className={[
-                  "flex-1 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-all",
+                  "flex-1 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm transition-all",
                   form.url
-                    ? "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"
+                    ? "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
                     : "bg-gray-100 text-gray-400 pointer-events-none",
                 ].join(" ")}
                 href={form.url || undefined}
