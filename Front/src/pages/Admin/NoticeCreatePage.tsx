@@ -138,6 +138,9 @@ export default function NoticeCreatePage() {
       setSubmitting(true);
 
       const data: AdminCreateNoticeResponse = await postAdminCreateNotice(form);
+
+      window.dispatchEvent(new Event("notices-changed"));
+
       navigate(`/notices/${data.noticeId}`, { replace: true });
     } catch (e) {
       const err = e as AxiosError<ApiErrorResponse>;

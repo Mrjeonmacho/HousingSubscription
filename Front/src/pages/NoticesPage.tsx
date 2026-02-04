@@ -81,7 +81,11 @@ function calcDaysLeft(endDate: string | null) {
   if (Number.isNaN(end.getTime())) return null;
 
   const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
   const startOfEnd = new Date(end.getFullYear(), end.getMonth(), end.getDate());
 
   const diffMs = startOfEnd.getTime() - startOfToday.getTime();
@@ -94,7 +98,11 @@ function isStarted(startDate: string | null) {
   if (Number.isNaN(s.getTime())) return true;
 
   const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
   const startOfStart = new Date(s.getFullYear(), s.getMonth(), s.getDate());
   return startOfStart.getTime() <= startOfToday.getTime();
 }
@@ -172,7 +180,7 @@ export default function NoticesPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  // ✅ [수정] 즐겨찾기 매핑에서 noticeNo / status 주입 제거 (항상 null)
+  // [수정] 즐겨찾기 매핑에서 noticeNo / status 주입 제거 (항상 null)
   const mapFavoriteToNotice = (f: FavoriteNotice): Notice => ({
     id: f.id,
     noticeNo: null,
@@ -214,39 +222,43 @@ export default function NoticesPage() {
     [isLoggedIn]
   );
 
-  useEffect(() => {
-    let ignore = false;
+  // 목록 + 즐겨찾기 재조회 함수
+  const loadNotices = useCallback(async () => {
+    setLoading(true);
+    setErrorMessage(null);
 
-    (async () => {
-      setLoading(true);
-      setErrorMessage(null);
+    try {
+      const list = await getNoticeList();
+      setNotices(list ?? []);
+      await loadFavorites(false);
+    } catch (err) {
+      const ax = err as AxiosError<ApiErrorResponse>;
+      const msg =
+        ax.response?.data?.message ||
+        ax.message ||
+        "목록을 불러오지 못했습니다.";
 
-      try {
-        const list = await getNoticeList();
-        if (ignore) return;
-
-        setNotices(list ?? []);
-        loadFavorites(ignore);
-      } catch (err) {
-        if (ignore) return;
-
-        const ax = err as AxiosError<ApiErrorResponse>;
-        const msg =
-          ax.response?.data?.message ||
-          ax.message ||
-          "목록을 불러오지 못했습니다.";
-
-        setErrorMessage(msg);
-        setNotices([]);
-      } finally {
-        if (!ignore) setLoading(false);
-      }
-    })();
-
-    return () => {
-      ignore = true;
-    };
+      setErrorMessage(msg);
+      setNotices([]);
+    } finally {
+      setLoading(false);
+    }
   }, [loadFavorites]);
+
+  // 최초 로딩
+  useEffect(() => {
+    loadNotices();
+  }, [loadNotices]);
+
+  // 생성/수정/삭제 등 공고 변경 이벤트 수신 → 재조회
+  useEffect(() => {
+    const onChanged = () => {
+      loadNotices();
+    };
+
+    window.addEventListener("notices-changed", onChanged);
+    return () => window.removeEventListener("notices-changed", onChanged);
+  }, [loadNotices]);
 
   const categoryKey = useMemo(
     () => JSON.stringify(filters.category),
@@ -331,6 +343,7 @@ export default function NoticesPage() {
     return sorted.slice(start, start + pageSize);
   }, [sorted, page]);
 
+  // 캐러셀 featured: notices 기준으로 즉시 재계산됨
   const featured = useMemo(() => {
     const base = notices ?? [];
 
@@ -349,7 +362,10 @@ export default function NoticesPage() {
     <div className="mx-auto md:py-8 space-y-10">
       <NoticeHeroCarousel items={featured} />
 
-      <FavoritesNoticeSection items={favorites} onChangedFavorites={loadFavorites} />
+      <FavoritesNoticeSection
+        items={favorites}
+        onChangedFavorites={loadFavorites}
+      />
 
       <div ref={listTopRef} />
 

@@ -211,6 +211,8 @@ export default function NoticeUpdatePage() {
       setSubmitting(true);
       const data = await patchAdminUpdateNotice(noticeId, form);
 
+      window.dispatchEvent(new Event("notices-changed"));
+
       const nextId = (data as { id?: number }).id ?? noticeId;
       navigate(`/notices/${nextId}`, { replace: true });
     } catch (e) {
