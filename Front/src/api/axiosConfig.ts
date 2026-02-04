@@ -1,10 +1,10 @@
-import axios, { 
-  type AxiosError, 
-  type InternalAxiosRequestConfig, 
-  AxiosHeaders 
+import axios, {
+  type AxiosError,
+  type InternalAxiosRequestConfig,
+  AxiosHeaders,
 } from "axios";
 
-//  Axios Request Config 타입 확장
+// Axios Request Config 타입 확장
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
@@ -16,9 +16,9 @@ interface ApiErrorResponse {
 }
 
 // 재발급 응답 타입
-interface ReissueResponse {
-  accessToken: string;
-}
+// interface ReissueResponse {
+//   accessToken: string;
+// }
 
 // 토큰 재발급 진행 상태 및 대기열 관리
 let isRefreshing = false;
@@ -29,14 +29,50 @@ let failedQueue: Array<{
 
 const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token!);
-    }
+    if (error) prom.reject(error);
+    else prom.resolve(token!);
   });
   failedQueue = [];
 };
+
+// 헤더에 Authorization 안전하게 세팅 (AxiosHeaders 캐스팅 문제 방지)
+function setAuthHeader(
+  headers: InternalAxiosRequestConfig["headers"],
+  token: string
+) {
+  const h = AxiosHeaders.from(headers);
+  h.set("Authorization", `Bearer ${token}`);
+  return h;
+}
+
+// refresh 응답에서 accessToken 추출 (백엔드 필드명 차이 대응)
+type UnknownObject = Record<string, unknown>;
+
+function isObject(value: unknown): value is UnknownObject {
+  return typeof value === "object" && value !== null;
+}
+
+function extractAccessToken(data: unknown): string | null {
+  if (!isObject(data)) return null;
+
+  if (typeof data.accessToken === "string") {
+    return data.accessToken;
+  }
+
+  if (typeof data.access_token === "string") {
+    return data.access_token;
+  }
+
+  if (typeof data.token === "string") {
+    return data.token;
+  }
+
+  if (isObject(data.data) && typeof data.data.accessToken === "string") {
+    return data.data.accessToken;
+  }
+
+  return null;
+}
 
 export const apiClient = axios.create({
   baseURL: "/api",
@@ -49,15 +85,16 @@ export const apiClient = axios.create({
 // [요청 인터셉터]
 apiClient.interceptors.request.use(
   (config) => {
+    const url = config.url ?? "";
+
+    // refresh 요청에는 accessToken을 붙이지 않기
+    if (url.includes("/auth/refresh")) return config;
+
     const token = localStorage.getItem("accessToken");
     if (token) {
-      // headers가 없으면 AxiosHeaders 인스턴스로 초기화
-      if (!config.headers) {
-        config.headers = new AxiosHeaders();
-      }
-      // headers는 AxiosRequestHeaders 타입이므로 set 메서드 사용 가능
-      (config.headers as AxiosHeaders).set("Authorization", `Bearer ${token}`);
+      config.headers = setAuthHeader(config.headers, token);
     }
+
     return config;
   },
   (error) => Promise.reject(error)
@@ -68,39 +105,42 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig | undefined;
-    const errorData = error.response?.data as ApiErrorResponse | undefined;
     const status = error.response?.status;
+    const errorData = error.response?.data as ApiErrorResponse | undefined;
 
-    if (!originalRequest || originalRequest._retry) {
-      return Promise.reject(error);
-    }
+    if (!originalRequest) return Promise.reject(error);
 
-    // [무한 루프 방지] 재발급 요청 자체가 실패한 경우
     const requestUrl = originalRequest.url ?? "";
+
+    // [무한 루프 방지] refresh 요청 자체가 실패한 경우
     if (requestUrl.includes("/auth/refresh")) {
-      console.error("리프레시 토큰 만료 또는 유효하지 않음");
       localStorage.removeItem("accessToken");
       window.location.href = "/login";
       return Promise.reject(error);
     }
 
-    // [TOKEN_EXPIRED] 토큰 만료 -> 재발급
-    if (status === 401 && errorData?.code === "TOKEN_EXPIRED") {
+    // [유효하지 않은 토큰] refresh 시도해도 의미 없으면 바로 로그아웃
+    if (status === 401 && errorData?.code === "TOKEN_INVALID") {
+      localStorage.removeItem("accessToken");
+      window.location.href = "/login";
+      return Promise.reject(error);
+    }
+
+    // 이미 재시도한 요청이면 그대로 종료
+    if (originalRequest._retry) {
+      return Promise.reject(error);
+    }
+
+    // 401이면 refresh 시도 (code 의존 제거)
+    if (status === 401) {
       if (isRefreshing) {
-        // 이미 갱신 중이라면 대기열에 추가하고, 갱신 완료 후 재요청
+        // 이미 갱신 중이면 대기열에 추가 후 완료되면 재요청
         return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            if (!originalRequest.headers) {
-              originalRequest.headers = new AxiosHeaders();
-            }
-            (originalRequest.headers as AxiosHeaders).set("Authorization", `Bearer ${token}`);
-            return apiClient(originalRequest);
-          })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
+        }).then((token) => {
+          originalRequest.headers = setAuthHeader(originalRequest.headers, token);
+          return apiClient(originalRequest);
+        });
       }
 
       originalRequest._retry = true;
@@ -108,39 +148,33 @@ apiClient.interceptors.response.use(
 
       try {
         // 재발급 요청
-        const { data } = await apiClient.post<ReissueResponse>("/auth/refresh");
-        const newAccessToken = data.accessToken;
-        localStorage.setItem("accessToken", newAccessToken);
+        const { data } = await apiClient.post<unknown>("/auth/refresh");
 
-        // 헤더 갱신
-        if (!originalRequest.headers) {
-          originalRequest.headers = new AxiosHeaders();
+        const newAccessToken = extractAccessToken(data);
+        if (!newAccessToken) {
+          throw new Error("refresh 응답에 accessToken이 없습니다.");
         }
-        (originalRequest.headers as AxiosHeaders).set("Authorization", `Bearer ${newAccessToken}`);
+
+        localStorage.setItem("accessToken", newAccessToken);
 
         // 대기 중이던 요청들 처리
         processQueue(null, newAccessToken);
         isRefreshing = false;
 
-        // 재요청
+        // 원 요청 재시도
+        originalRequest.headers = setAuthHeader(
+          originalRequest.headers,
+          newAccessToken
+        );
         return apiClient(originalRequest);
-
       } catch (refreshError) {
-        // 실패 시 대기열도 모두 에러 처리
         processQueue(refreshError, null);
         isRefreshing = false;
 
-        console.error("토큰 재발급 실패", refreshError);
         localStorage.removeItem("accessToken");
         window.location.href = "/login";
         return Promise.reject(refreshError);
       }
-    }
-
-    // [TOKEN_INVALID] 유효하지 않은 토큰
-    if (status === 401 && errorData?.code === "TOKEN_INVALID") {
-      localStorage.removeItem("accessToken");
-      window.location.href = "/login";
     }
 
     return Promise.reject(error);
