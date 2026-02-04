@@ -6,6 +6,8 @@ import {
 } from "../../../utils/noticeStatus";
 import type { Notice } from "../../../pages/NoticesPage";
 import CategoryBadge from "../../../components/common/CategoryBadge";
+import FavoriteHeartButton from "../../common/FavoriteHeartButton";
+import { useAuth } from "../../../context/AuthContext";
 
 type Props = {
   notice: Notice;
@@ -35,6 +37,8 @@ export default function FavoritesNoticeCard({
   onClick,
   onUnfavorite,
 }: Props) {
+  const { isLoggedIn } = useAuth();
+
   // 날짜 기반 상태만 사용 (백엔드 status fallback 제거)
   const computedStatus: ComputedNoticeStatus =
     computeNoticeStatus(notice.startDate, notice.endDate) ?? "UPCOMING";
@@ -56,32 +60,16 @@ export default function FavoritesNoticeCard({
     >
       <CategoryBadge category={notice.category} size="md" />
 
-      <button
-        type="button"
-        className="
-          absolute right-6 top-6
-          inline-flex h-9 w-9 items-center justify-center rounded-full
-          bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600
-          disabled:opacity-60
-        "
-        aria-label="찜 해제"
-        disabled={isPending}
-        onClick={(e) => {
-          e.stopPropagation();
-          onUnfavorite();
-        }}
-        title="찜 해제"
-      >
-        <span
-          className="material-symbols-outlined text-[20px] leading-none"
-          style={{
-            fontVariationSettings: "'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24",
-          }}
-          aria-hidden="true"
-        >
-          favorite
-        </span>
-      </button>
+      {/* 하트(통일): 기준 하트 스타일 + stopPropagation 유지 */}
+      <div className="absolute right-6 top-6">
+        <FavoriteHeartButton
+          isFavorite={true}
+          isPending={isPending}
+          isLoggedIn={isLoggedIn}
+          onToggle={onUnfavorite}
+          stopPropagation={true}
+        />
+      </div>
 
       <h3 className="mt-4 line-clamp-2 text-base font-semibold text-gray-900">
         {notice.title}

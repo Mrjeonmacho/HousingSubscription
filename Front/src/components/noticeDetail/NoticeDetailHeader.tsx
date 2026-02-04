@@ -9,6 +9,9 @@ import { getIsAdmin } from "../../api/UserApi";
 import type { AxiosError } from "axios";
 import { deleteAdminNotice } from "../../api/AdminNoticeApi";
 
+import FavoriteHeartButton from "../common/FavoriteHeartButton";
+import { useAuth } from "../../context/AuthContext";
+
 type Props = {
   noticeId: number | null;
   loading: boolean;
@@ -43,6 +46,7 @@ export default function NoticeDetailHeader({
   onShare,
 }: Props) {
   const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
 
   // 찜 상태 관리
   const [isFavorite, setIsFavorite] = useState(false);
@@ -89,8 +93,10 @@ export default function NoticeDetailHeader({
   // 찜 토글 핸들러
   const onFavorite = async () => {
     if (!noticeId) return;
+
     const previousState = isFavorite;
     setIsFavorite(!previousState);
+
     try {
       if (previousState) {
         await removeFavoriteNotice(noticeId);
@@ -210,23 +216,18 @@ export default function NoticeDetailHeader({
             </>
           )}
 
-          {/* 찜 버튼 */}
-          <button
-            onClick={onFavorite}
-            className="group flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 border border-gray-100 transition-all hover:bg-red-50 hover:border-red-100 active:scale-95"
-            title={isFavorite ? "관심 공고 해제" : "관심 공고 등록"}
-          >
-            <span
-              className={`material-symbols-outlined text-[22px] transition-colors ${
-                isFavorite
-                  ? "text-red-500"
-                  : "text-gray-400 group-hover:text-red-400"
-              }`}
-              style={{ fontVariationSettings: `'FILL' ${isFavorite ? 1 : 0}` }}
-            >
-              favorite
-            </span>
-          </button>
+          {/* 찜 버튼 (통일된 하트) */}
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 border border-gray-100 transition-all active:scale-95">
+            <FavoriteHeartButton
+              isFavorite={isFavorite}
+              isLoggedIn={isLoggedIn}
+              onToggle={onFavorite}
+              stopPropagation={false}
+              className="hover:bg-transparent"
+              ariaLabelFavorite="관심 공고 해제"
+              ariaLabelNotFavorite="관심 공고 등록"
+            />
+          </div>
 
           {/* 공유 버튼 */}
           <button

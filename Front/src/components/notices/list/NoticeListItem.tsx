@@ -1,9 +1,11 @@
-// Front/src/components/notices/list/NoticeListItem.tsx => 개별 공고
+// Front/src/components/notices/list/NoticeListItem.tsx
 import { useMemo } from "react";
 import type { Notice } from "../../../pages/NoticesPage";
 import { noticeStatusLabel } from "../../../utils/noticeFormat";
 import { computeNoticeStatus } from "../../../utils/noticeStatus";
 import CategoryBadge from "../../../components/common/CategoryBadge";
+import FavoriteHeartButton from "../../common/FavoriteHeartButton";
+import { useAuth } from "../../../context/AuthContext";
 
 type Props = {
   notice: Notice;
@@ -66,6 +68,8 @@ export default function NoticeListItem({
   onOpen,
   onToggleFavorite,
 }: Props) {
+  const { isLoggedIn } = useAuth();
+
   // 1) 날짜 기반 상태 계산 (startDate/endDate 기준)
   //    status fallback은 제거하고, null일 때만 안전하게 UPCOMING 처리
   const computedStatus = useMemo(
@@ -132,22 +136,12 @@ export default function NoticeListItem({
 
       {/* 3열: 관심공고 */}
       <div className="flex justify-center px-2">
-        <button
-          type="button"
-          className={[
-            "p-1 rounded-full transition-colors disabled:opacity-60",
-            "hover:bg-gray-100",
-            isFavorite ? "text-red-500 hover:text-red-600" : "text-gray-400 hover:text-red-400",
-          ].join(" ")}
-          aria-label={isFavorite ? "찜 해제" : "찜"}
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleFavorite(n.id);
-          }}
-          disabled={isPending}
-        >
-          ❤
-        </button>
+        <FavoriteHeartButton
+          isFavorite={isFavorite}
+          isPending={isPending}
+          isLoggedIn={isLoggedIn}
+          onToggle={() => onToggleFavorite(n.id)}
+        />
       </div>
     </article>
   );
