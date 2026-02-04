@@ -217,7 +217,7 @@ export default function Chatbot() {
             createdAt: new Date().toISOString(),
           },
         ]);
-        navigateTo(TERM_QUESTIONS, "keyword1");
+        navigateTo(TERM_QUESTIONS, "키워드 용어 의미");
       }, 300);
       return;
     }
@@ -274,7 +274,7 @@ export default function Chatbot() {
             createdAt: new Date().toISOString() 
           },
         ]);
-        navigateTo(POLICY_QUESTIONS, value); // 문맥 설정
+        navigateTo(POLICY_QUESTIONS, label); // 문맥 설정
       }, 300);
       return;
     }
