@@ -11,6 +11,7 @@ interface BasicFormState {
   userName: string;
   loginId: string;
   email: string;
+  authType: string;
 }
 
 // 모든 필드를 string으로 관리, 전송 시 변환
@@ -35,14 +36,16 @@ export default function MyPage() {
   const [savedBasicData, setSavedBasicData] = useState<BasicFormState>({
     userName: "",
     loginId: "",
-    email: ""
+    email: "",
+    authType: "",
   });
 
   // 폼 입력값 관리
   const [basicFormData, setBasicFormData] = useState<BasicFormState>({
     userName: "",
     loginId: "",
-    email: ""
+    email: "",
+    authType: "",
   });
 
   // 탈퇴 모달 상태 관리
@@ -164,12 +167,14 @@ export default function MyPage() {
           userName: basicData.userName,
           loginId: basicData.loginId,
           email: basicData.email,
+          authType: basicData.authType,
         });
 
         setBasicFormData({
           userName: basicData.userName,
           loginId: basicData.loginId,
           email: basicData.email,
+          authType: basicData.authType,
         });
 
         // 수정 모드 진입 시 폼에 채워넣을 데이터 세팅 (null -> "")
@@ -329,9 +334,31 @@ export default function MyPage() {
                   <label className="block text-sm font-bold text-gray-700 mb-2">아이디</label>
                   <input type="text" value={basicFormData.loginId} disabled className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-gray-100 text-gray-500 outline-none" />
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-bold text-gray-700 mb-2">이메일</label>
-                  <input type="email" name="email" value={basicFormData.email} onChange={handleBasicChange} className="w-full px-4 py-3 rounded-2xl border border-gray-200 text-gray-900 focus:border-primary outline-none" />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={basicFormData.email}
+                    onChange={handleBasicChange}
+                    // LOCAL(일반) 계정이 아니면 수정 불가
+                    disabled={!!savedBasicData.authType && savedBasicData.authType !== "LOCAL"}
+                    className={`w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all
+                      ${
+                        // 비활성화
+                        savedBasicData.authType && savedBasicData.authType !== "LOCAL"
+                          ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                          : "bg-white"
+                      }
+                    `}
+                  />
+                  {/* 소셜 로그인 사용자에게 안내 문구 표시 */}
+                  {savedBasicData.authType && savedBasicData.authType !== "LOCAL" && (
+                    <p className="mt-1.5 text-xs text-orange-500 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">info</span>
+                      소셜 로그인 사용자는 이메일을 변경할 수 없습니다.
+                    </p>
+                  )}
                 </div>
                 <div className="col-span-2 flex gap-3 mt-2">
                   <button 
