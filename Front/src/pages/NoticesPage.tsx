@@ -91,22 +91,6 @@ function calcDaysLeft(endDate: string | null) {
   const diffMs = startOfEnd.getTime() - startOfToday.getTime();
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
-
-function isStarted(startDate: string | null) {
-  if (!startDate) return true;
-  const s = new Date(startDate);
-  if (Number.isNaN(s.getTime())) return true;
-
-  const now = new Date();
-  const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-  );
-  const startOfStart = new Date(s.getFullYear(), s.getMonth(), s.getDate());
-  return startOfStart.getTime() <= startOfToday.getTime();
-}
-
 type NoticePresetState = {
   preselectedCategories?: string[];
   scrollToList?: boolean;
@@ -346,16 +330,25 @@ export default function NoticesPage() {
   // 캐러셀 featured: notices 기준으로 즉시 재계산됨
   const featured = useMemo(() => {
     const base = notices ?? [];
+    if (base.length === 0) return [];
 
-    return [...base]
+    // 1) 기본: 마감일까지 남은 날짜 기준으로(청약 예정 포함) 0 이상만 노출
+    const byDeadline = [...base]
       .map((n) => ({
         n,
         daysLeft: calcDaysLeft(n.endDate),
       }))
-      .filter((x) => x.daysLeft !== null && x.daysLeft >= 0 && isStarted(x.n.startDate))
+      .filter((x) => x.daysLeft !== null && x.daysLeft >= 0)
       .sort((a, b) => a.daysLeft! - b.daysLeft!)
       .slice(0, 5)
       .map((x) => x.n);
+
+    if (byDeadline.length > 0) return byDeadline;
+
+    // 2) fallback: 혹시 endDate 파싱 실패/없음 등으로 다 걸러지면 최신 등록순으로라도 띄우기
+    return [...base]
+      .sort((a, b) => toMs(b.regDate) - toMs(a.regDate))
+      .slice(0, 5);
   }, [notices]);
 
   return (
