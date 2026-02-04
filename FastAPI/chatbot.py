@@ -83,16 +83,16 @@ async def get_rag_answer(user_question: str, collection, title: str):
             ("system", (
                 "검색된 공고 정보가 없어 질문이 정확하지 않거나 틀린 답변이 나올 수 있습니다. 이 문장은 답변 맨 처음으로 고정" # Disclaimer prepended
                 "당신은 AI 챗봇 '서울집사'입니다. "
-                "사용자의 질문에 대해 당신이 아는 정보를 바탕으로 최대한 친절하고 상세하게 답변해주세요. "
+                "사용자의 질문과 질문 주제가 어떤주제(정책, 공고, 키워드)인지 따져서 당신이 아는 정보를 바탕으로 최대한 친절하고 상세하게 답변해주세요. "
                 "모든 답변은 '순수 평문(Plain Text)'으로만 작성해야 합니다. "
                 "절대로 별표(*), 특수기호(#), 대시(-) 등을 사용한 마크다운 형식을 쓰지 마세요. "
                 "강조가 필요하다면 괄호 [ ] 를 사용하거나 줄바꿈을 활용하세요. "
                 "목록을 나열할 때는 1. 2. 3. 처럼 숫자와 마침표만 사용하세요. "
                 "챗봇 형태이기 때문에 짧으면 한문장, 길면 5문장 이내로 압축해서 핵심적이고 읽기 쉽게 만들어줘 마무리로"
             )),
-            ("human", "{question}")
+            ("human", "주제: {title}\n\n질문: {question}")
         ])
-        full_prompt = general_prompt_template.format(question=user_question)
+        full_prompt = general_prompt_template.format(question=user_question, title=title)
         return await call_gemini_api(full_prompt)
     else:
         # 2-2. 검색 결과가 유효할 경우: RAG 답변 생성

@@ -64,7 +64,7 @@ for folder_name in os.listdir(base_dir):
             ids.append(chunk_id)
             documents.append(chunk_content)
 
-            # 메타데이터에 폴더명 noticeNo
+            # 메타데이터에 폴더명 title
             metadatas.append({
                 "title": folder_name,
                 "page": int(i * 1.5) + 1
