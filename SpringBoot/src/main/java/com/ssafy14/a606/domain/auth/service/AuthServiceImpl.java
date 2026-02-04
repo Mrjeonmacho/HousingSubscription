@@ -110,8 +110,8 @@ public class AuthServiceImpl implements AuthService{
         // 8) refreshToken 쿠키 교체
         ResponseCookie cookie = ResponseCookie.from("refreshToken", newRefreshToken)
                 .httpOnly(true)
-                .secure(false)      // 운영 https: true
-                .sameSite("Lax")    // 운영에서 프론트-백 도메인 분리면 None 고려
+                .secure(true)      // 운영 https: true
+                .sameSite("None")    // 운영에서 프론트-백 도메인 분리면 None 고려
                 .path("/")
                 .maxAge(Duration.ofDays(14))
                 .build();
