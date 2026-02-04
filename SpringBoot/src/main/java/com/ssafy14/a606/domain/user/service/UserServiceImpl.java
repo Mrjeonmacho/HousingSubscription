@@ -1,6 +1,8 @@
 package com.ssafy14.a606.domain.user.service;
 
 import com.ssafy14.a606.domain.auth.refresh.RefreshTokenStore;
+import com.ssafy14.a606.domain.email.service.EmailVerificationService;
+import com.ssafy14.a606.domain.email.store.EmailVerificationStatusStore;
 import com.ssafy14.a606.domain.user.dto.request.SignUpRequestDto;
 import com.ssafy14.a606.domain.user.dto.request.UserUpdateRequestDto;
 import com.ssafy14.a606.domain.user.dto.response.SignUpResponseDto;
@@ -37,6 +39,8 @@ public class UserServiceImpl implements UserService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsRepository userDetailsRepository;
     private final RefreshTokenStore refreshTokenStore;
+    private final EmailVerificationService emailVerificationService;
+    private final EmailVerificationStatusStore emailVerificationStatusStore;
 
     // 1. 회원가입
     @Override
@@ -51,6 +55,11 @@ public class UserServiceImpl implements UserService {
         // 로그인 ID 중복 체크
         if (userRepository.existsByLoginId(request.getLoginId())) {
             throw new DuplicateValueException("이미 사용 중인 ID입니다.");
+        }
+
+        // 이메일 인증 완료 여부 체크
+        if (!emailVerificationService.isVerified(request.getEmail())) {
+            throw new InvalidValueException("이메일 인증이 필요합니다.");
         }
 
         // 비밀번호 해시(BCrypt)
@@ -74,6 +83,9 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         userDetailsRepository.save(details);
+
+        // 회원가입 완료 후 verified 상태 삭제
+        emailVerificationStatusStore.deleteVerified(request.getEmail());
 
         return new SignUpResponseDto(saved.getId(), saved.getUserName(), saved.getRole().name());
     }
