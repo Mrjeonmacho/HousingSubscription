@@ -11,7 +11,7 @@ export type AdminCreateNoticeRequest = {
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
   pdf: string; // URL
-  url: string; // URL
+  originUrl: string; // URL
   summary: string | null; // 요약문
 };
 
@@ -40,7 +40,7 @@ function buildUpsertPayload(body: AdminCreateNoticeRequest): Record<string, unkn
     startDate: body.start_date,
     endDate: body.end_date,
     pdfUrl: body.pdf,
-    originUrl: body.url,
+    originUrl: body.originUrl,
     summary: body.summary,
   };
 
