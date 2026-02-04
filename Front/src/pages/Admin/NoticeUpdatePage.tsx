@@ -65,7 +65,7 @@ function toEditForm(detail: {
     start_date: detail.startDate ?? todayYYYYMMDD(),
     end_date: detail.endDate ?? todayYYYYMMDD(),
     pdf: detail.pdfUrl ?? "",
-    url: detail.originUrl ?? "",
+    originUrl: detail.originUrl ?? "",
     summary: detail.summary ?? "",
   };
 }
@@ -91,7 +91,7 @@ export default function NoticeUpdatePage() {
     start_date: todayYYYYMMDD(),
     end_date: todayYYYYMMDD(),
     pdf: "",
-    url: "",
+    originUrl: "",
     summary: null,
   }));
 
@@ -193,8 +193,8 @@ export default function NoticeUpdatePage() {
       next.pdf =
         "PDF 링크(https://...)를 입력해 주세요. (파일 경로를 쓰는 경우는 백엔드 정책에 따릅니다)";
     }
-    if (v.url && !/^https?:\/\//.test(v.url)) {
-      next.url = "원본 링크는 https://... 형태로 입력해 주세요.";
+    if (v.originUrl && !/^https?:\/\//.test(v.originUrl)) {
+      next.originUrl = "원본 링크는 https://... 형태로 입력해 주세요.";
     }
 
     setErrors(next);
