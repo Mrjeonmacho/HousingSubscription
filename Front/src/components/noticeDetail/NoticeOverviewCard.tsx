@@ -46,7 +46,7 @@ export default function NoticeOverviewCard({
   const displayColor = textColor || getColorByComputedStatus(computed);
 
   return (
-    <section className="rounded-3xl bg-white p-6 shadow-sm border border-gray-100">
+    <section className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
       <div className="mb-5 flex items-center gap-2.5">
         <div className="h-5 w-1.5 rounded-full bg-primary" />
         <h2 className="text-[17px] font-bold text-gray-900 tracking-tight">공고 기본 정보</h2>

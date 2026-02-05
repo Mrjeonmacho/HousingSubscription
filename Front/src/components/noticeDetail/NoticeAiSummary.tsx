@@ -34,16 +34,48 @@ export default function NoticeAiSummary({ summary }: Props) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="w-full rounded-2xl border border-blue-100 bg-white shadow-sm p-5 
-                   transition-all duration-300 hover:shadow-md hover:bg-blue-50/30 group text-left"
+        className="
+          w-full rounded-2xl
+          border border-primary/20
+          bg-white
+          p-5
+          shadow-sm
+          text-left
+          cursor-pointer
+          transition-all duration-300
+          hover:border-primary/50
+          hover:bg-primary/5
+          hover:shadow-md
+          group
+        "
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-primary flex items-center justify-center transition-transform group-hover:scale-110">
-              <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
+            <div
+              className="
+                w-10 h-10 rounded-full
+                bg-primary/10
+                flex items-center justify-center
+                text-primary
+                transition-all duration-300
+                group-hover:bg-primary
+                group-hover:text-white
+                group-hover:scale-110
+              "
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                auto_awesome
+              </span>
             </div>
+
             <div>
-              <h3 className="font-bold text-base text-gray-900 group-hover:text-primary transition-colors">
+              <h3
+                className="
+                  font-bold text-base text-gray-900
+                  transition-colors
+                  group-hover:text-primary
+                "
+              >
                 AI 공고 요약 보기
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">
@@ -167,7 +199,7 @@ export default function NoticeAiSummary({ summary }: Props) {
             <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
               <button
                 onClick={() => setIsOpen(false)}
-                className="px-6 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primary transition-colors shadow-lg shadow-blue-200"
+                className="px-6 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primary transition-colors shadow-lg"
               >
                 닫기
               </button>

@@ -241,7 +241,7 @@ export default function NoticeDetailPage() {
           />
         </div>
 
-        <div className="lg:col-span-2 top-6 h-[calc(100vh-100px)] min-h-[600px] overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+        <div className="lg:col-span-2 top-6 h-[calc(100vh-100px)] min-h-[600px] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
           <NoticeChatbotPanel noticeTitle={notice?.title} />
         </div>
       </div>
