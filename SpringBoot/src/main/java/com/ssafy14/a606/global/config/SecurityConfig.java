@@ -51,6 +51,7 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/login/oauth2/**"
                         ).permitAll()
+                        .requestMatchers("/api/users/email/**").permitAll()
                         .requestMatchers("/api/notices/favorites/**").authenticated()
                         .requestMatchers("/api/users/me/**").authenticated()
                         .requestMatchers("/api/auth/logout").permitAll()

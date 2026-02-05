@@ -59,6 +59,22 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+        connectiontimeout: 5000
+        timeout: 5000
+        writetimeout: 5000
+
 
 jwt:
   secret: ${JWT_SECRET}
@@ -71,3 +87,7 @@ fastapi:
 app:
   frontend:
     redirect-url: ${FRONT_REDIRECT_URL:http://localhost:5173/}
+
+  email:
+    dev-mode: ${EMAIL_DEV_MODE:false}
+    from: ${MAIL_FROM:${MAIL_USERNAME}}

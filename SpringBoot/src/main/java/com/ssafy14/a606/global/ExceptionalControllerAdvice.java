@@ -54,6 +54,12 @@ public class ExceptionalControllerAdvice {
         return handleException(e, HttpStatus.CONFLICT, "DUP");
     }
 
+    // 410 - 인증 만료
+    @ExceptionHandler(ExpiredVerificationCodeException.class)
+    public ResponseEntity<ErrorResponse> handleExpiredVerificationCode(ExpiredVerificationCodeException e) {
+        return handleException(e, HttpStatus.GONE, "GONE");
+    }
+
     // 500 - DB 오류
     @ExceptionHandler(DatabaseException.class)
     public ResponseEntity<ErrorResponse> handleDatabaseException(DatabaseException e) {
