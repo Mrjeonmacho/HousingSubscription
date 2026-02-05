@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useUIStore } from "../../store/uiStore";
 
 type FavoriteHeartButtonProps = {
   isFavorite: boolean;
@@ -26,14 +27,26 @@ export default function FavoriteHeartButton({
 }: FavoriteHeartButtonProps) {
   const navigate = useNavigate();
 
+  const openAlert = useUIStore((s) => s.openAlert);
+
   const ariaLabel = isFavorite ? ariaLabelFavorite : ariaLabelNotFavorite;
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (stopPropagation) e.stopPropagation();
 
     if (!isLoggedIn) {
-      alert("로그인이 필요한 기능입니다.");
-      navigate("/login");
+      openAlert({
+        title: "로그인 안내",
+        message: "로그인이 필요한 기능입니다.\n로그인 페이지로 이동하시겠습니까?",
+        icon: "lock",
+        
+        confirmText: "로그인",
+        cancelText: "아니오",
+        
+        onConfirm: () => {
+          navigate("/login");
+        },
+      });
       return;
     }
 

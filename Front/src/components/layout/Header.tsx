@@ -2,8 +2,11 @@
 import { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useUIStore } from "../../store/uiStore";
 
 export default function Header() {
+  const openAlert = useUIStore((s) => s.openAlert);
+
   const { isLoggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,8 +32,14 @@ export default function Header() {
   };
 
   const handleLogout = () => {
-    logout(); 
-    navigate("/"); 
+    openAlert({
+      title: "알림",
+      message: "로그아웃 되었습니다.",
+      onConfirm: () => {
+        logout();
+        navigate("/");
+      },
+    });
   };
 
   const navBase = "text-sm font-medium text-gray-700 hover:text-primary transition-colors whitespace-nowrap";

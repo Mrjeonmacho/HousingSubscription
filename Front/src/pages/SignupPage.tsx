@@ -7,9 +7,12 @@ import {
   registerUser,
 } from "../api/AuthApi";
 import axios from "axios";
+import { useUIStore } from "../store/uiStore";
 
 export default function SignupPage() {
   const navigate = useNavigate();
+  // 전역 모달 함수 가져오기
+  const openAlert = useUIStore((state) => state.openAlert);
 
   // 입력 데이터
   const [formData, setFormData] = useState({
@@ -176,13 +179,24 @@ export default function SignupPage() {
 
   // 이메일 인증번호 전송
   const handleSendVerification = async () => {
-    if (!formData.email) return alert("이메일을 입력해주세요.");
-    if (errors.email) return alert("올바른 이메일 형식을 입력해주세요.");
-    if (!status.isEmailChecked) return alert("이메일 중복 확인이 필요합니다.");
+    if (!formData.email) {
+      openAlert({ title: "입력 오류", message: "이메일을 입력해주세요.", icon: "warning", variant: "danger" });
+      return;
+    }
+    if (errors.email) {
+      openAlert({ title: "입력 오류", message: "올바른 이메일 형식을 입력해주세요.", icon: "warning", variant: "danger" });
+      return;
+    }
+    if (!status.isEmailChecked) {
+      openAlert({ title: "중복 확인 필요", message: "이메일 중복 확인이 완료되지 않았습니다.", icon: "info" });
+      return;
+    }
 
     try {
       await sendVerificationCode(formData.email);
-      alert("인증번호가 전송되었습니다.");
+      // 전송 성공
+      openAlert({ title: "전송 완료", message: "인증번호가 전송되었습니다.\n이메일을 확인해주세요.", icon: "mark_email_read" });
+      
       setStatus((prev) => ({
         ...prev,
         isEmailSent: true,
@@ -193,11 +207,11 @@ export default function SignupPage() {
       const statusCode = axios.isAxiosError(err) ? err.response?.status : undefined;
 
       if (statusCode === 429) {
-        alert("요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+        openAlert({ title: "전송 실패", message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.", icon: "error", variant: "danger" });
         return;
       }
 
-      alert("인증번호 전송에 실패했습니다.");
+      openAlert({ title: "전송 실패", message: "인증번호 전송에 실패했습니다.", icon: "error", variant: "danger" });
     }
   };
 
@@ -210,24 +224,25 @@ export default function SignupPage() {
       const result = await verifyCode(formData.email, formData.verificationCode);
 
       if (result.verified) {
-        alert("이메일 인증이 완료되었습니다.");
+        // 인증 성공
+        openAlert({ title: "인증 성공", message: "이메일 인증이 완료되었습니다.", icon: "check_circle" });
         setStatus((prev) => ({ ...prev, isEmailVerified: true }));
       } else {
-        alert("인증번호가 올바르지 않습니다.");
+        openAlert({ title: "인증 실패", message: "인증번호가 올바르지 않습니다.", icon: "error", variant: "danger" });
       }
     } catch (err: unknown) {
       const statusCode = axios.isAxiosError(err) ? err.response?.status : undefined;
 
       if (statusCode === 410) {
-        alert("인증코드가 만료되었습니다. 재전송 해주세요.");
+        openAlert({ title: "시간 초과", message: "인증코드가 만료되었습니다. 재전송 해주세요.", icon: "schedule", variant: "danger" });
         return;
       }
       if (statusCode === 429) {
-        alert("인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.");
+        openAlert({ title: "횟수 초과", message: "인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.", icon: "error", variant: "danger" });
         return;
       }
 
-      alert("인증 확인에 실패했습니다.");
+      openAlert({ title: "오류 발생", message: "인증 확인에 실패했습니다.", icon: "error", variant: "danger" });
     }
   };
 
@@ -243,7 +258,7 @@ export default function SignupPage() {
   // 최종 회원가입 요청
   const handleSignup = async () => {
     if (Object.values(errors).some((msg) => msg !== "")) {
-      alert("입력 정보를 다시 확인해주세요.");
+      openAlert({ title: "입력 확인", message: "입력 정보를 다시 확인해주세요.", icon: "warning", variant: "danger" });
       return;
     }
 
@@ -254,20 +269,38 @@ export default function SignupPage() {
       !formData.name ||
       !formData.email
     ) {
-      alert("모든 필수 정보를 입력해주세요.");
+      openAlert({ title: "입력 확인", message: "모든 필수 정보를 입력해주세요.", icon: "edit", variant: "danger" });
       return;
     }
 
-    if (!status.isIdChecked) return alert("아이디 중복 확인을 해주세요.");
-    if (formData.password !== formData.confirmPassword)
-      return alert("비밀번호가 일치하지 않습니다.");
-    if (!status.isEmailVerified) return alert("이메일 인증을 완료해주세요.");
-    if (!isAllAgreed) return alert("필수 약관에 모두 동의해주세요.");
+    if (!status.isIdChecked) {
+      openAlert({ title: "중복 확인", message: "아이디 중복 확인이 필요합니다.", icon: "person_search", variant: "danger" });
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      openAlert({ title: "비밀번호 불일치", message: "비밀번호가 일치하지 않습니다.", icon: "lock_reset", variant: "danger" });
+      return;
+    }
+    if (!status.isEmailVerified) {
+      openAlert({ title: "이메일 미인증", message: "이메일 인증을 완료해주세요.", icon: "mail", variant: "danger" });
+      return;
+    }
+    if (!isAllAgreed) {
+      openAlert({ title: "약관 동의", message: "필수 약관에 모두 동의해주세요.", icon: "assignment", variant: "danger" });
+      return;
+    }
 
     const success = await registerUser(formData);
     if (success) {
-      alert(`${formData.name}님, 회원가입이 완료되었습니다!`);
-      navigate("/login");
+      // 가입 완료 (축하 아이콘)
+      openAlert({
+        title: "가입 완료",
+        message: `${formData.name}님, 회원가입이 완료되었습니다!\n로그인 페이지로 이동합니다.`,
+        icon: "celebration",
+        onConfirm: () => {
+          navigate("/login");
+        }
+      });
     }
   };
 

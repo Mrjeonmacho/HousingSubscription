@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../context/AuthContext";
+import { useUIStore } from "../store/uiStore";
 
 // 레이아웃 및 인증 관련
 import Layout from "../components/layout/Layout";
 import ChatbotLayout from "../components/chatbot/ChatbotLayout";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import ScrollToTop from "../components/common/ScrollToTop";
+import AlertModal from "../components/modals/AlertModal";
 
 // 일반 페이지
 import HomePage from "../pages/HomePage";
@@ -33,6 +35,8 @@ import NoticeUpdatePage from "../pages/Admin/NoticeUpdatePage";
 
 
 export default function App() {
+  const { alertOpen, alert, closeAlert } = useUIStore();
+
   return (
     <BrowserRouter>
       <ScrollToTop />
@@ -79,6 +83,26 @@ export default function App() {
           </Route>
 
         </Routes>
+
+        {/* 전역 AlertModal 배치 (Routes 밖, AuthProvider 안) */}
+        <AlertModal
+          isOpen={alertOpen}
+          title={alert?.title}
+          message={alert?.message ?? ""}
+          icon={alert?.icon}
+          variant={alert?.variant}
+          confirmText={alert?.confirmText}
+          onConfirm={() => {
+            alert?.onConfirm?.();
+            closeAlert();
+          }}
+          onClose={() => {
+            alert?.onClose?.();
+            closeAlert();
+          }}
+          cancelText={alert?.cancelText}
+        />
+
       </AuthProvider>
     </BrowserRouter>
   );

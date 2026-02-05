@@ -128,7 +128,6 @@ export const logoutAPI = async (): Promise<void> => {
 
     window.dispatchEvent(new Event("auth-changed"));
     
-    alert("로그아웃 되었습니다");
   } catch (error) {
     console.error("로그아웃 요청 실패", error);
   }

@@ -1,15 +1,28 @@
-import { Navigate, Outlet } from "react-router-dom";
+// Front/src/components/auth/ProtectedRoute.tsx
+import { useEffect } from "react";
+import { useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useUIStore } from "../../store/uiStore";
 
 export default function ProtectedRoute() {
   const { isLoggedIn } = useAuth();
+  const navigate = useNavigate();
+  const openAlert = useUIStore((s) => s.openAlert);
 
-  // 로그인이 안 되어 있으면 로그인 페이지로 리다이렉트
-  if (!isLoggedIn) {
-    alert("로그인이 필요한 서비스입니다. 로그인 페이지로 이동합니다.");
-    return <Navigate to="/login" replace />;
-  }
+  useEffect(() => {
+    if (isLoggedIn) return;
 
-  // 로그인이 되어 있으면 자식 컴포넌트(Outlet) 보여줌
+    openAlert({
+      title: "로그인 안내", 
+      icon: "lock",
+      message: "로그인이 필요한 서비스입니다.\n로그인 페이지로 이동합니다.",
+      onConfirm: () => {
+        navigate("/login", { replace: true });
+      },
+    });
+  }, [isLoggedIn, openAlert, navigate]);
+
+  if (!isLoggedIn) return null;
+
   return <Outlet />;
 }
