@@ -44,24 +44,24 @@ export const checkDuplicate = async (type: "loginId" | "email", value: string): 
   }
 };
 
-// 이메일 인증번호 전송(더미)
-export const sendVerificationCode = async (email: string): Promise<void> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log(`[가짜 API] ${email}로 인증번호 전송됨`);
-      resolve();
-    }, 1000);
+// 이메일 인증코드 발송
+export const sendVerificationCode = async (email: string): Promise<string> => {
+  const res = await apiClient.post<{ message: string }>("/users/email/code", {
+    email,
   });
+  return res.data.message; // "EMAIL_CODE_SENT"
 };
 
-// 인증번호 검증(더미)
-export const verifyCode = async (code: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      if (code === "123456") resolve(true);
-      else resolve(false);
-    }, 500);
-  });
+// 이메일 인증코드 검증
+export const verifyCode = async (
+  email: string,
+  code: string
+): Promise<{ verified: boolean; message: string }> => {
+  const res = await apiClient.post<{ verified: boolean; message: string }>(
+    "/users/email/verification",
+    { email, code }
+  );
+  return res.data; // { verified: true/false, message: "EMAIL_VERIFIED" | "INVALID_CODE" }
 };
 
 // 회원가입 요청
