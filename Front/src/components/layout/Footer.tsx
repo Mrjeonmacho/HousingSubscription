@@ -1,5 +1,3 @@
-import seoulJibsaLogo from "../../assets/seouljibsa.png";
-
 export default function Footer() {
   return (
     <footer className="border-t border-gray-100 dark:border-white/5 px-4 md:px-20 lg:px-40 py-12 bg-white dark:bg-background-dark/50">
@@ -7,7 +5,7 @@ export default function Footer() {
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <img
-              src={seoulJibsaLogo}
+              src="/seouljibsa.png"
               alt="서울집사 로고"
               className="h-8 w-8 object-contain"
             />
