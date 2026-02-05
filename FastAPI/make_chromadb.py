@@ -64,9 +64,9 @@ for folder_name in os.listdir(base_dir):
             ids.append(chunk_id)
             documents.append(chunk_content)
 
-            # 메타데이터에 폴더명(source)을 명시하여 나중에 필터링 가능하게 함
+            # 메타데이터에 폴더명 title
             metadatas.append({
-                "source": folder_name,
+                "title": folder_name,
                 "page": int(i * 1.5) + 1
             })
 
@@ -85,5 +85,5 @@ print(f"전체 데이터 개수: {collection.count()}")
 
 # 저장된 소스 목록 확인
 all_data = collection.get(include=['metadatas'])
-sources = set(m['source'] for m in all_data['metadatas'])
+sources = set(m['title'] for m in all_data['metadatas'])
 print(f"저장된 공고 목록: {sources}")

@@ -1,178 +1,252 @@
-// Front/src/components/noticeDetail/NoticeDetailHeader.tsx
-import { useEffect, useMemo, useState } from "react";
-import type { Notice } from "../../pages/NoticesPage";
-import { statusLabel } from "../../utils/noticeFormat";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   addFavoriteNotice,
   getFavoriteNotices,
   removeFavoriteNotice,
 } from "../../api/NoticeApi";
+import { getIsAdmin } from "../../api/UserApi";
+import type { AxiosError } from "axios";
+import { deleteAdminNotice } from "../../api/AdminNoticeApi";
 
+import FavoriteHeartButton from "../common/FavoriteHeartButton";
+import { useAuth } from "../../context/AuthContext";
 
 type Props = {
   noticeId: number | null;
-  title: string;
-  status: Notice["status"];
-  dday: number | null;
   loading: boolean;
-  onBack: () => void;
-  onShare?: () => void;
+  title: string | undefined;
+  startDate: string | undefined;
+  endDate: string | undefined;
+
+  // 상태/스타일 정보
+  statusText: string;
+  badgeStyle: string;
+  dDayText: string | null;
+  isUrgent: boolean;
+
+  onShare: () => void;
 };
 
-function statusTone(status: Notice["status"]) {
-  if (status === "RECEIVING") return "bg-emerald-50 text-emerald-700";
-  if (status === "DEADLINE_APPROACHING") return "bg-rose-50 text-rose-700";
-  return "bg-gray-100 text-gray-700";
-}
-
-function MaterialIcon({
-  name,
-  className,
-  filled,
-}: {
-  name: string;
-  className?: string;
-  filled?: boolean;
-}) {
-  return (
-    <span
-      className={`material-symbols-outlined ${className ?? ""}`}
-      style={{
-        fontVariationSettings: `'FILL' ${filled ? 1 : 0}, 'wght' 500, 'GRAD' 0, 'opsz' 24`,
-      }}
-    >
-      {name}
-    </span>
-  );
-}
+type ApiErrorResponse = {
+  code?: string;
+  message?: string;
+};
 
 export default function NoticeDetailHeader({
   noticeId,
-  title,
-  status,
-  dday,
   loading,
-  onBack,
+  title,
+  startDate,
+  endDate,
+  statusText,
+  badgeStyle,
+  dDayText,
+  isUrgent,
   onShare,
 }: Props) {
+  const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
+
+  // 찜 상태 관리
   const [isFavorite, setIsFavorite] = useState(false);
-  const [favPending, setFavPending] = useState(false);
 
-  const badgeText = useMemo(() => {
-    return statusLabel(status);
-  }, [status]);
+  // 관리자 여부
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // 1) 로그인 사용자 조회 + 찜 여부 조회
+  // 삭제 중 상태
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setIsAdmin(getIsAdmin());
+
+    sync(); // 최초 1회
+
+    window.addEventListener("auth-changed", sync);
+    window.addEventListener("storage", sync);
+
+    return () => {
+      window.removeEventListener("auth-changed", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
+  // 초기 찜 상태 확인
   useEffect(() => {
     if (!noticeId || loading) return;
-
     let ignore = false;
-
     (async () => {
       try {
         const favorites = await getFavoriteNotices();
-        if (ignore) return;
-
-        const favored = favorites.some((f) => f?.id === noticeId);
-        setIsFavorite(favored);
+        if (!ignore) {
+          setIsFavorite(favorites.some((f) => f?.id === noticeId));
+        }
       } catch {
-        // 로그인 안 됐거나 에러 → 찜 아님으로 처리
-        if (!ignore) setIsFavorite(false);
+        /* ignore */
       }
     })();
-
     return () => {
       ignore = true;
     };
   }, [noticeId, loading]);
 
-
-  // 2) 찜 토글
+  // 찜 토글 핸들러
   const onFavorite = async () => {
-    if (!noticeId || favPending) return;
+    if (!noticeId) return;
 
-    const currently = isFavorite;
-
-    setFavPending(true);
-    setIsFavorite(!currently);
+    const previousState = isFavorite;
+    setIsFavorite(!previousState);
 
     try {
-      const data = currently
-        ? await removeFavoriteNotice(noticeId)
-        : await addFavoriteNotice(noticeId);
-
-      setIsFavorite(Boolean(data.isFavorite));
-    } catch {
-      setIsFavorite(currently);
-      alert("로그인이 필요하거나 요청 처리 중 오류가 발생했습니다.");
-    } finally {
-      setFavPending(false);
+      if (previousState) {
+        await removeFavoriteNotice(noticeId);
+      } else {
+        await addFavoriteNotice(noticeId);
+      }
+    } catch (error) {
+      console.error(error);
+      setIsFavorite(previousState);
     }
   };
 
+  const onUpdate = () => {
+    if (!noticeId) return;
+    navigate(`/admin/notices/${noticeId}/update`);
+  };
+
+  const onDelete = async () => {
+    if (!noticeId) return;
+    if (deleting) return;
+
+    const ok = window.confirm(
+      "정말 삭제하시겠습니까?\n삭제된 공고는 복구할 수 없습니다."
+    );
+    if (!ok) return;
+
+    try {
+      setDeleting(true);
+      await deleteAdminNotice(noticeId);
+
+      // 삭제 성공 → 목록으로
+      navigate("/notices", { replace: true });
+    } catch (e) {
+      const err = e as AxiosError<ApiErrorResponse>;
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        "삭제 중 오류가 발생했습니다.";
+      alert(msg);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="flex gap-2">
+          <div className="h-6 w-16 rounded bg-gray-200" />
+          <div className="h-6 w-10 rounded bg-gray-200" />
+        </div>
+        <div className="h-10 w-3/4 rounded bg-gray-200" />
+        <div className="h-5 w-48 rounded bg-gray-200" />
+      </div>
+    );
+  }
+
   return (
-    <header className="mb-8 flex flex-col gap-4">
-      <button
-        type="button"
-        onClick={onBack}
-        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800"
-      >
-        <MaterialIcon name="arrow_back" className="text-[18px]" />
-        공고 목록으로 돌아가기
-      </button>
+    <div>
+      {/* 뱃지 & D-Day 라인 */}
+      <div className="flex items-center gap-2 mb-3">
+        <span
+          className={`px-2.5 py-1 text-xs font-bold rounded-md ${badgeStyle}`}
+        >
+          {statusText}
+        </span>
+        {dDayText && (
+          <span
+            className={`text-sm font-bold ${
+              isUrgent ? "text-red-500" : "text-gray-500"
+            }`}
+          >
+            {dDayText}
+          </span>
+        )}
+      </div>
 
+      {/* 타이틀 & 버튼들 */}
       <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <span
-              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusTone(
-                status
-              )}`}
-            >
-              {badgeText}
-            </span>
+        <h1 className="text-2xl font-bold leading-snug text-gray-900 sm:text-3xl">
+          {title}
+        </h1>
 
-            {typeof dday === "number" && (
-              <span className="text-sm font-semibold text-red-500">
-                {dday > 0 ? `D-${dday}` : dday === 0 ? "D-DAY" : `D+${Math.abs(dday)}`}
-              </span>
-            )}
+        <div className="flex shrink-0 gap-2">
+          {/* 수정/삭제 버튼 (관리자만) */}
+          {isAdmin && noticeId && (
+            <>
+              <button
+                type="button"
+                onClick={onUpdate}
+                className="h-10 inline-flex items-center gap-1.5 rounded-full bg-gray-50 border border-gray-100 px-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:scale-95"
+                title="공고 수정"
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  edit
+                </span>
+                수정
+              </button>
+
+              <button
+                type="button"
+                onClick={onDelete}
+                disabled={deleting}
+                className={[
+                  "h-10 inline-flex items-center gap-1.5 rounded-full border px-3 text-sm font-semibold transition-all active:scale-95",
+                  deleting
+                    ? "bg-gray-100 border-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-red-50 border-red-100 text-red-600 hover:bg-red-100 hover:border-red-200",
+                ].join(" ")}
+                title="공고 삭제"
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  delete
+                </span>
+                {deleting ? "삭제 중..." : "삭제"}
+              </button>
+            </>
+          )}
+
+          {/* 찜 버튼 (통일된 하트) */}
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 border border-gray-100 transition-all active:scale-95">
+            <FavoriteHeartButton
+              isFavorite={isFavorite}
+              isLoggedIn={isLoggedIn}
+              onToggle={onFavorite}
+              stopPropagation={false}
+              className="hover:bg-transparent"
+              ariaLabelFavorite="관심 공고 해제"
+              ariaLabelNotFavorite="관심 공고 등록"
+            />
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-black leading-tight text-gray-900">
-            {loading ? (
-              <span className="inline-block h-10 w-[520px] max-w-full rounded bg-gray-100 animate-pulse" />
-            ) : (
-              title
-            )}
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-3">
+          {/* 공유 버튼 */}
           <button
-            type="button"
-            onClick={onFavorite}
-            className="h-11 w-11 rounded-full border border-gray-200 bg-white shadow-sm hover:bg-gray-50 flex items-center justify-center"
-            aria-label="찜"
-            disabled={loading || favPending}
-          >
-            <MaterialIcon
-              name="favorite"
-              className={isFavorite ? "text-red-500" : "text-gray-700"}
-              filled={isFavorite}
-            />
-          </button>
-          <button
-            type="button"
             onClick={onShare}
-            className="h-11 w-11 rounded-full border border-gray-200 bg-white shadow-sm hover:bg-gray-50 flex items-center justify-center"
-            aria-label="공유"
-            disabled={loading}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-all active:scale-95"
+            title="공유하기"
           >
-            <MaterialIcon name="share" className="text-gray-700" />
+            <span className="material-symbols-outlined text-[22px]">share</span>
           </button>
         </div>
       </div>
-    </header>
+
+      {/* 기간 표시 */}
+      <div className="mt-3 flex items-center gap-2 text-sm text-gray-500 font-medium">
+        <span className="material-symbols-outlined text-[18px]">
+          calendar_today
+        </span>
+        {startDate} ~ {endDate}
+      </div>
+    </div>
   );
 }

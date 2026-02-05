@@ -14,14 +14,23 @@ import NoticeDetailPage from "../pages/NoticeDetailPage";
 import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
 import MyPage from "../pages/MyPage";
+import SocialCallback from "../pages/SocialCallback";
 
 // 놀이터 페이지
 import Playground from "../pages/Playground/Playground";
 import Quiz from "../pages/Playground/Quiz";
 import Preference from "../pages/Playground/Preference";
 
+// 404 Not Found 페이지
+import NotFoundPage from "../pages/NotFoundPage";
+
 // 챗봇 페이지
 import Chatbot from "../pages/Chatbot";
+
+// 관리자(admin) 페이지
+import NoticeCreatePage from "../pages/Admin/NoticeCreatePage";
+import NoticeUpdatePage from "../pages/Admin/NoticeUpdatePage";
+
 
 export default function App() {
   return (
@@ -52,13 +61,23 @@ export default function App() {
             </Route>
 
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/oauth/callback" element={<SocialCallback />} />
             <Route path="/signup" element={<SignupPage />} />
+            
+            {/* 관리자 페이지 */}
+            <Route path="/admin/notices/create" element={<NoticeCreatePage />} />
+            <Route path="/admin/notices/:noticeId/update" element={<NoticeUpdatePage />} />
+
+            {/* 404 Not Found 페이지 */}
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
 
           {/* 챗봇 페이지: ChatbotLayout 적용 */}
           <Route element={<ChatbotLayout />}>
             <Route path="/chatbot" element={<Chatbot />} />
+            <Route path="/chatbot/*" element={<NotFoundPage />} />
           </Route>
+
         </Routes>
       </AuthProvider>
     </BrowserRouter>

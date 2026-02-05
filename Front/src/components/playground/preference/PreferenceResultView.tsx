@@ -74,6 +74,7 @@ export default function PreferenceResultView({ answers, onRestart }: PreferenceR
     navigate("/notices", {
       state: {
         preselectedCategories: data.recommendedCategories,
+        scrollToList: true,
       },
     });
   };

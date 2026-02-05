@@ -1,15 +1,33 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-primary: #00E676;
 }
 
 @layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
+
+  :root {
+    color-scheme: light;
+  }
+
+  @supports not (scrollbar-gutter: stable) {
+    html {
+      overflow-y: scroll;
+    }
+  }
+
   body {
     font-family: Pretendard, sans-serif;
+    @apply bg-white text-gray-900;
+    background-color: #ffffff; /* 혹시 모를 @apply 누락 대비 */
+    color: #111827;
   }
 }
-
 
 .glass {
   background: rgba(255, 255, 255, 0.85);

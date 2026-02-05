@@ -1,6 +1,8 @@
 package com.ssafy14.a606.domain.auth.service;
 
+import com.ssafy14.a606.domain.auth.dto.request.FindIdRequestDto;
 import com.ssafy14.a606.domain.auth.dto.request.SignInRequestDto;
+import com.ssafy14.a606.domain.auth.dto.response.FindIdResponseDto;
 import com.ssafy14.a606.domain.auth.dto.response.SignInResponseDto;
 import com.ssafy14.a606.domain.auth.dto.response.TokenReissueResponseDto;
 import com.ssafy14.a606.domain.auth.refresh.RefreshTokenStore;
@@ -8,6 +10,8 @@ import com.ssafy14.a606.domain.user.entity.AuthType;
 import com.ssafy14.a606.domain.user.entity.User;
 import com.ssafy14.a606.domain.user.repository.UserRepository;
 import com.ssafy14.a606.global.exceptions.AuthorizationException;
+import com.ssafy14.a606.global.exceptions.InvalidValueException;
+import com.ssafy14.a606.global.exceptions.NotFoundException;
 import com.ssafy14.a606.global.security.jwt.JwtTokenProvider;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -45,10 +49,11 @@ public class AuthServiceImpl implements AuthService{
             throw new AuthorizationException("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
 
+        Long userId = user.getId();
         String role = user.getRole().name(); // enum이면 name()
 
-        String accessToken = jwtTokenProvider.createAccessToken(user.getLoginId(), role);
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getLoginId());
+        String accessToken = jwtTokenProvider.createAccessToken(userId, role);
+        String refreshToken = jwtTokenProvider.createRefreshToken(userId);
 
         String userRole = "ROLE_" + user.getRole().name();
 
@@ -78,10 +83,10 @@ public class AuthServiceImpl implements AuthService{
             throw new AuthorizationException("RefreshToken이 없습니다.");
         }
 
-        // 2) + 3) 만료/유효하지 않음 분기 + loginId 추출
-        final String loginId;
+        // 2) + 3) 만료/유효하지 않음 분기 + userId 추출
+        final Long userId;
         try {
-            loginId = jwtTokenProvider.getLoginId(refreshToken);
+            userId = jwtTokenProvider.getUserId(refreshToken);
         } catch (ExpiredJwtException e) {
             throw new AuthorizationException("RefreshToken이 만료되었습니다.");
         } catch (JwtException | IllegalArgumentException e) {
@@ -89,10 +94,9 @@ public class AuthServiceImpl implements AuthService{
         }
 
         // 4) loginId로 사용자 조회
-        User user = userRepository.findByLoginId(loginId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AuthorizationException("사용자 정보를 찾을 수 없습니다."));
 
-        Long userId = user.getId();
         String role = user.getRole().name();
 
         // 5) Redis 저장값과 일치 확인 (rotation 검증)
@@ -101,8 +105,8 @@ public class AuthServiceImpl implements AuthService{
         }
 
         // 6) 새 access/refresh 발급
-        String newAccessToken = jwtTokenProvider.createAccessToken(loginId, role);
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(loginId);
+        String newAccessToken = jwtTokenProvider.createAccessToken(userId, role);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(userId);
 
         // 7) Redis 덮어쓰기 (기존 refresh 폐기)
         refreshTokenStore.save(userId, newRefreshToken);
@@ -110,8 +114,8 @@ public class AuthServiceImpl implements AuthService{
         // 8) refreshToken 쿠키 교체
         ResponseCookie cookie = ResponseCookie.from("refreshToken", newRefreshToken)
                 .httpOnly(true)
-                .secure(false)      // 운영 https: true
-                .sameSite("Lax")    // 운영에서 프론트-백 도메인 분리면 None 고려
+                .secure(true)      // 운영 https: true
+                .sameSite("None")    // 운영에서 프론트-백 도메인 분리면 None 고려
                 .path("/")
                 .maxAge(Duration.ofDays(14))
                 .build();
@@ -143,6 +147,31 @@ public class AuthServiceImpl implements AuthService{
                 .build();
 
         response.addHeader("Set-Cookie", expiredCookie.toString());
+    }
+
+    // 아이디찾기
+    @Override
+    public FindIdResponseDto findLoginId(FindIdRequestDto requestDto) {
+
+        // 1) email로 사용자 조회
+        User user = userRepository.findByEmail(requestDto.getEmail())
+                .orElseThrow(() -> new NotFoundException("일치하는 계정을 찾을 수 없습니다.")); // USR-ERR-404 매핑
+
+        // 2) 소셜 가입 계정 방어
+        if (user.getAuthType() != AuthType.LOCAL) {
+            throw new InvalidValueException("소셜 로그인으로 가입한 계정입니다. 구글/카카오 로그인을 이용해주세요."); // USR-ERR-002
+        }
+
+        // 3) loginId 반환 (마스킹 X)
+        String loginId = user.getLoginId();
+        if (loginId == null || loginId.isBlank()) {
+            throw new InvalidValueException("요청 값이 올바르지 않습니다."); // 케이스상 거의 없지만 방어
+        }
+
+        return FindIdResponseDto.builder()
+                .loginId(loginId)
+                .message("아이디 조회에 성공했습니다.")
+                .build();
     }
 
 }

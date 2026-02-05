@@ -1,17 +1,17 @@
 // Front/src/components/notices/filters/NoticeFilterBar.tsx
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   categoryLabel,
-  statusLabel,
+  noticeStatusLabel,
   type NoticeCategory,
-  type NoticeStatus,
 } from "../../../utils/noticeFormat";
+import type { ComputedNoticeStatus } from "../../../utils/noticeStatus";
 
 import NoticeFilterCollapsed from "./NoticeFilterCollapsed";
 import NoticeFilterExpanded from "./NoticeFilterExpanded";
 
-type Option = {
-  value: string;
+type Option<T extends string = string> = {
+  value: T;
   label: string;
 };
 
@@ -20,7 +20,7 @@ type SortKey = "LATEST" | "DEADLINE" | "POPULAR";
 export type Filters = {
   keyword: string;
   category: string[];
-  status: string[];
+  status: ComputedNoticeStatus[];
   sort: SortKey;
 };
 
@@ -28,8 +28,8 @@ type NoticeFilterBarProps = {
   value: Filters;
   onChange: (next: Filters) => void;
 
-  categoryOptions?: Option[];
-  statusOptions?: Option[];
+  categoryOptions?: Option<string>[];
+  statusOptions?: Option<ComputedNoticeStatus>[];
 
   placeholder?: string;
   className?: string;
@@ -49,8 +49,7 @@ function MaterialIcon({
     <span
       className={`material-symbols-outlined ${className ?? ""}`}
       style={{
-        fontVariationSettings:
-          "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20",
+        fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20",
       }}
       aria-hidden="true"
     >
@@ -58,6 +57,9 @@ function MaterialIcon({
     </span>
   );
 }
+
+// 필터에서 제외할 카테고리(주택유형)
+const EXCLUDED_CATEGORIES = new Set<string>(["SALE_HOUSE"]);
 
 export default function NoticeFilterBar({
   value,
@@ -72,30 +74,51 @@ export default function NoticeFilterBar({
   const [expanded, setExpanded] = useState(() => defaultExpanded);
   const [localKeyword, setLocalKeyword] = useState(value.keyword);
 
-  const defaultCategoryOptions = useMemo<Option[]>(() => {
+  // 만약 외부에서든 내부에서든 SALE_HOUSE가 들어와 있으면 제거(보이지 않는 선택값 방지)
+  useEffect(() => {
+    if (!value.category?.some((c) => EXCLUDED_CATEGORIES.has(c))) return;
+
+    const nextCategory = (value.category ?? []).filter(
+      (c) => !EXCLUDED_CATEGORIES.has(c)
+    );
+    onChange({ ...value, category: nextCategory });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value.category]);
+
+  const defaultCategoryOptions = useMemo<Option<NoticeCategory>[]>(() => {
     const categories: NoticeCategory[] = [
       "YOUTH_RESIDENCE",
       "HAPPY_HOUSE",
       "NATIONAL_RENTAL",
       "PUBLIC_RENTAL",
       "LONG_TERM_RENTAL",
-      "SALE_HOUSE",
     ];
-    return categories.map((c) => ({ value: c, label: categoryLabel(c) }));
+
+    return categories
+      .filter((c) => !EXCLUDED_CATEGORIES.has(String(c)))
+      .map((c) => ({ value: c, label: categoryLabel(c) }));
   }, []);
 
-  const defaultStatusOptions = useMemo<Option[]>(() => {
-    const statuses: NoticeStatus[] = [
-      "RECEIVING",
-      "DEADLINE_APPROACHING",
-      "COMPLETED",
-      "TO_BE_ANNOUNCED",
+  // 진행상태는 날짜 기반 computed 상태로 고정
+  const defaultStatusOptions = useMemo<Option<ComputedNoticeStatus>[]>(() => {
+    const statuses: ComputedNoticeStatus[] = [
+      "UPCOMING",
+      "RECRUITING",
+      "DEADLINE_SOON",
+      "CLOSED",
     ];
-    return statuses.map((s) => ({ value: s, label: statusLabel(s) }));
+    return statuses.map((s) => ({ value: s, label: noticeStatusLabel(s) }));
   }, []);
 
-  const categories = categoryOptions ?? defaultCategoryOptions;
-  const statuses = statusOptions ?? defaultStatusOptions;
+  // 외부에서 categoryOptions를 주더라도, 필터에서 제외 대상은 한번 더 걸러줌
+  const categories = useMemo<Option<string>[]>(() => {
+    const base: Option<string>[] =
+      categoryOptions ?? (defaultCategoryOptions as Option<string>[]);
+    return base.filter((opt) => !EXCLUDED_CATEGORIES.has(opt.value));
+  }, [categoryOptions, defaultCategoryOptions]);
+
+  const statuses: Option<ComputedNoticeStatus>[] =
+    statusOptions ?? defaultStatusOptions;
 
   const commitKeyword = () => {
     const next = localKeyword.trim();
@@ -138,7 +161,11 @@ export default function NoticeFilterBar({
               if (e.key === "Enter") commitKeyword();
             }}
             placeholder={placeholder}
-            className="w-full bg-transparent outline-none text-gray-900 placeholder:text-gray-400 text-sm"
+            className={[
+              "w-full bg-transparent outline-none text-gray-900 placeholder:text-gray-400 text-sm",
+              "h-11 leading-[44px]",
+              "py-0",
+            ].join(" ")}
             aria-label="공지 검색"
           />
         </div>

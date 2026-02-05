@@ -4,22 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { getNoticeList } from "../../api/NoticeApi";
 import type { Notice } from "../../pages/NoticesPage";
-import { categoryLabel } from "../../utils/noticeFormat";
-
-type UiStatus = "진행중" | "종료";
-
-function StatusBadge({ status }: { status: UiStatus }) {
-  const cls =
-    status === "진행중"
-      ? "bg-primary/10 text-primary"
-      : "bg-gray-100 text-gray-400";
-
-  return (
-    <span className={`px-3 py-1 rounded-full ${cls} text-[10px] font-bold`}>
-      {status}
-    </span>
-  );
-}
+import CategoryBadge from "../common/CategoryBadge";
 
 function formatPeriod(start: string | null, end: string | null) {
   const s = start ?? "-";
@@ -27,60 +12,61 @@ function formatPeriod(start: string | null, end: string | null) {
   return `${s} ~ ${e}`;
 }
 
-/**
- * 홈 캐러셀 기준 "종료" 판정
- * - status가 COMPLETED면 종료
- * - endDate가 오늘(00:00)보다 과거면 종료
- */
-function calcUiStatus(n: Notice): UiStatus {
-  if (n.status === "COMPLETED") return "종료";
+function getDDayInfo(endDate: string | null) {
+  if (!endDate) return null;
 
-  if (n.endDate) {
-    const end = new Date(n.endDate);
-    if (!Number.isNaN(end.getTime())) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      end.setHours(0, 0, 0, 0);
-      if (end < today) return "종료";
-    }
-  }
+  const end = new Date(endDate);
+  if (Number.isNaN(end.getTime())) return null;
 
-  return "진행중";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.floor(
+    (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  if (diffDays < 0) return null;
+  if (diffDays === 0) return { text: "Today", daysLeft: 0 };
+  return { text: `D-${diffDays}`, daysLeft: diffDays };
 }
 
-function badgeClassByCategory(category: string | null | undefined) {
-  switch (category) {
-    case "YOUTH_RESIDENCE":
-      return "bg-primary/10 text-primary";
-    case "HAPPY_HOUSE":
-      return "bg-emerald-500/10 text-emerald-600";
-    case "NATIONAL_RENTAL":
-      return "bg-blue-500/10 text-blue-600";
-    case "PUBLIC_RENTAL":
-      return "bg-indigo-500/10 text-indigo-600";
-    case "LONG_TERM_RENTAL":
-      return "bg-purple-500/10 text-purple-600";
-    case "SALE_HOUSE":
-      return "bg-amber-500/10 text-amber-700";
-    default:
-      return "bg-gray-100 text-gray-500";
+// [디자인 수정 1] D-Day 색상 로직 변경 및 폰트 굵기 통일
+function DDayBadge({ endDate }: { endDate: string | null }) {
+  const info = getDDayInfo(endDate);
+  if (!info) return null;
+
+  // 기본 스타일: 폰트 굵기 통일 (font-bold)
+  let colorClass = "";
+
+  if (info.daysLeft <= 3) {
+    // D-Day ~ D-3: 빨간색 (강조 효과 유지)
+    colorClass = "text-red-600"; 
+  } else if (info.daysLeft <= 7) {
+    // D-4 ~ D-7: 초록색
+    colorClass = "text-green-600";
+  } else {
+    // 나머지: 회색
+    colorClass = "text-gray-400";
   }
+
+  return (
+    <span className={`text-xs tracking-tight font-bold ${colorClass}`}>
+      {info.text}
+    </span>
+  );
 }
 
 function SkeletonCard() {
   return (
-    <div className="glass p-6 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm">
-      <div className="flex justify-between items-start mb-4">
-        <div className="h-6 w-24 rounded-full bg-gray-100 animate-pulse" />
-        <div className="h-6 w-16 rounded-full bg-gray-100 animate-pulse" />
+    <div className="bg-white p-6 rounded-[1.5rem] border border-gray-100 shadow-sm">
+      <div className="flex justify-between items-center mb-4">
+        <div className="h-6 w-16 rounded-lg bg-gray-100 animate-pulse" />
+        <div className="h-4 w-10 rounded bg-gray-100 animate-pulse" />
       </div>
-      <div className="h-6 w-4/5 rounded bg-gray-100 animate-pulse mb-3" />
-      <div className="h-6 w-3/5 rounded bg-gray-100 animate-pulse mb-6" />
-      <div className="flex items-center gap-2 mb-6">
-        <div className="h-5 w-5 rounded bg-gray-100 animate-pulse" />
-        <div className="h-4 w-40 rounded bg-gray-100 animate-pulse" />
-      </div>
-      <div className="h-12 w-full rounded-xl bg-gray-100 animate-pulse" />
+      <div className="h-6 w-3/4 rounded bg-gray-100 animate-pulse mb-3" />
+      <div className="h-4 w-1/2 rounded bg-gray-100 animate-pulse mb-8" />
+      <div className="h-11 w-full rounded-xl bg-gray-100 animate-pulse mt-auto" />
     </div>
   );
 }
@@ -88,32 +74,22 @@ function SkeletonCard() {
 function useColumnsByBreakpoint() {
   const calc = () => {
     const w = window.innerWidth;
-
-    // Tailwind 기본 브레이크포인트:
-    // sm: 640, md: 768, lg: 1024, xl: 1280
     if (w >= 1280) return 4;
     if (w >= 1024) return 3;
     if (w >= 768) return 2;
     return 1;
   };
 
-  // 초기값은 여기서 계산 (effect 안에서 setState 금지)
   const [cols, setCols] = useState<number>(() => calc());
 
   useEffect(() => {
-    const onResize = () => {
-      setCols(calc());
-    };
-
+    const onResize = () => setCols(calc());
     window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("resize", onResize);
-    };
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   return cols;
 }
-
 
 export default function NoticeCarousel() {
   const navigate = useNavigate();
@@ -126,15 +102,12 @@ export default function NoticeCarousel() {
 
   useEffect(() => {
     let ignore = false;
-
     const fetchList = async () => {
       try {
         setLoading(true);
         setErrorMessage(null);
-
         const list = await getNoticeList();
         if (ignore) return;
-
         setItems(list ?? []);
       } catch {
         if (ignore) return;
@@ -144,36 +117,23 @@ export default function NoticeCarousel() {
         if (!ignore) setLoading(false);
       }
     };
-
     fetchList();
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, []);
 
   const latest = useMemo(() => {
-    // 1) 종료 공고 제외
-    const openOnly = items.filter((n) => calcUiStatus(n) !== "종료");
-
-    // 2) 마감 임박순 정렬 (endDate가 가까운 순)
+    const openOnly = items.filter((n) => getDDayInfo(n.endDate) !== null);
     const sorted = [...openOnly].sort((a, b) => {
-      const aEnd = a.endDate
-        ? new Date(a.endDate).getTime()
-        : Number.POSITIVE_INFINITY;
-      const bEnd = b.endDate
-        ? new Date(b.endDate).getTime()
-        : Number.POSITIVE_INFINITY;
-
-      if (aEnd !== bEnd) return aEnd - bEnd;
-
+      const aInfo = getDDayInfo(a.endDate);
+      const bInfo = getDDayInfo(b.endDate);
+      const aLeft = aInfo ? aInfo.daysLeft : Number.POSITIVE_INFINITY;
+      const bLeft = bInfo ? bInfo.daysLeft : Number.POSITIVE_INFINITY;
+      if (aLeft !== bLeft) return aLeft - bLeft;
       const aReg = a.regDate ? new Date(a.regDate).getTime() : 0;
       const bReg = b.regDate ? new Date(b.regDate).getTime() : 0;
       if (bReg !== aReg) return bReg - aReg;
-
       return (Number(b.id) || 0) - (Number(a.id) || 0);
     });
-
-    // 3) 화면 크기(cols)에 맞게 "한 줄만" 보여주기
     return sorted.slice(0, cols);
   }, [items, cols]);
 
@@ -182,27 +142,32 @@ export default function NoticeCarousel() {
   };
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between px-2">
+    <section className="space-y-8 px-2">
+      
+      {/* 헤더 */}
+      <div className="flex items-end justify-between px-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">최근 주거 공고</h2>
-          <p className="text-gray-500 dark:text-gray-400 font-medium">
-            지금 신청 가능한 서울시 맞춤형 공고입니다.
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+            마감 임박 공고
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            놓치면 안 되는 서울시 주요 공고를 확인하세요.
           </p>
         </div>
 
         <Link
           to="/notices"
-          className="cursor-pointer group text-primary font-bold flex items-center gap-1 transition-colors"
+          className="group flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-primary transition-colors mb-1"
         >
-          <span className="group-hover:underline">전체보기</span>
-          <span className="material-symbols-outlined text-sm transform group-hover:translate-x-1 transition-transform">
+          <span>전체보기</span>
+          <span className="material-symbols-outlined text-[18px] group-hover:translate-x-0.5 transition-transform">
             chevron_right
           </span>
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-2">
+      {/* 카드 그리드 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         {loading ? (
           <>
             <SkeletonCard />
@@ -211,93 +176,61 @@ export default function NoticeCarousel() {
             <SkeletonCard />
           </>
         ) : errorMessage ? (
-          <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4 w-full px-2">
-            <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
-              <p className="text-sm text-gray-500">{errorMessage}</p>
-              <Link
-                to="/notices"
-                className="cursor-pointer inline-flex items-center gap-1 mt-4 text-primary font-bold"
-              >
-                공고 목록으로 이동
-                <span className="material-symbols-outlined text-sm">
-                  chevron_right
-                </span>
-              </Link>
-            </div>
+          <div className="col-span-full py-10 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+            <p className="text-gray-500 mb-4">{errorMessage}</p>
+            <button onClick={() => window.location.reload()} className="text-sm font-bold text-primary hover:underline">
+              다시 시도하기
+            </button>
           </div>
         ) : latest.length === 0 ? (
-          <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4 w-full px-2">
-            <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
-              <p className="text-sm text-gray-500">
-                지금 신청 가능한 공고가 없습니다.
-              </p>
-              <Link
-                to="/notices"
-                className="cursor-pointer inline-flex items-center gap-1 mt-4 text-primary font-bold"
-              >
-                전체 공고 보기
-                <span className="material-symbols-outlined text-sm">
-                  chevron_right
-                </span>
-              </Link>
-            </div>
+          <div className="col-span-full py-12 text-center bg-gray-50 rounded-[2rem]">
+            <span className="material-symbols-outlined text-4xl text-gray-300 mb-3">folder_open</span>
+            <p className="text-gray-500 font-medium">현재 신청 가능한 공고가 없습니다.</p>
           </div>
         ) : (
-          latest.map((item) => {
-            const uiStatus = calcUiStatus(item);
-            const isDisabled = uiStatus === "종료";
+          latest.map((item) => (
+            <div
+              key={item.id}
+              onClick={() => goDetail(item.id)}
+              className="
+                group relative flex flex-col justify-between
+                bg-white dark:bg-gray-800 
+                border border-gray-100 dark:border-gray-700
+                rounded-[1.5rem] p-5
+                shadow-[0_2px_8px_rgba(0,0,0,0.04)]
+                hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]
+                hover:-translate-y-1
+                transition-all duration-300 ease-out
+                cursor-pointer h-full
+              "
+            >
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <CategoryBadge category={item.category} size="sm" />
+                  <DDayBadge endDate={item.endDate} />
+                </div>
 
-            return (
-              <div
-                key={item.id}
-                className="glass p-6 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-xl transition-all group flex flex-col"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <span
-                    className={`px-3 py-1 rounded-full ${badgeClassByCategory(
-                      item.category
-                    )} text-[10px] font-bold uppercase`}
-                  >
-                    {categoryLabel(item.category)}
+                <h3 className="text-[17px] font-bold text-gray-800 dark:text-gray-100 leading-snug mb-3 line-clamp-2 group-hover:text-primary transition-colors">
+                  {item.title}
+                </h3>
+
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-6 w-fit">
+                  <span className="font-medium tracking-tight">
+                    {formatPeriod(item.startDate, item.endDate)}
                   </span>
-                  <StatusBadge status={uiStatus} />
-                </div>
-
-                {/* 본문은 늘어나도 OK */}
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold mb-4 line-clamp-2">
-                    {item.title}
-                  </h3>
-
-                  <div className="space-y-2 mb-6">
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <span className="material-symbols-outlined text-sm">
-                        calendar_month
-                      </span>
-                      <span>{formatPeriod(item.startDate, item.endDate)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 버튼 하단 고정 */}
-                <div className="mt-auto">
-                  {isDisabled ? (
-                    <button className="w-full py-3 bg-gray-50 dark:bg-white/5 rounded-xl text-sm font-bold opacity-50 cursor-not-allowed">
-                      공고 종료
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => goDetail(item.id)}
-                      className="cursor-pointer w-full py-3 bg-gray-50 dark:bg-white/5 rounded-xl text-sm font-bold group-hover:bg-primary group-hover:text-white transition-all"
-                    >
-                      공고 상세보기
-                    </button>
-                  )}
                 </div>
               </div>
-            );
-          })
+
+              <div className="mt-auto pt-4 border-t border-gray-50 dark:border-gray-700">
+                 <div className="flex items-center justify-between text-sm text-gray-400 group-hover:text-primary transition-colors">
+                    <span className="font-medium">자세히 보기</span>
+                    <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">
+                        arrow_forward
+                    </span>
+                 </div>
+              </div>
+            </div>
+          ))
         )}
       </div>
     </section>

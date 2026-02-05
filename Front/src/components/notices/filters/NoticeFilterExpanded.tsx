@@ -1,7 +1,10 @@
-import type { Filters } from "./NoticeFilterBar";
+import type { ReactNode } from "react";
 
-type Option = {
-  value: string;
+import type { Filters } from "./NoticeFilterBar";
+import type { ComputedNoticeStatus } from "../../../utils/noticeStatus";
+
+type Option<T extends string = string> = {
+  value: T;
   label: string;
 };
 
@@ -12,7 +15,7 @@ function Chip({
   onClick,
 }: {
   active: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
   onClick: () => void;
 }) {
   return (
@@ -34,21 +37,20 @@ function Chip({
   );
 }
 
-function MultiChipGroup({
+function MultiChipGroup<T extends string>({
   title,
   options,
   value,
   onChange,
 }: {
   title: string;
-  options: Option[];
-  value: string[];
-  onChange: (next: string[]) => void;
+  options: Option<T>[];
+  value: T[];
+  onChange: (next: T[]) => void;
 }) {
   const hasAny = value.length > 0;
 
-  const toggle = (v: string) => {
-    // 이미 선택된 경우 제거, 아니면 추가
+  const toggle = (v: T) => {
     const nextValue = value.includes(v)
       ? value.filter((x) => x !== v)
       : [...value, v];
@@ -56,7 +58,7 @@ function MultiChipGroup({
   };
 
   return (
-    <div className="flex flex-col gap-3"> {/* 그룹 내부 간격 조정 */}
+    <div className="flex flex-col gap-3">
       <p className="text-[15px] font-bold text-gray-900">{title}</p>
       <div className="flex flex-wrap gap-2">
         <Chip active={!hasAny} onClick={() => onChange([])}>
@@ -77,8 +79,8 @@ function MultiChipGroup({
 }
 
 type Props = {
-  categories: Option[];
-  statuses: Option[];
+  categories: Option<string>[];
+  statuses: Option<ComputedNoticeStatus>[];
   value: Filters;
   onChange: (next: Filters) => void;
   onReset: () => void;

@@ -1,0 +1,137 @@
+import os
+import json
+import httpx # 비동기 HTTP 통신을 위해 추천
+from langchain_core.prompts import ChatPromptTemplate
+from dotenv import load_dotenv
+
+load_dotenv()
+
+async def call_gemini_api(prompt_text):
+    """Gemini API를 호출하는 공통 함수"""
+    gms_key = os.getenv("GMS_KEY")
+    url = os.getenv("GMS_URL")
+
+    headers = {"Content-Type": "application/json", "x-goog-api-key": gms_key}
+    payload = {
+        "contents": [{"parts": [{"text": prompt_text}]}],
+        "generationConfig": {"temperature": 0.1, "maxOutputTokens": 3000}
+    }
+
+    # httpx를 사용하여 Non-blocking으로 API 호출
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            response = await client.post(url, headers=headers, json=payload)
+            response.raise_for_status() # 200번대 응답이 아니면 예외 발생
+            result = response.json()
+            # API 응답 구조에 'candidates'가 없을 경우를 대비한 안전 장치
+            if 'candidates' in result and result['candidates']:
+                return result['candidates'][0]['content']['parts'][0]['text'].strip()
+            return "API 응답이 비어있습니다. 다시 시도해주세요."
+        except httpx.HTTPStatusError as e:
+            return f"답변 생성 중 오류가 발생했습니다. (HTTP 상태 코드: {e.response.status_code})"
+        except Exception as e:
+            return f"답변 생성 중 예상치 못한 오류가 발생했습니다: {str(e)}"
+
+    # 2. 결과 파싱 로직: 숫자만 추출하여 판단 (가장 안전함)
+    clean_response = "".join(filter(str.isdigit, response))
+    return "1" in clean_response
+
+def expand_context(best_id, collection):
+    """ID를 기반으로 앞뒤 2개씩 총 5개의 청크를 가져와 문맥을 완성합니다."""
+    parts = best_id.rsplit('_', 1)
+    id_prefix = parts[0]
+    current_idx = int(parts[1])
+
+    # 가져올 청크 ID 범위를 계산 (인덱스가 1 미만이 되지 않도록 방지)
+    start_idx = max(1, current_idx - 2)
+    end_idx = current_idx + 2
+
+    window_ids = [f"{id_prefix}_{i}" for i in range(start_idx, end_idx + 1)]
+
+    retrieved_data = collection.get(ids=window_ids, include=['documents'])
+
+    # 순서를 보장하며 문서를 결합
+    documents_dict = {doc_id: doc_text for doc_id, doc_text in zip(retrieved_data['ids'], retrieved_data['documents'])}
+    sorted_documents = [documents_dict[doc_id] for doc_id in window_ids if doc_id in documents_dict]
+
+    return "\n\n".join(sorted_documents)
+
+async def get_rag_answer(user_question: str, collection, title: str):
+    """RAG 파이프라인을 실행하여 사용자의 질문에 답변합니다."""
+
+    # 1. 유사도 검색 (가장 관련 있는 1개 청크 확보)
+    if collection is None:
+        return "죄송합니다. 현재 데이터베이스에 연결할 수 없어 답변을 드릴 수 없습니다."
+
+    where_clause = {"title": title}
+    results = collection.query(
+        query_texts=[user_question],
+        n_results=1,
+        where=where_clause,
+        include=["documents", "metadatas", "distances"]
+    )
+    is_relevant_result = False
+    if results and results['ids'] and results['ids'][0]:
+        # 결과가 있을 경우, 유사도 임계값(Threshold) 확인
+        if results['distances'][0][0] <= 0.6:
+            is_relevant_result = True
+
+    # 2. 검색 결과 유효성 검사 및 분기
+    if not is_relevant_result:
+        # 2-1. 검색 결과가 없거나 관련성이 낮을 경우: 일반적인 답변 생성
+        general_prompt_template = ChatPromptTemplate.from_messages([
+            ("system", (
+                "당신은 서울시 주거 지원 서비스 '서울집사'의 AI 전문가입니다. "
+                "당신에게 주어지는 주제({title})는 다음 세 가지 중 하나입니다.\n"
+                "1. 특정 주거 [공고]\n"
+                "2. 정부나 시의 주거 [정책]\n"
+                "3. 부동산/건축 관련 전문 [용어/키워드]\n\n"
+                "당신은 주제({title})의 이름을 보고 어떤 카테고리인지 스스로 판단한 뒤, 전달된 질문에 대해 '주거 맥락'에서 가장 정확한 정보를 제공해야 합니다. "
+                "만약 [{title}]이 전문 용어라면 그 정의와 주거 생활에서의 의미를 설명하고, 공고나 정책이라면 일반적인 절차나 혜택을 안내하세요.\n\n"
+                "ex) [question]은 [title]인것 같습니다 -> 처럼 검증과정은 굳이 사용자에서 설명 할 필요 없습니다. 그냥 사용자 질문에 대답만 하시면 됩니다."
+
+                "모든 답변은 마크다운 기호 사용을 해야합니다. 그래서 강조하거나 이모티콘을 넣어 가독성을 꼭 좋게 답변을 만드세요. "
+                "정보의 가독성을 높이기 위해 반드시 마크다운(Markdown) 형식을 사용하세요.\n"
+                "1. 주요 섹션 제목은 '### 📅 제목' 처럼 헤더(#)와 이모지를 조합해서 작성하세요.\n"
+                "2. 핵심 수치나 날짜는 **강조(Bold)** 처리하세요.\n"
+                "3. 나열할 정보가 있다면 숫자나 글머리 기호를 사용하여 구분하세요.\n"
+                
+                "답변은 짧아도 되지만 길면 최대 10문장까지 압축해서 가독성 쉽게 말을 만드세요"
+                " 주어진 '내용'에 질문에 대한 답이 없다면, '죄송합니다. 현재 제공된 공고문 안에서는 해당 내용을 찾기 어렵네요. 😅 혹시 다른 궁금한 점이 있으신가요?' 이 문장은 답변 맨 마지막으로 고정.\n\n"
+            )),
+            ("human", "주제: {title}\n질문: {question}\n\n서울집사의 지식을 바탕으로 위 주제와 질문에 대해 친절하게 답변해줘.")
+        ])
+        full_prompt = general_prompt_template.format(question=user_question, title=title)
+        return await call_gemini_api(full_prompt)
+    else:
+        # 2-2. 검색 결과가 유효할 경우: RAG 답변 생성
+        # 3. 문맥 확장 (슬라이딩 윈도우 방식으로 주변 텍스트 병합)
+        best_id = results['ids'][0][0]
+        final_context = expand_context(best_id, collection)
+
+        # 4. 프롬프트 구성 (시스템 역할을 통한 전문가 페르소나 부여)
+        prompt_template = ChatPromptTemplate.from_messages([
+            ("system", (
+                "당신은 AI 챗봇 '서울집사'입니다. "
+                "당신의 임무는 오직 주어진 '내용'({source_folder} 공고)에 대해서만 사실에 기반하여 정확하게 답변하는 것입니다. "
+                "절대로 '내용'에 없는 정보나 당신의 외부 지식을 사용해서는 안 됩니다. "
+                "주어진 '내용'에 질문에 대한 답이 없다면, '죄송합니다. 현재 제공된 공고문 안에서는 해당 내용을 찾기 어렵네요. 😅 혹시 다른 궁금한 점이 있으신가요?' 라고 솔직하게 답변하세요. "
+                "답변은 친절한 전문가의 말투로 설명해주세요. "
+                
+                
+                "모든 답변은 마크다운 기호 사용을 해야합니다. 그래서 강조하거나 이모티콘을 넣어 가독성을 꼭 좋게 답변을 만드세요. "
+                "정보의 가독성을 높이기 위해 반드시 마크다운(Markdown) 형식을 사용하세요.\n"
+                "1. 주요 섹션 제목은 '### 📅 제목' 처럼 헤더(#)와 이모지를 조합해서 작성하세요.\n"
+                "2. 핵심 수치나 날짜는 **강조(Bold)** 처리하세요.\n"
+                "3. 나열할 정보가 있다면 숫자나 글머리 기호를 사용하여 구분하세요.\n"
+                
+                
+                "답변 마지막에는 정보의 출처인 출처 : '{source_folder}'를 명시해주세요. "
+                "챗봇 형태이기 때문에 짧으면 한문장, 길면10문장 이내로 압축해서 핵심적이고 가독성 쉽게 만들어주세요"
+            )),
+            ("human", "내용:\n{context}\n\n질문: {question}")
+        ])
+        full_prompt = prompt_template.format(context=final_context, question=user_question, source_folder=title)
+
+        # 5. Gemini API 호출 (비동기 처리)
+        return await call_gemini_api(full_prompt)

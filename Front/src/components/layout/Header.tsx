@@ -1,12 +1,21 @@
 // seoul-jibsa\src\components\layout\Header.tsx
 import { useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 export default function Header() {
   const { isLoggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
   console.log("Header - isLoggedIn:", isLoggedIn, "user:", user);
+
+  const location = useLocation();
+  const handleHomeClick = (e: React.MouseEvent) => {
+    // 현재 페이지가 홈("/")이라면 새로고침 실행
+    if (location.pathname === "/") {
+      e.preventDefault(); 
+      window.location.href = "/";
+    }
+  };
 
   const handleLogout = () => {
     logout(); 
@@ -33,7 +42,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-black/5">
       <div className="mx-auto max-w-6xl px-4 md:px-8 py-4 flex items-center justify-between">
         {/* Left: Logo */}
-        <Link to="/" className="flex items-center gap-3">
+        <Link to="/" onClick={handleHomeClick} className="flex items-center gap-3">
           <div className="size-9 rounded-full bg-primary flex items-center justify-center text-white shadow-sm">
             <span className="material-symbols-outlined text-[18px]">domain</span>
           </div>
@@ -44,7 +53,7 @@ export default function Header() {
 
         {/* Center: Nav */}
         <nav className="hidden md:flex items-center gap-6 lg:gap-8">
-          <NavLink to="/" className={navClass}>홈</NavLink>
+          <NavLink to="/" onClick={handleHomeClick} className={navClass}>홈</NavLink>
           <NavLink to="/notices" className={navClass}>SH 공고 찾기</NavLink>
           <NavLink to="/chatbot" className={navClass}>AI 채팅</NavLink>
           <NavLink to="/playground" className={navClass}>청약 놀이터</NavLink>

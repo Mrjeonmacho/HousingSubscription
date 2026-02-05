@@ -24,6 +24,21 @@ type ApiErrorResponse = {
   message?: string;
 };
 
+function pickNoticeIdFromFavorite(fav: unknown): number | null {
+  if (!fav || typeof fav !== "object") return null;
+  const f = fav as Record<string, unknown>;
+
+  // 백엔드가 noticeId로 주는 경우도 커버
+  const noticeId = f.noticeId;
+  if (typeof noticeId === "number") return noticeId;
+
+  // 기존: id가 noticeId인 경우
+  const id = f.id;
+  if (typeof id === "number") return id;
+
+  return null;
+}
+
 export default function NoticeListSection({
   items,
   loading,
@@ -48,7 +63,8 @@ export default function NoticeListSection({
 
         const next: Record<number, boolean> = {};
         for (const fav of list) {
-          if (typeof fav?.id === "number") next[fav.id] = true;
+          const noticeId = pickNoticeIdFromFavorite(fav);
+          if (typeof noticeId === "number") next[noticeId] = true;
         }
         setFavoriteMap(next);
       } catch (err) {
@@ -120,7 +136,7 @@ export default function NoticeListSection({
         <div className="divide-y divide-gray-100">
           <NoticeList
             loading={loading}
-            items={items} // 정렬된/페이지된 items 그대로 사용
+            items={items}
             isFavorite={(id) => Boolean(favoriteMap[id])}
             isPending={(id) => Boolean(favoritePending[id])}
             onOpen={(id) => navigate(`/notices/${id}`)}

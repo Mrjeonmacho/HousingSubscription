@@ -1,5 +1,13 @@
-import { categoryLabel, statusLabel } from "../../../utils/noticeFormat";
+// Front/src/components/notices/favorites/FavoritesNoticeCard.tsx
+import { noticeStatusLabel } from "../../../utils/noticeFormat";
+import {
+  computeNoticeStatus,
+  type ComputedNoticeStatus,
+} from "../../../utils/noticeStatus";
 import type { Notice } from "../../../pages/NoticesPage";
+import CategoryBadge from "../../../components/common/CategoryBadge";
+import FavoriteHeartButton from "../../common/FavoriteHeartButton";
+import { useAuth } from "../../../context/AuthContext";
 
 type Props = {
   notice: Notice;
@@ -8,12 +16,36 @@ type Props = {
   onUnfavorite: () => void;
 };
 
+function statusToneByComputed(status: ComputedNoticeStatus) {
+  switch (status) {
+    case "DEADLINE_SOON":
+      return "text-red-500";
+    case "RECRUITING":
+      return "text-primary";
+    case "UPCOMING":
+      return "text-gray-600";
+    case "CLOSED":
+      return "text-gray-500";
+    default:
+      return "text-gray-600";
+  }
+}
+
 export default function FavoritesNoticeCard({
   notice,
   isPending,
   onClick,
   onUnfavorite,
 }: Props) {
+  const { isLoggedIn } = useAuth();
+
+  // 날짜 기반 상태만 사용 (백엔드 status fallback 제거)
+  const computedStatus: ComputedNoticeStatus =
+    computeNoticeStatus(notice.startDate, notice.endDate) ?? "UPCOMING";
+
+  const statusText = noticeStatusLabel(computedStatus);
+  const statusClass = statusToneByComputed(computedStatus);
+
   return (
     <div
       data-fav-card
@@ -26,31 +58,25 @@ export default function FavoritesNoticeCard({
         min-w-[260px]
       "
     >
-      <span className="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-        {categoryLabel(notice.category)}
-      </span>
+      <CategoryBadge category={notice.category} size="md" />
 
-      <button
-        type="button"
-        className="absolute right-6 top-6 text-red-500 hover:text-red-600 disabled:opacity-60"
-        aria-label="찜 해제"
-        disabled={isPending}
-        onClick={(e) => {
-          e.stopPropagation();
-          onUnfavorite();
-        }}
-      >
-        ❤
-      </button>
+      {/* 하트(통일): 기준 하트 스타일 + stopPropagation 유지 */}
+      <div className="absolute right-6 top-6">
+        <FavoriteHeartButton
+          isFavorite={true}
+          isPending={isPending}
+          isLoggedIn={isLoggedIn}
+          onToggle={onUnfavorite}
+          stopPropagation={true}
+        />
+      </div>
 
       <h3 className="mt-4 line-clamp-2 text-base font-semibold text-gray-900">
         {notice.title}
       </h3>
 
       <div className="mt-6 flex items-center justify-between">
-        <span className="text-sm font-medium text-green-600">
-          {statusLabel(notice.status)}
-        </span>
+        <span className={`text-sm font-medium ${statusClass}`}>{statusText}</span>
         <span className="text-gray-300">→</span>
       </div>
     </div>

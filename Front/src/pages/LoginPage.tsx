@@ -5,6 +5,8 @@ import KakaoButton from "../components/login/KakaoButton";
 import { login as loginAPI } from "../api/AuthApi";
 import { useAuth } from "../context/AuthContext";
 
+const baseURL = "/api";
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -38,11 +40,11 @@ export default function LoginPage() {
   };
 
   const handleKakaoLogin = () => {
-    console.log("카카오 로그인 클릭");
+    window.location.href = `${baseURL}/auth/kakao`;
   };
 
   const handleGoogleLogin = () => {
-    console.log("구글 로그인 클릭");
+    window.location.href = `${baseURL}/auth/google`;
   };
 
   return (

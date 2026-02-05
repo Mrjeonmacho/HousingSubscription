@@ -2,8 +2,8 @@
 
 type Props = {
   loading: boolean;
-  pdf: string | null;
-  url: string | null;
+  pdfUrl: string | null;
+  originUrl: string | null;
 };
 
 function MaterialIcon({
@@ -42,7 +42,7 @@ function SkeletonCard() {
   );
 }
 
-export default function NoticeQuickLinksCard({ loading, pdf, url }: Props) {
+export default function NoticeQuickLinksCard({ loading, pdfUrl, originUrl }: Props) {
   if (loading) return <SkeletonCard />;
 
   return (
@@ -54,9 +54,9 @@ export default function NoticeQuickLinksCard({ loading, pdf, url }: Props) {
       <div className="space-y-3">
         <button
           type="button"
-          onClick={() => pdf && safeExternalOpen(pdf)}
-          disabled={!pdf}
-          className="w-full rounded-xl bg-green-400 px-4 py-3 text-left font-semibold text-gray-900 hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
+          onClick={() => pdfUrl && safeExternalOpen(pdfUrl)}
+          disabled={!pdfUrl}
+          className="w-full rounded-xl bg-green-400 px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
         >
           <span className="flex items-center gap-3">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/70">
@@ -69,9 +69,9 @@ export default function NoticeQuickLinksCard({ loading, pdf, url }: Props) {
 
         <button
           type="button"
-          onClick={() => url && safeExternalOpen(url)}
-          disabled={!url}
-          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-left font-semibold text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
+          onClick={() => originUrl && safeExternalOpen(originUrl)}
+          disabled={!originUrl}
+          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
         >
           <span className="flex items-center gap-3">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">

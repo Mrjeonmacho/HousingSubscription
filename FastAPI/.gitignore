@@ -1,4 +1,4 @@
-# 가상 환경 (폴더명은 보통 venv 또는 env)
+ # 가상 환경 (폴더명은 보통 venv 또는 env)
 venv/
 env/
 .venv/
@@ -12,3 +12,6 @@ __pycache__/
 
 # PyCharm 등 설정
 .idea/
+
+# ChromaDB 데이터 폴더 제외
+chroma_db/

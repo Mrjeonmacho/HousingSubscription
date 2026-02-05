@@ -1,120 +1,88 @@
 // Front/src/components/noticeDetail/NoticeOverviewCard.tsx
-import { categoryLabel, statusLabel } from "../../utils/noticeFormat";
+import { categoryLabel } from "../../utils/noticeFormat";
+import { computeNoticeStatus, type ComputedNoticeStatus } from "../../utils/noticeStatus";
+import { noticeStatusLabel } from "../../utils/noticeFormat"; // 이 함수는 computed -> 한글 라벨
 import type { Notice } from "../../pages/NoticesPage";
 
 type Props = {
   loading: boolean;
   notice: Notice | null;
+
+  // 외부에서 강제로 표시 텍스트/색상을 주고 싶을 때만 사용
+  statusText?: string;
+  textColor?: string;
 };
 
-function MaterialIcon({
-  name,
-  className,
-}: {
-  name: string;
-  className?: string;
-}) {
-  return (
-    <span
-      className={`material-symbols-outlined ${className ?? ""}`}
-      style={{
-        fontVariationSettings: "'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24",
-      }}
-    >
-      {name}
-    </span>
-  );
+function getColorByComputedStatus(status: ComputedNoticeStatus | null) {
+  switch (status) {
+    case "RECRUITING":
+      return "text-primary";
+    case "DEADLINE_SOON":
+      return "text-[#FF5A5A]";
+    case "UPCOMING":
+      return "text-[#8B95A1]";
+    case "CLOSED":
+      return "text-gray-400";
+    default:
+      return "text-gray-400";
+  }
 }
 
-function SkeletonCard() {
-  return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-      <div className="mb-5 flex items-center gap-2">
-        <span className="inline-block h-5 w-1 rounded bg-gray-200 animate-pulse" />
-        <div className="h-6 w-32 rounded bg-gray-100 animate-pulse" />
-      </div>
+export default function NoticeOverviewCard({
+  loading,
+  notice,
+  statusText,
+  textColor,
+}: Props) {
+  if (loading || !notice) return <div className="h-64 rounded-3xl bg-gray-50 animate-pulse" />;
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="space-y-5">
-          <div>
-            <div className="h-3 w-20 rounded bg-gray-100 animate-pulse" />
-            <div className="mt-2 h-5 w-40 rounded bg-gray-100 animate-pulse" />
-          </div>
-          <div>
-            <div className="h-3 w-16 rounded bg-gray-100 animate-pulse" />
-            <div className="mt-2 h-5 w-24 rounded bg-gray-100 animate-pulse" />
-          </div>
-        </div>
+  // 1) 날짜 기반 상태 계산
+  const computed = computeNoticeStatus(notice.startDate, notice.endDate);
 
-        <div className="space-y-5">
-          <div>
-            <div className="h-3 w-16 rounded bg-gray-100 animate-pulse" />
-            <div className="mt-2 h-5 w-28 rounded bg-gray-100 animate-pulse" />
-          </div>
-          <div>
-            <div className="h-3 w-20 rounded bg-gray-100 animate-pulse" />
-            <div className="mt-2 h-5 w-20 rounded bg-gray-100 animate-pulse" />
-          </div>
-        </div>
-      </div>
+  // 2) 표시 텍스트: (외부 지정) > (날짜 기반 라벨)
+  const displayStatus = statusText || noticeStatusLabel(computed);
 
-      <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50 p-5">
-        <div className="mb-2 h-4 w-24 rounded bg-gray-100 animate-pulse" />
-        <div className="h-4 w-60 rounded bg-gray-100 animate-pulse" />
-      </div>
-    </section>
-  );
-}
-
-export default function NoticeOverviewCard({ loading, notice }: Props) {
-  if (loading) return <SkeletonCard />;
-  if (!notice) return null;
+  // 3) 컬러: (외부 지정) > (날짜 기반)
+  const displayColor = textColor || getColorByComputedStatus(computed);
 
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-      <div className="mb-5 flex items-center gap-2">
-        <span className="inline-block h-5 w-1 rounded bg-green-400" />
-        <h2 className="text-lg font-bold text-gray-900">공고 기본 정보</h2>
+    <section className="rounded-3xl bg-white p-6 shadow-sm border border-gray-100">
+      <div className="mb-5 flex items-center gap-2.5">
+        <div className="h-5 w-1.5 rounded-full bg-primary" />
+        <h2 className="text-[17px] font-bold text-gray-900 tracking-tight">공고 기본 정보</h2>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="space-y-5">
-          <div>
-            <p className="text-xs text-gray-400">공고 등록 번호</p>
-            <p className="mt-1 text-base font-semibold text-gray-900">
-              {notice.noticeNo || "-"}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400">공고 등록일</p>
-            <p className="mt-1 text-base font-semibold text-gray-900">
-              {notice.regDate || "-"}
-            </p>
-          </div>
+      <div className="space-y-4 px-1">
+        <div className="flex items-center justify-between">
+          <span className="text-[14px] font-medium text-gray-400">공고 분류</span>
+          <span className="text-[15px] font-semibold text-gray-900">
+            {categoryLabel(notice.category)}
+          </span>
         </div>
 
-        <div className="space-y-5">
-          <div>
-            <p className="text-xs text-gray-400">공고 분류</p>
-            <p className="mt-1 text-base font-semibold text-gray-900">
-              {categoryLabel(notice.category)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400">모집 공고 상태</p>
-            <p className="mt-1 text-base font-semibold text-green-600">
-              {statusLabel(notice.status)}
-            </p>
-          </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[14px] font-medium text-gray-400">공고 등록일</span>
+          <span className="text-[15px] font-semibold text-gray-900">{notice.regDate}</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-[14px] font-medium text-gray-400">모집 공고 상태</span>
+          <span className={`text-[15px] font-bold ${displayColor}`}>{displayStatus}</span>
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-green-100 bg-green-50 p-5">
-        <p className="mb-2 text-sm font-semibold text-green-700">청약 접수 기간</p>
-        <div className="flex items-center gap-2 text-sm text-gray-900">
-          <MaterialIcon name="event" className="text-green-700" />
-          <span className="font-semibold">
-            {notice.startDate ?? "-"} ~ {notice.endDate ?? "-"}
+      <div className="mt-6 rounded-2xl bg-emerald-50/60 p-4 border border-emerald-100/50">
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="text-[12px] font-bold text-emerald-600/80 uppercase tracking-wider">
+            청약 접수 기간
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-emerald-600 text-[20px]">
+            calendar_today
+          </span>
+          <span className="text-[16px] font-bold text-gray-900 tracking-tight">
+            {notice.startDate} ~ {notice.endDate}
           </span>
         </div>
       </div>

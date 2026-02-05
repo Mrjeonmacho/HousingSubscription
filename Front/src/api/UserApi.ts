@@ -2,7 +2,7 @@ import { apiClient } from "./axiosConfig";
 import { type UserAddInfo } from "../types/user";
 
 // 기본 정보 조회 (GET)
-export const getUserBasicInfo = async (): Promise<{ userName: string; email: string; loginId: string }> => {
+export const getUserBasicInfo = async (): Promise<{ userName: string; email: string; loginId: string; authType: string }> => {
   try{
     const response = await apiClient.get("/users/me");
     return response.data;
@@ -58,4 +58,15 @@ export const updateUserAddInfo = async (data: UserAddInfo) => {
     console.error("추가 정보 수정 실패:", error);
     throw error;
   }
+};
+
+/**
+ * 관리자 여부 확인 (서버 기준)
+ */
+export const getIsAdmin = (): boolean => {
+  const token = localStorage.getItem("accessToken");
+  if (!token) return false;
+
+  const role = localStorage.getItem("userRole");
+  return role === "ROLE_ADMIN" || role === "ADMIN";
 };

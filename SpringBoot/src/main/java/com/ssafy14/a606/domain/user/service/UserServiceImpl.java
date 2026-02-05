@@ -1,5 +1,8 @@
 package com.ssafy14.a606.domain.user.service;
 
+import com.ssafy14.a606.domain.auth.refresh.RefreshTokenStore;
+import com.ssafy14.a606.domain.email.service.EmailVerificationService;
+import com.ssafy14.a606.domain.email.store.EmailVerificationStatusStore;
 import com.ssafy14.a606.domain.user.dto.request.SignUpRequestDto;
 import com.ssafy14.a606.domain.user.dto.request.UserUpdateRequestDto;
 import com.ssafy14.a606.domain.user.dto.response.SignUpResponseDto;
@@ -10,11 +13,16 @@ import com.ssafy14.a606.domain.user.entity.User;
 import com.ssafy14.a606.domain.user.entity.UserDetails;
 import com.ssafy14.a606.domain.user.repository.UserDetailsRepository;
 import com.ssafy14.a606.domain.user.repository.UserRepository;
+import com.ssafy14.a606.global.exceptions.AuthenticationException;
 import com.ssafy14.a606.global.exceptions.DuplicateValueException;
 import com.ssafy14.a606.global.exceptions.InvalidValueException;
 import com.ssafy14.a606.global.exceptions.NotFoundException;
 import com.ssafy14.a606.global.security.jwt.JwtTokenProvider;
+import com.ssafy14.a606.global.security.user.CustomUserDetails;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +38,9 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsRepository userDetailsRepository;
+    private final RefreshTokenStore refreshTokenStore;
+    private final EmailVerificationService emailVerificationService;
+    private final EmailVerificationStatusStore emailVerificationStatusStore;
 
     // 1. 회원가입
     @Override
@@ -44,6 +55,11 @@ public class UserServiceImpl implements UserService {
         // 로그인 ID 중복 체크
         if (userRepository.existsByLoginId(request.getLoginId())) {
             throw new DuplicateValueException("이미 사용 중인 ID입니다.");
+        }
+
+        // 이메일 인증 완료 여부 체크
+        if (!emailVerificationService.isVerified(request.getEmail())) {
+            throw new InvalidValueException("이메일 인증이 필요합니다.");
         }
 
         // 비밀번호 해시(BCrypt)
@@ -67,6 +83,9 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         userDetailsRepository.save(details);
+
+        // 회원가입 완료 후 verified 상태 삭제
+        emailVerificationStatusStore.deleteVerified(request.getEmail());
 
         return new SignUpResponseDto(saved.getId(), saved.getUserName(), saved.getRole().name());
     }
@@ -153,13 +172,52 @@ public class UserServiceImpl implements UserService {
     // 7. 회원탈퇴
     @Override
     @Transactional
-    public void deleteAccount(Long userId){
+    public void deleteAccount(Long userId, HttpServletResponse response){
 
+        // 1) 사용자 존재 확인
         User user = userRepository.findById(userId)
                 .orElseThrow(()->new NotFoundException("존재하지 않는 사용자입니다."));
 
+        // 2) Redis에서 RT 삭제
+        refreshTokenStore.delete(userId);
+
+        // 3) RT 쿠키 만료
+        ResponseCookie expiredCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(true)        // 로컬 http면 false, 운영 https면 true
+                .sameSite("None")    // 로컬이면 Lax도 고려, 운영 cross-site면 None
+                .path("/")
+                .maxAge(0)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
+
+        // 4) 회원 삭제
         userRepository.delete(user);
 
+    }
+
+    // 8. 비밀번호 검증
+    public void confirmPassword(Long userId, String rawPassword){
+
+        // 요청값 검증 (400)
+        if(rawPassword == null || rawPassword.isBlank()){
+            throw new InvalidValueException("요청 값이 올바르지 않습니다.");
+        }
+
+        // 사용자 조회 (404)
+        User user = userRepository.findById(userId)
+                .orElseThrow(()-> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+
+        // 로컬 회원가입 사용자만 비밀번호 검증 가능
+        if (user.getAuthType() != AuthType.LOCAL) {
+            throw new InvalidValueException("소셜 로그인 사용자는 비밀번호 확인이 불가합니다.");
+        }
+
+        // 비밀번호 불일치 (403)
+        if(!passwordEncoder.matches(rawPassword, user.getPassword())){
+            throw new AuthenticationException("비밀번호가 일치하지 않습니다.");
+        }
     }
 
 

@@ -1,6 +1,8 @@
-// Front/src/components/notices/list/NoticeListHeader.tsx  => 검색결과, 전체 공고
+// Front/src/components/notices/list/NoticeListHeader.tsx
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { SortType } from "./NoticeListLayout";
+import { getIsAdmin } from "../../../api/UserApi";
 
 type Props = {
   totalCount: number;
@@ -13,9 +15,28 @@ export default function NoticeListHeader({
   sortType,
   onChangeSort,
 }: Props) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setIsAdmin(getIsAdmin());
+
+    // 최초 1회
+    sync();
+
+    window.addEventListener("auth-changed", sync);
+    window.addEventListener("storage", sync);
+
+    return () => {
+      window.removeEventListener("auth-changed", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+  
+  // 드롭다운 바깥 클릭 시 닫기 (원래 로직 복구)
   useEffect(() => {
     if (!open) return;
 
@@ -29,17 +50,34 @@ export default function NoticeListHeader({
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
 
+  const onClickCreateNotice = () => {
+    navigate("/admin/notices/create");
+  };
+
   return (
-    <div className="flex items-end justify-between px-1">
-      <h3 className="text-xl font-bold text-gray-900 leading-none">
-        검색결과 <span className="text-gray-900">({totalCount})</span>
-      </h3>
+    <div className="flex items-baseline justify-between px-1">
+      <div className="flex items-baseline gap-3">
+        <h3 className="text-xl font-bold text-gray-900 leading-tight">
+          검색결과 <span className="text-gray-900">({totalCount})</span>
+        </h3>
+
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={onClickCreateNotice}
+            className="group inline-flex items-center px-1 text-[11px] text-gray-400 transition-colors hover:text-primary"
+          >
+            <span className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 mr-1.5 group-hover:border-primary">+</span>
+            공고 등록
+          </button>
+        )}
+      </div>
 
       <div className="relative" ref={dropdownRef}>
         <button
           type="button"
           onClick={() => setOpen((prev) => !prev)}
-          className="inline-flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors"
+          className="h-9 inline-flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors"
           aria-label="정렬"
         >
           {sortType === "REG_DATE" ? "최신 등록순" : "마감 임박순"}
