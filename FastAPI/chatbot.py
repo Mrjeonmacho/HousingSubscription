@@ -77,7 +77,6 @@ async def get_rag_answer(user_question: str, collection, title: str):
     # 2. 검색 결과 유효성 검사 및 분기
     if not is_relevant_result:
         # 2-1. 검색 결과가 없거나 관련성이 낮을 경우: 일반적인 답변 생성
-        # "1. 주요 섹션 제목은 '### 📅 제목' 처럼 헤더(#)와 이모지를 조합해서 작성하세요.\n"
         general_prompt_template = ChatPromptTemplate.from_messages([
             ("system", (
                 "당신은 서울시 주거 지원 서비스 '서울집사'의 AI 전문가입니다. "
@@ -91,7 +90,8 @@ async def get_rag_answer(user_question: str, collection, title: str):
 
                 "모든 답변은 마크다운 기호 사용을 해야합니다. 그래서 강조하거나 이모티콘을 넣어 가독성을 꼭 좋게 답변을 만드세요. "
                 "정보의 가독성을 높이기 위해 반드시 마크다운(Markdown) 형식을 사용하세요.\n"
-                "2. 핵심 수치나 날짜는 **강조(Bold)** 처리하세요.\n"
+                "1. 주요 섹션 제목은 '### 📅 제목' 처럼 헤더(#)와 이모지를 조합해서 작성하세요.\n"
+                "2. 핵심 수치나 날짜는 **강조(Bold)** 처리하세요. 프론트에서 처리하는데 강조 하는 앞뒤로 작은 따옴표 ' 이게 들어가면 강조가 되지않고 문자 그대로 ** 보이니 강조하는 단어에는 따옴표 넣지 마세요 \n"
                 "3. 나열할 정보가 있다면 숫자나 글머리 기호를 사용하여 구분하세요.\n"
                 
                 "답변은 짧아도 되지만 길면 최대 10문장까지 압축해서 가독성 쉽게 말을 만드세요"
@@ -108,8 +108,6 @@ async def get_rag_answer(user_question: str, collection, title: str):
         final_context = expand_context(best_id, collection)
 
         # 4. 프롬프트 구성 (시스템 역할을 통한 전문가 페르소나 부여)
-        # "1. 주요 섹션 제목은 '### 📅 제목' 처럼 헤더(#)와 이모지를 조합해서 작성하세요.\n"
-
         prompt_template = ChatPromptTemplate.from_messages([
             ("system", (
                 "당신은 서울시 주거 지원 서비스 '서울집사'의 AI 전문가입니다. "
@@ -127,7 +125,8 @@ async def get_rag_answer(user_question: str, collection, title: str):
                 
                 "모든 답변은 마크다운 기호 사용을 해야합니다. 그래서 강조하거나 이모티콘을 넣어 가독성을 꼭 좋게 답변을 만드세요. "
                 "정보의 가독성을 높이기 위해 반드시 마크다운(Markdown) 형식을 사용하세요.\n"
-                "2. 핵심 수치나 날짜는 **강조(Bold)** 처리하세요.\n"
+                "1. 주요 섹션 제목은 '### 📅 제목' 처럼 헤더(#)와 이모지를 조합해서 작성하세요.\n"
+                "2. 핵심 수치나 날짜는 **강조(Bold)** 처리하세요. 프론트에서 처리하는데 강조 하는 앞뒤로 작은 따옴표 ' 이게 들어가면 강조가 되지않고 문자 그대로 ** 보이니 강조하는 단어에는 따옴표 넣지 마세요 \n"
                 "3. 나열할 정보가 있다면 숫자나 글머리 기호를 사용하여 구분하세요.\n"
                 
                 
