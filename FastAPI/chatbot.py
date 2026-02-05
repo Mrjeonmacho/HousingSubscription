@@ -32,7 +32,7 @@ async def call_gemini_api(prompt_text):
         except Exception as e:
             return f"답변 생성 중 예상치 못한 오류가 발생했습니다: {str(e)}"
 
-
+    # 2. 결과 파싱 로직: 숫자만 추출하여 판단 (가장 안전함)
 
 def expand_context(best_id, collection):
     """ID를 기반으로 앞뒤 2개씩 총 5개의 청크를 가져와 문맥을 완성합니다."""
@@ -134,7 +134,7 @@ async def get_rag_answer(user_question: str, collection, title: str):
             )),
             ("human", "내용:\n{context}\n\n질문: {question}")
         ])
-        full_prompt = prompt_template.format(context=final_context, question=user_question, source_folder=title)
+        full_prompt = prompt_template.format(context=final_context, question=user_question, title=title, source_folder=title)
 
         # 5. Gemini API 호출 (비동기 처리)
         return await call_gemini_api(full_prompt)
