@@ -164,15 +164,11 @@ export default function NoticeHeroCarousel({
             </div>
 
             {/* 메인 텍스트: 줄바꿈 처리를 통해 가독성 확보 */}
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight text-white/90 drop-shadow-sm">
-              현재 모집 중인 <br /> 새로운 공고를 준비하고 있습니다.
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-relaxed md:leading-relaxed lg:leading-relaxed tracking-tight text-white/90 drop-shadow-sm">
+              현재 진행 중이거나 예정된 공고가 없습니다. 
+              <br /> 
+              <span className="block mt-2">곧 새로운 소식으로 찾아올게요!</span>
             </h2>
-
-            {/* 서브 텍스트: 날짜 영역과 위치를 맞춰 안정감 부여 */}
-            <div className="mt-6 flex items-center gap-2 text-white/50 font-medium bg-white/5 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/5">
-              <span className="material-symbols-outlined text-[18px]">notifications_paused</span>
-              <span className="text-sm">업데이트 시 알림으로 알려드릴게요.</span>
-            </div>
           </div>
         </div>
 
