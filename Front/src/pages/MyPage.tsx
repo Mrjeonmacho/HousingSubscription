@@ -5,6 +5,7 @@ import { getUserBasicInfo, updateUserBasicInfo, getUserAddInfo, updateUserAddInf
 import type { UserAddInfo } from "../types/user";
 import { withdrawAccount, confirmPasswordAPI } from "../api/AuthApi";
 import WithdrawModal from "../components/modals/WithdrawModal";
+import { useUIStore } from "../store/uiStore";
 
 // 기본 정보 폼 타입
 interface BasicFormState {
@@ -31,6 +32,9 @@ export default function MyPage() {
 
   // 기본 정보 State
   const [isBasicEditing, setIsBasicEditing] = useState(false);
+
+  // 전역 모달 함수 가져오기
+  const openAlert = useUIStore((state) => state.openAlert);
 
   // 저장된 기본 정보
   const [savedBasicData, setSavedBasicData] = useState<BasicFormState>({
@@ -65,7 +69,12 @@ export default function MyPage() {
       const isVerified = await confirmPasswordAPI(password);
       
       if (!isVerified) {
-        alert("비밀번호가 일치하지 않습니다.");
+        openAlert({
+          title: "인증 실패",
+          message: "비밀번호가 일치하지 않습니다.",
+          icon: "error",
+          variant: "danger"
+        });
         setIsWithdrawLoading(false);
         return;
       }
@@ -75,12 +84,25 @@ export default function MyPage() {
 
       // 성공 처리
       localStorage.clear();
-      alert("회원 탈퇴가 완료되었습니다.\n그동안 이용해 주셔서 감사합니다.");
-      window.location.href = "/";
+
+      openAlert({
+        title: "탈퇴 완료",
+        message: "회원 탈퇴가 완료되었습니다.\n그동안 이용해 주셔서 감사합니다.",
+        icon: "check",
+        onConfirm: () => {
+          window.location.href = "/";
+        }
+      });
 
     } catch (error) {
       console.error("탈퇴 프로세스 실패:", error);
-      alert("탈퇴 처리에 실패했습니다. 다시 시도해주세요."); // 소셜 로그인 유저 등 예외 처리
+
+      openAlert({
+        title: "오류 발생",
+        message: "탈퇴 처리에 실패했습니다. 다시 시도해주세요.",
+        icon: "warning",
+        variant: "danger"
+      });
     } finally {
       setIsWithdrawLoading(false);
     }
@@ -94,7 +116,12 @@ export default function MyPage() {
   const handleBasicSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!basicFormData.userName || !basicFormData.email) {
-      alert("이름과 이메일은 필수입니다.");
+      openAlert({
+        title: "입력 오류",
+        message: "이름과 이메일은 필수 입력 항목입니다.",
+        icon: "info",
+        variant: "danger"
+      });
       return;
     }
 
@@ -114,13 +141,24 @@ export default function MyPage() {
         loginId: savedBasicData.loginId 
       });
 
-      alert("저장되었습니다!");
-      setIsBasicEditing(false);
+      openAlert({
+        title: "저장 완료",
+        message: "기본 정보가 성공적으로 수정되었습니다.",
+        icon: "check",
+        onConfirm: () => {
+          setIsBasicEditing(false);
+          navigate(0); // 페이지 새로고침
+        }
+      });
       
-      navigate(0); // 페이지 새로고침
     } catch (error) {
       console.error("기본 정보 저장 실패:", error);
-      alert("저장에 실패했습니다. 다시 시도해주세요.");
+      openAlert({
+        title: "저장 실패",
+        message: "정보 저장 중 오류가 발생했습니다.\n다시 시도해주세요.",
+        icon: "error",
+        variant: "danger"
+      });
       return;
     }
   };
@@ -226,16 +264,25 @@ export default function MyPage() {
       income: addInfoFormData.income === "" ? null : Number(addInfoFormData.income),
     };
 
-    console.log("서버로 전송될 데이터:", payload);
+    // console.log("서버로 전송될 데이터:", payload);
     try{
       // API 호출
       await updateUserAddInfo(payload); // PUT 호출
-      alert("성공적으로 수정되었습니다!");
+      openAlert({
+        title: "저장 완료",
+        message: "맞춤형 정보가 성공적으로 수정되었습니다!",
+        icon: "check",
+      });
       setSavedData(payload); // 화면 표시용 데이터 업데이트
       setIsAddInfoEditing(false);
     } catch (error) {
       console.error("추가 정보 저장 실패:", error);
-      alert("저장에 실패했습니다. 다시 시도해주세요.");
+      openAlert({
+        title: "저장 실패",
+        message: "정보 저장에 실패했습니다. 잠시 후 다시 시도해주세요.",
+        icon: "error",
+        variant: "danger"
+      });
     } finally {
       setIsLoading(false);
     }
