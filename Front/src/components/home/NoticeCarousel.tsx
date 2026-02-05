@@ -27,7 +27,7 @@ function getDDayInfo(endDate: string | null) {
   );
 
   if (diffDays < 0) return null;
-  if (diffDays === 0) return { text: "Today", daysLeft: 0 };
+  if (diffDays === 0) return { text: "D-DAY", daysLeft: 0 };
   return { text: `D-${diffDays}`, daysLeft: diffDays };
 }
 
