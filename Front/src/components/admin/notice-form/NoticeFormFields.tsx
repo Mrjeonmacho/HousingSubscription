@@ -61,22 +61,40 @@ export function SelectField({
         {required && <span className="text-sm font-bold text-primary">*</span>}
       </div>
 
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={[
-          "h-12 w-full rounded-2xl border px-4 text-sm outline-none transition-colors bg-white",
-          error
-            ? "border-red-200 focus:border-red-300"
-            : "border-gray-200 focus:border-gray-300",
-        ].join(" ")}
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+      <div className="relative">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={[
+            "h-12 w-full appearance-none rounded-2xl border px-4 pr-10 text-sm outline-none transition-colors bg-white",
+            error
+              ? "border-red-200 focus:border-red-300"
+              : "border-gray-200 focus:border-gray-300",
+          ].join(" ")}
+        >
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+
+        <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
+          <svg
+            className="h-5 w-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </div>
+      </div>
 
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
     </div>
