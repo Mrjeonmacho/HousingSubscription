@@ -72,6 +72,8 @@ async def get_rag_answer(user_question: str, collection, title: str):
     if results and results['ids'] and results['ids'][0]:
         # 결과가 있을 경우, 유사도 임계값(Threshold) 확인
         if results['distances'][0][0] <= 0.8:
+            actual_distance = results['distances'][0][0]
+            print(f"DEBUG >>> 질문: {user_question} | 측정된 거리: {actual_distance:.4f}")
             is_relevant_result = True
 
     # 2. 검색 결과 유효성 검사 및 분기
