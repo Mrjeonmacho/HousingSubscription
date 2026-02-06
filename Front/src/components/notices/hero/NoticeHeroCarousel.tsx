@@ -29,26 +29,53 @@ function formatDate(dateStr: string | null) {
   return dateStr ?? "-";
 }
 
+type HeroSlide = {
+  id: string; // 인디케이터/키 용도 (가상 슬라이드는 id가 달라야 함)
+  notice: Notice;
+  bgSrc: string;
+};
+
 export default function NoticeHeroCarousel({
   items,
   autoPlayMs = 5000,
 }: NoticeHeroCarouselProps) {
   const navigate = useNavigate();
 
-  const slides = useMemo(() => (items ?? []).slice(0, 5), [items]);
+  // ✅ 공고 1개면 "가상 슬라이드" 생성 (배경만 다르게)
+  const slides: HeroSlide[] = useMemo(() => {
+    const srcItems = items ?? [];
+    if (srcItems.length === 0) return [];
+
+    // 2개 이상이면: 기존처럼 공고별 슬라이드 + 배경은 index 기반
+    if (srcItems.length > 1) {
+      return srcItems.slice(0, 5).map((notice, i) => ({
+        id: `notice-${notice.id}`,
+        notice,
+        bgSrc: getHeroBgByIndex(i),
+      }));
+    }
+
+    // 1개면: 같은 공고를 배경만 바꿔서 여러 장처럼
+    const only = srcItems[0];
+    const virtualCount = Math.min(5, HERO_IMAGES.length); // 최대 5장
+    return Array.from({ length: virtualCount }, (_, i) => ({
+      id: `virtual-${only.id}-${i}`,
+      notice: only,
+      bgSrc: HERO_IMAGES[i],
+    }));
+  }, [items]);
+
   const count = slides.length;
   const canSlide = count > 1;
-  const canRotateBgOnly = count === 1; // 공고 1개면 배경만 회전
 
   const [index, setIndex] = useState(0);
   const [visibleIndex, setVisibleIndex] = useState(0);
   const pausedRef = useRef(false);
 
+  // ✅ 타입 넓혀두기(리터럴 유니온 오류 방지)
   const [bgFront, setBgFront] = useState<string>(() => getHeroBgByIndex(0));
   const [bgBack, setBgBack] = useState<string | null>(null);
   const [fading, setFading] = useState(false);
-
-  const bgIndexRef = useRef(0);
 
   const rafRef = useRef<number | null>(null);
   const timeoutRef = useRef<number | null>(null);
@@ -67,12 +94,8 @@ export default function NoticeHeroCarousel({
     });
   }, []);
 
-  const slidesKey = useMemo(
-    () => slides.map((s) => String(s.id)).join("|"),
-    [slides]
-  );
+  const slidesKey = useMemo(() => slides.map((s) => s.id).join("|"), [slides]);
 
-  // ✅ 공통으로 쓰는 "배경 페이드 전환" 함수
   const swapBackground = useCallback((nextSrc: string) => {
     if (rafRef.current != null) window.cancelAnimationFrame(rafRef.current);
     if (timeoutRef.current != null) window.clearTimeout(timeoutRef.current);
@@ -93,6 +116,7 @@ export default function NoticeHeroCarousel({
     }, FADE_MS);
   }, []);
 
+  // slides 변경 시 초기화
   useEffect(() => {
     if (rafRef.current != null) window.cancelAnimationFrame(rafRef.current);
     if (timeoutRef.current != null) window.clearTimeout(timeoutRef.current);
@@ -103,14 +127,14 @@ export default function NoticeHeroCarousel({
       setIndex(0);
       setVisibleIndex(0);
 
-      bgIndexRef.current = 0;
-      setBgFront(getHeroBgByIndex(0));
+      const first = slides[0]?.bgSrc ?? getHeroBgByIndex(0);
+      setBgFront(first);
       setBgBack(null);
       setFading(false);
     }, 0);
 
     return () => clearTimeout(resetTimer);
-  }, [slidesKey]);
+  }, [slidesKey, slides]);
 
   const go = useCallback(
     (nextIndex: number) => {
@@ -118,22 +142,28 @@ export default function NoticeHeroCarousel({
       const normalized = ((nextIndex % count) + count) % count;
       if (normalized === index) return;
 
+      if (rafRef.current != null) window.cancelAnimationFrame(rafRef.current);
+      if (timeoutRef.current != null) window.clearTimeout(timeoutRef.current);
+      rafRef.current = null;
+      timeoutRef.current = null;
+
       setIndex(normalized);
 
-      const nextSrc = getHeroBgByIndex(normalized);
+      const nextSrc = slides[normalized]?.bgSrc ?? getHeroBgByIndex(normalized);
       swapBackground(nextSrc);
 
-      window.setTimeout(() => {
+      timeoutRef.current = window.setTimeout(() => {
         setVisibleIndex(normalized);
+        timeoutRef.current = null;
       }, FADE_MS);
     },
-    [count, index, swapBackground]
+    [count, index, slides, swapBackground]
   );
 
   const prev = useCallback(() => go(index - 1), [go, index]);
   const next = useCallback(() => go(index + 1), [go, index]);
 
-  // 공고가 2개 이상일 때만 "슬라이드 자동재생"
+  // ✅ 오토플레이는 "슬라이드" 기준으로만 동작 (가상 슬라이드 포함)
   useEffect(() => {
     if (!autoPlayMs || autoPlayMs <= 0) return;
     if (!canSlide) return;
@@ -146,22 +176,6 @@ export default function NoticeHeroCarousel({
     return () => window.clearInterval(id);
   }, [autoPlayMs, canSlide, go, index]);
 
-  // 공고가 1개일 때는 "배경만 자동재생"
-  useEffect(() => {
-    if (!autoPlayMs || autoPlayMs <= 0) return;
-    if (!canRotateBgOnly) return;
-
-    const id = window.setInterval(() => {
-      if (pausedRef.current) return;
-
-      bgIndexRef.current += 1;
-      const nextSrc = getHeroBgByIndex(bgIndexRef.current);
-      swapBackground(nextSrc);
-    }, autoPlayMs);
-
-    return () => window.clearInterval(id);
-  }, [autoPlayMs, canRotateBgOnly, swapBackground]);
-
   useEffect(() => {
     return () => {
       if (rafRef.current != null) window.cancelAnimationFrame(rafRef.current);
@@ -169,6 +183,9 @@ export default function NoticeHeroCarousel({
     };
   }, []);
 
+  // --------------------------------------------------------------------------
+  // [Render] 데이터 없음
+  // --------------------------------------------------------------------------
   if (!current) {
     return (
       <section className="relative overflow-hidden rounded-[1.2rem] bg-gray-900 text-white shadow-lg min-h-[340px] md:min-h-[450px] isolate">
@@ -201,10 +218,15 @@ export default function NoticeHeroCarousel({
     );
   }
 
+  // --------------------------------------------------------------------------
+  // [Render] 메인 캐러셀
+  // --------------------------------------------------------------------------
+  const currentNotice = current.notice;
+
   return (
     <section
       className="group relative overflow-hidden rounded-[1.2rem] bg-gray-900 text-white shadow-lg isolate transform transition-transform duration-300 min-h-[340px] md:min-h-[450px]"
-      onClick={() => navigate(`/notices/${current.id}`)}
+      onClick={() => navigate(`/notices/${currentNotice.id}`)}
       onMouseEnter={() => {
         pausedRef.current = true;
       }}
@@ -222,6 +244,7 @@ export default function NoticeHeroCarousel({
         }
       `}</style>
 
+      {/* 배경 레이어 */}
       <div className="absolute inset-0 z-0">
         <img
           src={bgFront}
@@ -249,28 +272,30 @@ export default function NoticeHeroCarousel({
       </div>
 
       <div className="relative z-10 flex h-full flex-col justify-end px-12 py-12 md:px-28 lg:px-32 pb-24">
+        {/* ✅ 가상 슬라이드도 key가 바뀌어서 텍스트 애니메이션이 자연스럽게 재실행 */}
         <div key={current.id} className="animate-fade-in-up flex flex-col items-start">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold backdrop-blur-md shadow-lg">
             <span className="text-primary-300">
-              {categoryLabel(current.category ?? undefined)}
+              {categoryLabel(currentNotice.category ?? undefined)}
             </span>
             <span className="h-3 w-[1px] bg-white/30" />
             <span className="text-white/90">
-              {getNoticeComputedStatusText(current)}
+              {getNoticeComputedStatusText(currentNotice)}
             </span>
           </div>
 
           <h2 className="mt-5 text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight text-white drop-shadow-sm">
-            {current.title}
+            {currentNotice.title}
           </h2>
 
           <div className="mt-6 flex items-center gap-2 text-white/80 font-medium bg-black/20 px-3 py-1 rounded-lg backdrop-blur-sm">
             <span className="material-symbols-outlined text-[20px]">calendar_today</span>
-            <span>마감일 : {formatDate(current.endDate)}</span>
+            <span>마감일 : {formatDate(currentNotice.endDate)}</span>
           </div>
         </div>
       </div>
 
+      {/* 공고 보러 가기 버튼 */}
       <div className="absolute bottom-10 right-10 z-20 md:bottom-20 md:right-25">
         <div
           className="
@@ -288,6 +313,7 @@ export default function NoticeHeroCarousel({
         </div>
       </div>
 
+      {/* ✅ 공고 1개여도 (가상 슬라이드가 2장 이상이면) 버튼/인디케이터 표시 */}
       {canSlide && (
         <>
           <button
@@ -296,12 +322,12 @@ export default function NoticeHeroCarousel({
               e.stopPropagation();
               prev();
             }}
-            aria-label="이전 공고"
+            aria-label="이전 슬라이드"
             className="
               absolute left-4 top-1/2 -translate-y-1/2 z-20
-              flex h-12 w-12 items-center justify-center rounded-full 
+              flex h-12 w-12 items-center justify-center rounded-full
               border border-white/10 bg-black/20 text-white/70 backdrop-blur-md
-              transition-all duration-300 
+              transition-all duration-300
               hover:bg-white hover:text-black hover:scale-110
               md:left-8 opacity-0 group-hover:opacity-100
             "
@@ -315,12 +341,12 @@ export default function NoticeHeroCarousel({
               e.stopPropagation();
               next();
             }}
-            aria-label="다음 공고"
+            aria-label="다음 슬라이드"
             className="
               absolute right-4 top-1/2 -translate-y-1/2 z-20
-              flex h-12 w-12 items-center justify-center rounded-full 
+              flex h-12 w-12 items-center justify-center rounded-full
               border border-white/10 bg-black/20 text-white/70 backdrop-blur-md
-              transition-all duration-300 
+              transition-all duration-300
               hover:bg-white hover:text-black hover:scale-110
               md:right-8 opacity-0 group-hover:opacity-100
             "
@@ -336,7 +362,7 @@ export default function NoticeHeroCarousel({
             const active = i === index;
             return (
               <button
-                key={i}
+                key={slides[i].id}
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
