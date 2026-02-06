@@ -7,7 +7,6 @@ import { getIsAdmin } from "../../api/UserApi";
 import {
   postAdminCreateNotice,
   type AdminCreateNoticeRequest,
-  type AdminCreateNoticeResponse,
 } from "../../api/AdminNoticeApi";
 
 import type { NoticeCategory } from "../../utils/noticeFormat";
@@ -149,7 +148,7 @@ export default function NoticeCreatePage() {
     try {
       setSubmitting(true);
 
-      const data: AdminCreateNoticeResponse = await postAdminCreateNotice(form);
+      await postAdminCreateNotice(form);
 
       window.dispatchEvent(new Event("notices-changed"));
       
@@ -158,7 +157,7 @@ export default function NoticeCreatePage() {
         message: "공고가 성공적으로 등록되었습니다.",
         icon: "check_circle",
         onConfirm: () => {
-          navigate(`/notices/${data.noticeId}`, { replace: true });
+          navigate(`/notices`, { replace: true });
         },
       });
 
