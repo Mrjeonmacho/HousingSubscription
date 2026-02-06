@@ -72,8 +72,8 @@ async def get_rag_answer(user_question: str, collection, title: str):
     if results and results['ids'] and results['ids'][0]:
         # 결과가 있을 경우, 유사도 임계값(Threshold) 확인
         if results['distances'][0][0] <= 0.8:
-            actual_distance = results['distances'][0][0]
-            print(f"DEBUG >>> 질문: {user_question} | 측정된 거리: {actual_distance:.4f}")
+            # actual_distance = results['distances'][0][0]
+            # print(f"DEBUG >>> 질문: {user_question} | 측정된 거리: {actual_distance:.4f}")
             is_relevant_result = True
 
     # 2. 검색 결과 유효성 검사 및 분기
@@ -98,7 +98,6 @@ async def get_rag_answer(user_question: str, collection, title: str):
 
 
                 "답변은 짧아도 되지만 길면 최대 10문장까지 압축해서 가독성 쉽게 말을 만드세요"
-                " 주어진 '내용'에 질문에 대한 답이 없다면, '죄송합니다. 현재 제공된 공고문 안에서는 해당 내용을 찾기 어렵네요. 😅 혹시 다른 궁금한 점이 있으신가요?' 이 문장은 답변 맨 마지막으로 고정.\n\n"
             )),
             ("human", "주제: {title}\n질문: {question}\n\n서울집사의 지식을 바탕으로 위 주제와 질문에 대해 친절하게 답변해줘.")
         ])
