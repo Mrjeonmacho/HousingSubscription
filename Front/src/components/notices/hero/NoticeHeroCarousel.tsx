@@ -8,7 +8,7 @@ import { getNoticeComputedStatusText } from "../../../utils/noticeComputedText";
 
 type NoticeHeroCarouselProps = {
   items: Notice[];
-  autoPlayMs?: number; 
+  autoPlayMs?: number;
 };
 
 const HERO_IMAGES = [
@@ -38,14 +38,17 @@ export default function NoticeHeroCarousel({
   const slides = useMemo(() => (items ?? []).slice(0, 5), [items]);
   const count = slides.length;
   const canSlide = count > 1;
+  const canRotateBgOnly = count === 1; // 공고 1개면 배경만 회전
 
   const [index, setIndex] = useState(0);
   const [visibleIndex, setVisibleIndex] = useState(0);
   const pausedRef = useRef(false);
 
-  const [bgFront, setBgFront] = useState(() => getHeroBgByIndex(0));
+  const [bgFront, setBgFront] = useState<string>(() => getHeroBgByIndex(0));
   const [bgBack, setBgBack] = useState<string | null>(null);
   const [fading, setFading] = useState(false);
+
+  const bgIndexRef = useRef(0);
 
   const rafRef = useRef<number | null>(null);
   const timeoutRef = useRef<number | null>(null);
@@ -69,6 +72,27 @@ export default function NoticeHeroCarousel({
     [slides]
   );
 
+  // ✅ 공통으로 쓰는 "배경 페이드 전환" 함수
+  const swapBackground = useCallback((nextSrc: string) => {
+    if (rafRef.current != null) window.cancelAnimationFrame(rafRef.current);
+    if (timeoutRef.current != null) window.clearTimeout(timeoutRef.current);
+    rafRef.current = null;
+    timeoutRef.current = null;
+
+    setBgBack(nextSrc);
+
+    rafRef.current = window.requestAnimationFrame(() => {
+      setFading(true);
+    });
+
+    timeoutRef.current = window.setTimeout(() => {
+      setBgFront(nextSrc);
+      setBgBack(null);
+      setFading(false);
+      timeoutRef.current = null;
+    }, FADE_MS);
+  }, []);
+
   useEffect(() => {
     if (rafRef.current != null) window.cancelAnimationFrame(rafRef.current);
     if (timeoutRef.current != null) window.clearTimeout(timeoutRef.current);
@@ -78,6 +102,8 @@ export default function NoticeHeroCarousel({
     const resetTimer = setTimeout(() => {
       setIndex(0);
       setVisibleIndex(0);
+
+      bgIndexRef.current = 0;
       setBgFront(getHeroBgByIndex(0));
       setBgBack(null);
       setFading(false);
@@ -92,33 +118,22 @@ export default function NoticeHeroCarousel({
       const normalized = ((nextIndex % count) + count) % count;
       if (normalized === index) return;
 
-      if (rafRef.current != null) window.cancelAnimationFrame(rafRef.current);
-      if (timeoutRef.current != null) window.clearTimeout(timeoutRef.current);
-      rafRef.current = null;
-      timeoutRef.current = null;
-
       setIndex(normalized);
+
       const nextSrc = getHeroBgByIndex(normalized);
-      setBgBack(nextSrc);
+      swapBackground(nextSrc);
 
-      rafRef.current = window.requestAnimationFrame(() => {
-        setFading(true);
-      });
-
-      timeoutRef.current = window.setTimeout(() => {
-        setBgFront(nextSrc);
-        setBgBack(null);
-        setFading(false);
+      window.setTimeout(() => {
         setVisibleIndex(normalized);
-        timeoutRef.current = null;
       }, FADE_MS);
     },
-    [count, index]
+    [count, index, swapBackground]
   );
 
   const prev = useCallback(() => go(index - 1), [go, index]);
   const next = useCallback(() => go(index + 1), [go, index]);
 
+  // 공고가 2개 이상일 때만 "슬라이드 자동재생"
   useEffect(() => {
     if (!autoPlayMs || autoPlayMs <= 0) return;
     if (!canSlide) return;
@@ -131,6 +146,22 @@ export default function NoticeHeroCarousel({
     return () => window.clearInterval(id);
   }, [autoPlayMs, canSlide, go, index]);
 
+  // 공고가 1개일 때는 "배경만 자동재생"
+  useEffect(() => {
+    if (!autoPlayMs || autoPlayMs <= 0) return;
+    if (!canRotateBgOnly) return;
+
+    const id = window.setInterval(() => {
+      if (pausedRef.current) return;
+
+      bgIndexRef.current += 1;
+      const nextSrc = getHeroBgByIndex(bgIndexRef.current);
+      swapBackground(nextSrc);
+    }, autoPlayMs);
+
+    return () => window.clearInterval(id);
+  }, [autoPlayMs, canRotateBgOnly, swapBackground]);
+
   useEffect(() => {
     return () => {
       if (rafRef.current != null) window.cancelAnimationFrame(rafRef.current);
@@ -138,41 +169,31 @@ export default function NoticeHeroCarousel({
     };
   }, []);
 
-  // --------------------------------------------------------------------------
-  // [Render] 데이터 없음 (NoticeHeroCarousel.tsx 내부)
-  // --------------------------------------------------------------------------
   if (!current) {
     return (
       <section className="relative overflow-hidden rounded-[1.2rem] bg-gray-900 text-white shadow-lg min-h-[340px] md:min-h-[450px] isolate">
-        {/* 1. 배경 레이어: 메인 캐러셀의 깊이감과 톤을 유지 */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-br from-[#062015] via-[#04150E] to-[#020A06]" />
-          {/* 장식용 빛 효과 (글래스모피즘 느낌 강조) */}
           <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/15 blur-[120px] rounded-full" />
           <div className="absolute inset-0 bg-[#02120A]/20" />
         </div>
 
-        {/* 2. 콘텐츠 영역: 메인 캐러셀과 동일한 정렬 및 애니메이션 적용 */}
         <div className="relative z-10 flex h-full flex-col justify-end px-12 py-12 md:px-28 lg:px-32 pb-24">
           <div className="animate-fade-in-up flex flex-col items-start">
-            
-            {/* 상태 배지: 메인 캐러셀의 카테고리 뱃지 스타일 차용 */}
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm font-semibold backdrop-blur-md shadow-lg mb-5">
               <span className="text-gray-400">STATUS</span>
               <span className="h-3 w-[1px] bg-white/20" />
               <span className="text-white/70">준비 중</span>
             </div>
 
-            {/* 메인 텍스트: 줄바꿈 처리를 통해 가독성 확보 */}
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-relaxed md:leading-relaxed lg:leading-relaxed tracking-tight text-white/90 drop-shadow-sm">
-              현재 진행 중이거나 예정된 공고가 없습니다. 
-              <br /> 
+              현재 진행 중이거나 예정된 공고가 없습니다.
+              <br />
               <span className="block mt-2">곧 새로운 소식으로 찾아올게요!</span>
             </h2>
           </div>
         </div>
 
-        {/* 3. 하단 장식 (캐러셀의 인디케이터와 시각적 균형) */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 opacity-30">
           <div className="h-1.5 w-8 bg-white/50 rounded-full" />
         </div>
@@ -180,9 +201,6 @@ export default function NoticeHeroCarousel({
     );
   }
 
-  // --------------------------------------------------------------------------
-  // [Render] 메인 캐러셀
-  // --------------------------------------------------------------------------
   return (
     <section
       className="group relative overflow-hidden rounded-[1.2rem] bg-gray-900 text-white shadow-lg isolate transform transition-transform duration-300 min-h-[340px] md:min-h-[450px]"
@@ -204,7 +222,6 @@ export default function NoticeHeroCarousel({
         }
       `}</style>
 
-      {/* 배경 레이어 */}
       <div className="absolute inset-0 z-0">
         <img
           src={bgFront}
@@ -232,7 +249,6 @@ export default function NoticeHeroCarousel({
       </div>
 
       <div className="relative z-10 flex h-full flex-col justify-end px-12 py-12 md:px-28 lg:px-32 pb-24">
-        
         <div key={current.id} className="animate-fade-in-up flex flex-col items-start">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold backdrop-blur-md shadow-lg">
             <span className="text-primary-300">
@@ -255,7 +271,6 @@ export default function NoticeHeroCarousel({
         </div>
       </div>
 
-      {/* 공고 보러 가기 버튼 */}
       <div className="absolute bottom-10 right-10 z-20 md:bottom-20 md:right-25">
         <div
           className="
@@ -273,7 +288,6 @@ export default function NoticeHeroCarousel({
         </div>
       </div>
 
-      {/* 좌우 네비게이션 버튼 */}
       {canSlide && (
         <>
           <button
@@ -316,7 +330,6 @@ export default function NoticeHeroCarousel({
         </>
       )}
 
-      {/* 인디케이터 (Pagination) */}
       {canSlide && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
           {slides.map((_, i) => {
