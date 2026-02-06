@@ -14,7 +14,7 @@ export default function PreferenceFooterNav({
   nextLabel = "다음 질문으로",
 }: PreferenceFooterNavProps) {
   return (
-    <section className="w-full max-w-3xl mx-auto px-4 mt-10 pb-10">
+    <section className="w-full max-w-3xl mx-auto px-4 mt-2">
       <div className="flex items-center gap-6">
         {/* Prev */}
         <button
@@ -23,7 +23,7 @@ export default function PreferenceFooterNav({
           disabled={!canGoPrev}
           className={[
             "flex items-center justify-center gap-3",
-            "h-16 w-[42%] rounded-3xl",
+            "h-14 w-[42%] rounded-3xl",
             "border border-gray-200 bg-white",
             "text-gray-700 font-semibold",
             "transition-colors",
@@ -52,7 +52,7 @@ export default function PreferenceFooterNav({
           disabled={!canGoNext}
           className={[
             "flex items-center justify-center gap-3",
-            "h-16 flex-1 rounded-3xl",
+            "h-14 flex-1 rounded-3xl",
             "font-semibold transition-all",
             canGoNext
               ? "bg-primary text-gray-900 shadow-[0_10px_30px_rgba(15,230,104,0.35)] hover:brightness-95"

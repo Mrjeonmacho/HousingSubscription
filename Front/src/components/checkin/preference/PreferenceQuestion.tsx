@@ -6,7 +6,7 @@ export default function PreferenceQuestion({
   title,
 }: PreferenceQuestionProps) {
   return (
-    <section className="w-full max-w-3xl mx-auto text-center mt-14 mb-12 px-4">
+    <section className="w-full max-w-3xl mx-auto text-center mb-4 px-4">
       {/* Question Title */}
       <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 leading-snug break-keep whitespace-normal">
         {title}

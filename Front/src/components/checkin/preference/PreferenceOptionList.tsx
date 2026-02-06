@@ -13,7 +13,7 @@ export default function PreferenceOptionList({
 }: PreferenceOptionListProps) {
   return (
     <section className="w-full max-w-3xl mx-auto px-4">
-      <ul className="flex flex-col gap-4">
+      <ul className="flex flex-col gap-3">
         {options.map((option) => {
           const isSelected = option.value === selectedValue;
 

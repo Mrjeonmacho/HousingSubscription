@@ -49,9 +49,17 @@ export default function CheckinIntro({ onComplete }: IntroProps) {
           <FadeInWhenVisible delay="0.5s">
             <p className="text-gray-400 text-lg md:text-xl leading-relaxed break-keep mt-4">
               복잡한 용어부터 나에게 맞는 집 찾기까지,<br />
-              주인님은 그저 편안하게 따라오시면 됩니다.
+              그저 편안하게 따라오시면 됩니다.
             </p>
           </FadeInWhenVisible>
+          
+          {/* 화살표 애니메이션 */}
+          <FadeInWhenVisible delay="1.0s">
+            <div className="mt-10 animate-bounce text-gray-300 mt-6">
+              <span className="material-symbols-outlined text-4xl">keyboard_arrow_down</span>
+            </div>
+          </FadeInWhenVisible>
+        
         </div>
       </section>
 

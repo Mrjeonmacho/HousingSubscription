@@ -16,21 +16,21 @@ export default function PreferenceHeader({
   const progress = Math.round((currentNumber / safeTotal) * 100);
 
   return (
-    <section className="w-full">
+    <section className="w-full mb-5">
       {/* Category */}
       <div className="text-center text-sm font-semibold text-gray-700">
         PART {currentNumber}. {category}
       </div>
 
       {/* Card */}
-      <div className="mt-6 bg-white w-full max-w-3xl mx-auto rounded-3xl px-8 md:px-12 py-8 shadow-[0_10px_40px_rgba(0,0,0,0.05)] border border-black/5">
+      <div className="mt-4 bg-white w-full max-w-3xl mx-auto rounded-3xl px-8 md:px-12 py-8 shadow-[0_10px_40px_rgba(0,0,0,0.05)] border border-black/5">
         {/* Top row */}
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-primary">
+            <span className="text-xl font-extrabold text-primary">
               Q{currentNumber}
             </span>
-            <span className="text-3xl font-extrabold text-gray-300">
+            <span className="text-xl font-extrabold text-gray-300">
               / Q{safeTotal}
             </span>
           </div>

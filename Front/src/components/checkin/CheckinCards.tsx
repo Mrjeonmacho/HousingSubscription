@@ -7,8 +7,8 @@ export default function CheckinCards() {
     <main className="h-full w-full flex items-center justify-center bg-white px-4 md:px-8 py-16">
       <div className="w-full max-w-4xl">
         <div className="mb-12 text-center">
-          <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 animate-fade-in-up">
-            그럼 이제, 주인님의 체크인을 도와드리겠습니다.
+          <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3 animate-fade-in-up">
+            그럼 이제, 체크인을 도와드리겠습니다.
           </h3>
           <p className="text-gray-500 text-sm md:text-base animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
             아래에 준비된 체험 중, 궁금한 것부터 골라보시겠어요?
@@ -39,7 +39,7 @@ export default function CheckinCards() {
               </h2>
 
               <p className="text-sm leading-relaxed text-white/60 mb-8 break-keep">
-                3분이면 충분합니다.<br/>주인님의 실력을 확인해 보세요.
+                3분이면 충분합니다.<br/>당신의 실력을 확인해 보세요.
               </p>
 
               <button className="inline-flex items-center justify-center rounded-full bg-white px-8 py-3 text-sm font-bold text-primary shadow-sm hover:brightness-95 transition">
@@ -69,7 +69,7 @@ export default function CheckinCards() {
               </h2>
 
               <p className="text-sm leading-relaxed text-black/60 mb-8 break-keep">
-                나에게 딱 맞는 집은 어디일까?<br/>주인님께 꼭 맞는 공고를 찾아 드릴게요.
+                나에게 딱 맞는 집은 어디일까?<br/>당신에게 꼭 맞는 공고를 찾아 드릴게요.
               </p>
 
               <button className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 text-sm font-bold text-white shadow-md shadow-primary/25 hover:brightness-105 transition">
