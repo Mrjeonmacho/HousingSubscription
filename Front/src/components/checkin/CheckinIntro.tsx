@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import FadeInWhenVisible from "./FadeInWhenVisible";
 
 interface IntroProps {
@@ -5,12 +6,64 @@ interface IntroProps {
 }
 
 export default function CheckinIntro({ onComplete }: IntroProps) {
+  // Step 1 섹션으로 이동하기 위한 Ref
+  const step1Ref = useRef<HTMLElement>(null);
+
+  // 처음 방문일 경우 Step 1으로 스크롤
+  const handleFirstTime = () => {
+    step1Ref.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <>
       {/* --------------------------------------------------------------------------------
-          Step 1: 첫 인사
+          Step 0: 처음 방문 여부 확인 (New)
       -------------------------------------------------------------------------------- */}
       <section className="h-full w-full flex-shrink-0 snap-start flex flex-col items-center justify-center bg-white px-6 text-center">
+        <div className="max-w-2xl space-y-8">
+          <FadeInWhenVisible delay="0.2s">
+            <h1 className="text-3xl md:text-5xl font-bold text-gray-900 leading-tight break-keep">
+              안녕하세요!<br />
+              <span className="text-primary">서울집사</span> 방문이 처음이신가요?
+            </h1>
+          </FadeInWhenVisible>
+          
+          <FadeInWhenVisible delay="0.4s">
+            <p className="text-gray-400 text-lg md:text-xl break-keep">
+              처음오셨다면 튜토리얼을 통해 안내해 드리고,<br />
+              이미 익숙하시다면 바로 체크인을 시작할 수 있어요.
+            </p>
+          </FadeInWhenVisible>
+
+          <FadeInWhenVisible delay="0.6s">
+            <div className="flex flex-col md:flex-row gap-4 justify-center items-center mt-8">
+              {/* 처음입니다 -> Step 1로 이동 */}
+              <button
+                onClick={handleFirstTime}
+                className="w-full md:w-auto px-8 py-4 rounded-full bg-primary text-white text-lg font-bold shadow-lg hover:bg-primary/90 transition-all hover:scale-105"
+              >
+                네, 처음입니다
+              </button>
+
+              {/* 아닙니다 -> 바로 CheckinCards (onComplete 실행) */}
+              <button
+                onClick={onComplete}
+                className="w-full md:w-auto px-8 py-4 rounded-full bg-gray-100 text-gray-600 text-lg font-bold hover:bg-gray-200 transition-all"
+              >
+                아니요, 바로 시작할래요
+              </button>
+            </div>
+          </FadeInWhenVisible>
+        </div>
+      </section>
+
+      {/* --------------------------------------------------------------------------------
+          Step 1: 첫 인사 (ref 추가됨)
+      -------------------------------------------------------------------------------- */}
+      <section 
+        ref={step1Ref} 
+        className="h-full w-full flex-shrink-0 snap-start flex flex-col items-center justify-center bg-white px-6 text-center"
+      >
         <div className="max-w-2xl space-y-6">
           <FadeInWhenVisible delay="0.2s">
             <h1 className="text-3xl md:text-5xl font-bold text-gray-900 leading-tight break-keep">

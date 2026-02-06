@@ -24,9 +24,10 @@ export default function Footer() {
               서비스
             </h4>
             <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-2">
-              <li><a className="hover:text-primary transition-colors" href="/checkin">집사의 체크인</a></li>
               <li><a className="hover:text-primary transition-colors" href="/chatbot">AI 채팅</a></li>
               <li><a className="hover:text-primary transition-colors" href="/notices">SH 공고 찾기</a></li>
+              <li><a className="hover:text-primary transition-colors" href="/checkin/quiz">청약 용어 퀴즈</a></li>
+              <li><a className="hover:text-primary transition-colors" href="/checkin/preference">주거 성향 테스트</a></li>
             </ul>
           </div>
         </div>
