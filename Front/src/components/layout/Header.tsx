@@ -101,8 +101,8 @@ export default function Header() {
 
         {/* Center: Nav*/}
         <nav className="hidden md:flex items-center gap-6 lg:gap-8">
-          <NavLink to="/" onClick={handleHomeClick} className={navClass}>
-            홈
+          <NavLink to="/checkin" onClick={handleNavClick("/checkin")} className={navClass}>
+            집사의 체크인
           </NavLink>
           <NavLink to="/notices" onClick={handleNavClick("/notices")} className={navClass}>
             SH 공고 찾기
@@ -160,8 +160,8 @@ export default function Header() {
       {isMenuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-lg animate-fade-in-down">
           <nav className="flex flex-col py-2">
-            <NavLink to="/" className={mobileNavClass} onClick={closeMenu}>
-              홈
+            <NavLink to="/checkin" className={mobileNavClass} onClick={closeMenu}>
+              집사의 체크인
             </NavLink>
             <NavLink to="/notices" className={mobileNavClass} onClick={closeMenu}>
               SH 공고 찾기

@@ -15,7 +15,6 @@ export default function Checkin() {
   };
 
   return (
-    /* h-[calc(100dvh-64px)]: 헤더(약 64px)를 제외한 나머지 화면을 꽉 채움 */
     <div 
       ref={scrollRef}
       className={`w-full h-[calc(100dvh-64px)] overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar ${
