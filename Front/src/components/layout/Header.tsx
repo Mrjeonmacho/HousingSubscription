@@ -31,7 +31,7 @@ export default function Header() {
     }
   };
 
-  // ✅ 추가: NavLink 공통 클릭 핸들러 (현재 페이지면 홈과 동일하게 새로고침)
+  // NavLink 공통 클릭 핸들러 (현재 페이지면 홈과 동일하게 새로고침)
   const handleNavClick = (to: string) => (e: React.MouseEvent) => {
     if (location.pathname === to) {
       e.preventDefault();
@@ -104,17 +104,11 @@ export default function Header() {
           <NavLink to="/" onClick={handleHomeClick} className={navClass}>
             홈
           </NavLink>
-          <NavLink to="/checkin" onClick={handleNavClick("/checkin")} className={navClass}>
-            집사의 체크인
-          </NavLink>
           <NavLink to="/notices" onClick={handleNavClick("/notices")} className={navClass}>
             SH 공고 찾기
           </NavLink>
           <NavLink to="/chatbot" onClick={handleNavClick("/chatbot")} className={navClass}>
             AI 채팅
-          </NavLink>
-          <NavLink to="/mypage" onClick={handleNavClick("/mypage")} className={navClass}>
-            마이페이지
           </NavLink>
         </nav>
 
@@ -168,9 +162,6 @@ export default function Header() {
           <nav className="flex flex-col py-2">
             <NavLink to="/" className={mobileNavClass} onClick={closeMenu}>
               홈
-            </NavLink>
-            <NavLink to="/checkin" className={mobileNavClass} onClick={closeMenu}>
-              집사의 체크인
             </NavLink>
             <NavLink to="/notices" className={mobileNavClass} onClick={closeMenu}>
               SH 공고 찾기
