@@ -143,13 +143,13 @@ export default function NoticeHeroCarousel({
   // --------------------------------------------------------------------------
   if (!current) {
     return (
-      <section className="relative overflow-hidden rounded-[1.2rem] bg-gray-900 text-white shadow-lg min-h-[300px] md:min-h-[420px] isolate">
+      <section className="relative overflow-hidden rounded-[1.2rem] bg-gray-900 text-white shadow-lg min-h-[340px] md:min-h-[450px] isolate">
         {/* 1. 배경 레이어: 메인 캐러셀의 깊이감과 톤을 유지 */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#062015] via-[#04150E] to-[#020A06]" />
           {/* 장식용 빛 효과 (글래스모피즘 느낌 강조) */}
-          <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 blur-[120px] rounded-full" />
-          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/15 blur-[120px] rounded-full" />
+          <div className="absolute inset-0 bg-[#02120A]/20" />
         </div>
 
         {/* 2. 콘텐츠 영역: 메인 캐러셀과 동일한 정렬 및 애니메이션 적용 */}
@@ -185,7 +185,7 @@ export default function NoticeHeroCarousel({
   // --------------------------------------------------------------------------
   return (
     <section
-      className="group relative overflow-hidden rounded-[1.2rem] bg-gray-900 text-white shadow-lg isolate transform transition-transform duration-300 min-h-[300px] md:min-h-[420px]"
+      className="group relative overflow-hidden rounded-[1.2rem] bg-gray-900 text-white shadow-lg isolate transform transition-transform duration-300 min-h-[340px] md:min-h-[450px]"
       onClick={() => navigate(`/notices/${current.id}`)}
       onMouseEnter={() => {
         pausedRef.current = true;
@@ -228,7 +228,7 @@ export default function NoticeHeroCarousel({
             draggable={false}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#02120A]/90 via-[#041A10]/50 to-[#072615]/35" />
       </div>
 
       <div className="relative z-10 flex h-full flex-col justify-end px-12 py-12 md:px-28 lg:px-32 pb-24">
@@ -252,6 +252,24 @@ export default function NoticeHeroCarousel({
             <span className="material-symbols-outlined text-[20px]">calendar_today</span>
             <span>마감일 : {formatDate(current.endDate)}</span>
           </div>
+        </div>
+      </div>
+
+      {/* 공고 보러 가기 버튼 */}
+      <div className="absolute bottom-10 right-10 z-20 md:bottom-20 md:right-25">
+        <div
+          className="
+            pointer-events-none inline-flex items-center gap-2
+            rounded-full border border-white/20 bg-white/10
+            px-5 py-2 text-sm font-semibold text-white/90
+            backdrop-blur-md shadow-lg
+            transition-all duration-300
+            group-hover:bg-white group-hover:text-black group-hover:scale-[1.02]
+          "
+          aria-hidden
+        >
+          <span>공고 보러 가기</span>
+          <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
         </div>
       </div>
 
