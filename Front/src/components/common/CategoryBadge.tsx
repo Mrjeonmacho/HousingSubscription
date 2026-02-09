@@ -48,7 +48,7 @@ function categoryTone(category: string | null) {
     case "NATIONAL_RENTAL": // 노랑
       return "bg-amber-50 text-amber-800 border-amber-100";
     case "PUBLIC_RENTAL": // 초록
-      return "bg-green-50 text-green-700 border-green-100";
+      return "bg-primary/10 text-primary border-primary/10";
     case "LONG_TERM_RENTAL": // 파랑
       return "bg-blue-50 text-blue-700 border-blue-100";
     case "SALE_HOUSE": // 보라

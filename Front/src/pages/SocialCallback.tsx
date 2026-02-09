@@ -46,7 +46,7 @@ export default function SocialCallback() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-      <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+      <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
       <p className="text-gray-600 font-medium">로그인 중입니다...</p>
     </div>
   );

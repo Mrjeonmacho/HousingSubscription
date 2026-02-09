@@ -108,7 +108,7 @@ export default function NoticeChatbotPanel({ noticeTitle }: Props) {
       {/* 헤더 */}
       <header className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary">
             <span className="material-symbols-outlined">smart_toy</span>
           </div>
           <div>
@@ -127,8 +127,8 @@ export default function NoticeChatbotPanel({ noticeTitle }: Props) {
         ))}
         {isSending && (
           <div className="flex justify-start">
-             <div className="mr-3 mt-1 h-8 w-8 rounded-full bg-green-50 flex items-center justify-center">
-                <span className="material-symbols-outlined text-[18px] text-green-600">smart_toy</span>
+             <div className="mr-3 mt-1 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-[18px] text-primary">smart_toy</span>
              </div>
              <div className="bg-white rounded-2xl px-4 py-3 border border-black/5 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}/>
@@ -153,15 +153,17 @@ export default function NoticeChatbotPanel({ noticeTitle }: Props) {
               }
             }}
             placeholder={isSending ? "답변을 생성 중입니다..." : "메시지를 입력하세요"}
-            className="flex-1 h-11 rounded-xl bg-gray-50 px-4 text-sm outline-none focus:bg-white focus:ring-2 focus:ring-green-500/30 transition border border-transparent focus:border-green-500/30"
+            className="flex-1 h-11 rounded-xl bg-gray-50 px-4 text-sm outline-none"
           />
           <button
             type="button"
             disabled={isSending || !input.trim()}
             onClick={() => handleSendText(input)}
-            className="h-11 w-11 rounded-xl bg-[#00D179] text-white flex items-center justify-center hover:opacity-90 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-11 w-11 rounded-full bg-primary text-white flex items-center justify-center hover:opacity-90 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="material-symbols-outlined text-[20px]">send</span>
+            <span className="material-symbols-outlined text-[24px] leading-none font-bold">
+              arrow_upward
+            </span>
           </button>
         </div>
       </div>

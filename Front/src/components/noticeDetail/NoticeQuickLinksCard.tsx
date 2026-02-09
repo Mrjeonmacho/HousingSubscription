@@ -32,8 +32,12 @@ function safeExternalOpen(link: string) {
 
 function SkeletonCard() {
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-      <div className="mb-4 h-4 w-36 rounded bg-gray-100 animate-pulse" />
+    <section className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
+      <div className="mb-5 flex items-center gap-2.5">
+        <div className="h-5 w-1.5 rounded-full bg-gray-100 animate-pulse" />
+        <div className="h-4 w-40 rounded bg-gray-100 animate-pulse" />
+      </div>
+
       <div className="space-y-3">
         <div className="h-12 w-full rounded-xl bg-gray-100 animate-pulse" />
         <div className="h-12 w-full rounded-xl bg-gray-100 animate-pulse" />
@@ -42,44 +46,105 @@ function SkeletonCard() {
   );
 }
 
-export default function NoticeQuickLinksCard({ loading, pdfUrl, originUrl }: Props) {
+export default function NoticeQuickLinksCard({
+  loading,
+  pdfUrl,
+  originUrl,
+}: Props) {
   if (loading) return <SkeletonCard />;
 
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-      <h3 className="mb-4 text-sm font-semibold text-gray-700">
-        첨부 파일 및 바로가기
-      </h3>
+    <section className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
+      <div className="mb-5 flex items-center gap-2.5">
+        <div className="h-5 w-1.5 rounded-full bg-primary" />
+        <h3 className="text-[17px] font-bold text-gray-900 tracking-tight">
+          첨부 파일 및 바로가기
+        </h3>
+      </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 px-1">
         <button
           type="button"
           onClick={() => pdfUrl && safeExternalOpen(pdfUrl)}
           disabled={!pdfUrl}
-          className="w-full rounded-xl bg-green-400 px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
+          className="
+            w-full rounded-2xl
+            border border-primary/20
+            bg-white
+            px-4 py-3
+            text-left
+            text-sm font-semibold text-gray-900
+            shadow-sm
+            transition-all duration-300
+            cursor-pointer
+            hover:border-primary/50
+            hover:bg-primary/5
+            hover:shadow-md
+            disabled:opacity-50
+            disabled:cursor-not-allowed
+            flex items-center justify-between
+            group
+          "
         >
           <span className="flex items-center gap-3">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/70">
-              <MaterialIcon name="description" className="text-gray-800" />
+            <span
+              className="
+                inline-flex h-9 w-9 items-center justify-center rounded-xl
+                bg-primary/10 text-primary
+                transition-all duration-300
+                group-hover:bg-primary group-hover:text-white
+              "
+            >
+              <MaterialIcon name="description" className="text-[20px]" />
             </span>
             모집 공고문 PDF 바로가기
           </span>
-          <MaterialIcon name="open_in_new" className="text-gray-800" />
+          <MaterialIcon
+            name="open_in_new"
+            className="text-gray-400 transition-colors duration-300 group-hover:text-primary"
+          />
         </button>
 
         <button
           type="button"
           onClick={() => originUrl && safeExternalOpen(originUrl)}
           disabled={!originUrl}
-          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
+          className="
+            w-full rounded-2xl
+            border border-gray-200
+            bg-white
+            px-4 py-3
+            text-left
+            text-sm font-semibold text-gray-900
+            shadow-sm
+            transition-all duration-300
+            cursor-pointer
+            hover:border-gray-300
+            hover:bg-gray-50
+            hover:shadow-md
+            disabled:opacity-50
+            disabled:cursor-not-allowed
+            flex items-center justify-between
+            group
+          "
         >
           <span className="flex items-center gap-3">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
-              <MaterialIcon name="language" className="text-gray-700" />
+            <span
+              className="
+                inline-flex h-9 w-9 items-center justify-center rounded-xl
+                bg-gray-100 text-gray-700
+                transition-all duration-300
+                group-hover:bg-gray-900 group-hover:text-white
+              "
+            >
+              <MaterialIcon name="language" className="text-[20px]" />
             </span>
             SH 공식 홈페이지 바로가기
           </span>
-          <MaterialIcon name="open_in_new" className="text-gray-700" />
+          <MaterialIcon
+            name="open_in_new"
+            className="text-gray-400 transition-colors duration-300 group-hover:text-gray-700"
+          />
         </button>
       </div>
     </section>

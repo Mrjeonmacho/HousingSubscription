@@ -37,7 +37,7 @@ export default function ChatComposer({
                   : "메시지를 입력하세요"
               }
               className="flex-1 h-11 rounded-xl bg-black/5 px-4 text-[14px] outline-none
-                         focus:bg-white focus:ring-2 focus:ring-primary/30 transition
+                         focus:bg-white transition
                          read-only:opacity-50 read-only:bg-gray-100 read-only:cursor-not-allowed"
             />
 
@@ -45,17 +45,17 @@ export default function ChatComposer({
               type="button"
               disabled={isSending || isDisabled}
               onClick={(e) => {
-                e.currentTarget.blur(); // 버튼 클릭 시 포커스 해제하여 스크롤 튐 방지
+                e.currentTarget.blur();
                 onSend();
               }}
-              className="h-11 px-5 rounded-xl bg-primary text-white font-semibold
-                         inline-flex items-center gap-2
-                         hover:opacity-95 active:opacity-90 transition
-                         disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-11 h-11 rounded-full bg-primary text-white 
+                        flex justify-center items-center shrink-0
+                        hover:opacity-90 active:scale-95 transition-all
+                        disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="전송"
             >
-              {isSending ? "전송 중" : "전송"}
-              <span className="material-symbols-outlined text-[18px] leading-none">
-                send
+              <span className="material-symbols-outlined text-[24px] leading-none font-bold">
+                arrow_upward
               </span>
             </button>
           </div>

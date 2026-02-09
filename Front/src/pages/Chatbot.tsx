@@ -270,7 +270,7 @@ export default function Chatbot() {
             id: `sys-${Date.now()}`, 
             role: "assistant", 
             type: "text", 
-            text: `**'${label}'**에 대해 어떤 것이 궁금하신가요?\n궁금한 점을 **아래에서 선택**하거나 **직접** 물어보세요!`, 
+            text: `**${label}**에 대해 어떤 것이 궁금하신가요?\n궁금한 점을 **아래에서 선택**하거나 **직접** 물어보세요!`, 
             createdAt: new Date().toISOString() 
           },
         ]);

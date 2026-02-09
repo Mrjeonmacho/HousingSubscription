@@ -34,9 +34,9 @@ app_state = {}
 #     except Exception as e:
 #         print(f"DB 연결 실패: {e}")
 #         app_state["collection"] = None
-#
-#     yield
-#     app_state.clear()
+
+    # yield
+    # app_state.clear()
 
 
 # 배포 상황

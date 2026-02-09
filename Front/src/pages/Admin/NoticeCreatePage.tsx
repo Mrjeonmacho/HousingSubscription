@@ -7,11 +7,11 @@ import { getIsAdmin } from "../../api/UserApi";
 import {
   postAdminCreateNotice,
   type AdminCreateNoticeRequest,
-  type AdminCreateNoticeResponse,
 } from "../../api/AdminNoticeApi";
 
 import type { NoticeCategory } from "../../utils/noticeFormat";
 import { categoryLabel } from "../../utils/noticeFormat";
+import { useUIStore } from "../../store/uiStore";
 
 import NoticeCreateHeader from "../../components/admin/notice-form/NoticeFormHeader";
 import NoticeCreateBasicInfoSection from "../../components/admin/notice-form/NoticeFormBasicInfoSection";
@@ -31,7 +31,6 @@ const CATEGORY_VALUES: NoticeCategory[] = [
   "NATIONAL_RENTAL",
   "PUBLIC_RENTAL",
   "LONG_TERM_RENTAL",
-  "SALE_HOUSE",
 ];
 
 function todayYYYYMMDD() {
@@ -52,6 +51,8 @@ function compareDate(a: string, b: string) {
 
 export default function NoticeCreatePage() {
   const navigate = useNavigate();
+
+  const openAlert = useUIStore((state) => state.openAlert);
 
   const [checking, setChecking] = useState(true);
   const [allowed, setAllowed] = useState(false);
@@ -125,6 +126,16 @@ export default function NoticeCreatePage() {
     }
 
     setErrors(next);
+    
+    if (Object.keys(next).length > 0) {
+      openAlert({
+        title: "입력 확인",
+        message: "필수 입력 항목을 확인해 주세요.",
+        icon: "warning",
+        variant: "danger",
+      });
+    }
+
     return Object.keys(next).length === 0;
   };
 
@@ -137,11 +148,19 @@ export default function NoticeCreatePage() {
     try {
       setSubmitting(true);
 
-      const data: AdminCreateNoticeResponse = await postAdminCreateNotice(form);
+      await postAdminCreateNotice(form);
 
       window.dispatchEvent(new Event("notices-changed"));
+      
+      openAlert({
+        title: "등록 완료",
+        message: "공고가 성공적으로 등록되었습니다.",
+        icon: "check_circle",
+        onConfirm: () => {
+          navigate(`/notices`, { replace: true });
+        },
+      });
 
-      navigate(`/notices/${data.noticeId}`, { replace: true });
     } catch (e) {
       const err = e as AxiosError<ApiErrorResponse>;
       const msg =
@@ -149,6 +168,13 @@ export default function NoticeCreatePage() {
         err.message ||
         "요청 처리 중 오류가 발생했습니다.";
       setServerError(msg);
+      
+      openAlert({
+        title: "등록 실패",
+        message: msg,
+        icon: "error",
+        variant: "danger",
+      });
     } finally {
       setSubmitting(false);
     }

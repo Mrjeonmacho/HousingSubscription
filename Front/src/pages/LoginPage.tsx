@@ -4,12 +4,14 @@ import GoogleButton from "../components/login/GoogleButton";
 import KakaoButton from "../components/login/KakaoButton";
 import { login as loginAPI } from "../api/AuthApi";
 import { useAuth } from "../context/AuthContext";
+import { useUIStore } from "../store/uiStore";
 
 const baseURL = "/api";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const openAlert = useUIStore((state) => state.openAlert);
 
   // 입력값 상태 관리
   const [loginId, setLoginId] = useState("");
@@ -19,9 +21,15 @@ export default function LoginPage() {
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!loginId || !password) {
-      alert("아이디와 비밀번호를 모두 입력해주세요.");
+      openAlert({
+        title: "입력 오류",
+        message: "아이디와 비밀번호를 모두 입력해주세요.",
+        icon: "warning",
+        variant: "danger",
+      });
       return;
     }
+    
     // 로그인 요청
     const result = await loginAPI({ loginId, password });
 
@@ -32,10 +40,22 @@ export default function LoginPage() {
         userName: result.userName,
         userRole: result.userRole
       });
-      alert(`${result.userName}님 환영합니다!`);
-      navigate("/");
+
+      openAlert({
+        title: "환영합니다!",
+        message: `${result.userName}님, 반갑습니다!`,
+        icon: "check",
+        onConfirm: () => {
+          navigate("/");
+        },
+      });
     } else {
-      alert("아이디 또는 비밀번호가 일치하지 않습니다.");
+      openAlert({
+        title: "로그인 실패",
+        message: "아이디 또는 비밀번호가 일치하지 않습니다.",
+        icon: "error",
+        variant: "danger",
+      });
     }
   };
 
@@ -51,8 +71,12 @@ export default function LoginPage() {
     <div className="bg-white flex flex-col items-center my-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full bg-white rounded-[2rem] shadow-lg border border-gray-100 p-8 md:p-10 relative">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-50 text-primary mb-4">
-            <span className="material-symbols-outlined text-3xl">storefront</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+            <img
+              src="/seouljibsa.png"
+              alt="서울집사 로고"
+              className="w-8 h-8 object-contain"
+            />
           </div>
           <h2 className="text-2xl font-bold text-[#111814] mb-1">
             서울집사 로그인
